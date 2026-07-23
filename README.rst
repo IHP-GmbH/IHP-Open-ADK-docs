@@ -6,7 +6,7 @@ IHP Open Assembly Design Kit documentation
    :target: https://github.com/IHP-GmbH/IHP-Open-ADK
 
 Documentation source for the IHP Open Assembly Design Kit (ADK) and the open
-flow for 2.5D heterogeneous chiplet integration built around it.
+flow for 2.5D/3D heterogeneous chiplet integration built around it.
 
 .. image:: docs/_static/IHP_logo.png
    :align: center
@@ -47,8 +47,6 @@ repositories pinned as submodules under ``src/``:
 - `chiplet-studio <https://github.com/IHP-GmbH/chiplet-studio>`__, the 3D assembly viewer
 - `ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__, the container that pins and builds them all
 
-The base process PDK is documented separately at
-https://ihp-open-pdk-docs.readthedocs.io.
 
 Prerequisites
 =============
