@@ -48,12 +48,6 @@ repositories pinned as submodules under ``src/``:
 - `ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__, the container that pins and builds them all
 
 
-Prerequisites
-=============
-
-- Git 2.35 or newer
-- Python 3.10 or newer
-
 Building locally
 ================
 
