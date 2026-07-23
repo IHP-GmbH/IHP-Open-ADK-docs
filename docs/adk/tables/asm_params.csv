@@ -1,0 +1,2 @@
+"ASM_b","Minimum spacing between chiplets, in micrometres. Edge-to-edge between adjacent chiplet boundary polygons.","50","um"
+"ASM_e","Minimum chiplet area, in square micrometres. Chiplet boundary polygons below this threshold are flagged.","10000","um2"

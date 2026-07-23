@@ -1,0 +1,56 @@
+% ADK Ecosystem Overview - 6 tools hub (Slide 4)
+\documentclass[border=3mm]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+\definecolor{IHPfg}{RGB}{0,80,139}
+\definecolor{IHPred}{RGB}{228,15,19}
+\definecolor{IHPaccent}{RGB}{109,112,114}
+\definecolor{IHPlight}{RGB}{225,238,250}
+\definecolor{cGDS2K}{RGB}{228,15,19}
+\definecolor{cPDK}{RGB}{190,125,35}
+\definecolor{cHYP}{RGB}{65,155,75}
+\definecolor{cKicad}{RGB}{0,80,139}
+\definecolor{cChiplet}{RGB}{55,145,195}
+\definecolor{cDesigns}{RGB}{120,70,150}
+
+\begin{document}
+\begin{tikzpicture}[
+    >=Stealth,
+    toolbox/.style={
+        rectangle, rounded corners=2.5pt,
+        draw=#1, fill=#1!10, line width=0.7pt,
+        minimum width=34mm, minimum height=9mm,
+        font=\sffamily\scriptsize, text=#1, align=center
+    },
+    hub/.style={
+        rectangle, rounded corners=4pt,
+        draw=IHPfg, fill=IHPlight, line width=1pt,
+        minimum width=30mm, minimum height=10mm,
+        font=\sffamily\footnotesize\bfseries, text=IHPfg, align=center
+    },
+    conn/.style={
+        -{Stealth[length=1.5mm]}, line width=0.5pt, color=IHPaccent!70
+    }
+]
+
+% Center hub
+\node[hub] (adk) at (0, 0) {ADK\\[-0.3mm]Ecosystem};
+
+% Tools arranged around hub (6 tools)
+\node[toolbox=cKicad]   (t1) at (0,  2.1)   {\textbf{KiCad Fork}\\[-0.3mm]{\tiny nm support, exports}};
+\node[toolbox=cChiplet] (t2) at (0, -2.1)   {\textbf{Chiplet Studio}\\[-0.3mm]{\tiny 3D/2D + Flow Orchestrator}};
+\node[toolbox=cGDS2K]   (t3) at (-2.7,  1.05) {\textbf{GDS-to-KiCad}\\[-0.3mm]{\tiny footprints + symbols + netlist}};
+\node[toolbox=cPDK]     (t4) at ( 2.7,  1.05) {\textbf{Interposer PDK}\\[-0.3mm]{\tiny IntM4TM2 BEOL, DRC + PCells}};
+\node[toolbox=cHYP]     (t5) at (-2.7, -1.05) {\textbf{HYP-to-GDS}\\[-0.3mm]{\tiny fab-ready GDS}};
+\node[toolbox=cDesigns] (t6) at ( 2.7, -1.05) {\textbf{ADK}\\[-0.3mm]{\tiny assembly DRC: ASM + IXN}};
+
+% Connections to hub
+\foreach \t in {t1,t2,t3,t4,t5,t6} {
+    \draw[conn] (adk) -- (\t);
+}
+
+\end{tikzpicture}
+\end{document}

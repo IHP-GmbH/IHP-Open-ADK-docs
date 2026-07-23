@@ -1,0 +1,138 @@
+# Copyright 2026 IHP Open ADK Authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Regenerate content from the pinned sources
+        run: make -C docs preprocess
+
+      - name: Fail if generated content is stale
+        # The generators read src/ and write docs/. If re-running them changes
+        # anything, the committed tables no longer describe the pinned code.
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::Generated content is out of date. Run 'make -C docs preprocess' and commit the result."
+            git --no-pager diff --stat
+            git --no-pager diff
+            exit 1
+          fi
+
+      - name: Build HTML
+        run: sphinx-build -b html -W --keep-going docs docs/_build/html
+
+      - name: Check editorial constraints
+        # These are factual and legal constraints, not style preferences. The
+        # authoring contract that explains each one is the Editorial rules
+        # section of docs/contrib/02_documentation.rst.
+        run: |
+          status=0
+          # The contributing page quotes these rules in order to state them, so
+          # it is the one file exempt from matching them.
+          EXEMPT='docs/contrib/02_documentation.rst'
+          check() {
+            local pattern="$1" message="$2"
+            local hits
+            hits=$(grep -rniE --include='*.rst' --include='*.md' --include='*.tex' \
+                   "$pattern" docs/ | grep -v "^${EXEMPT}:" || true)
+            if [ -n "$hits" ]; then
+              echo "::error::$message"
+              echo "$hits"
+              status=1
+            fi
+          }
+          # Assembly-level connectivity verification may be described as a
+          # concept and as scope. Naming an implementation of it may not: no
+          # module, no repository, no comparison result, no availability claim.
+          check 'assembly_lvs|assembly-lvs/' 'Do not name an implementation of assembly LVS. The concept is in scope; the implementation is not released.'
+          check 'netgen|run_demo\.py' 'Do not name the tools or scripts of the unreleased connectivity work.'
+          check 'pactech|pac tech' 'Do not name a bumping vendor in the site prose.'
+          # Every page that discusses the connectivity axis must also say it is
+          # not in this release. Checked per file rather than per line.
+          python3 - <<'PY' || status=1
+          import pathlib, re, sys
+          mentions = re.compile(r'assembly[ \n-]lvs|connectivity axis', re.I)
+          disclaims = re.compile(
+              r'\b(not|no)\b[^.]{0,120}\bpart of th(is|e)\s+(preview\s+)?release',
+              re.I | re.S)
+          bad = []
+          for path in pathlib.Path('docs').rglob('*.rst'):
+              if path.name == '02_documentation.rst':
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if mentions.search(text) and not disclaims.search(text):
+                  bad.append(str(path))
+          if bad:
+              print('::error::A page discusses assembly-level connectivity verification without stating that no implementation of it is part of this preview release.')
+              print('\n'.join(bad))
+              sys.exit(1)
+          PY
+          check 'signoff.?grade|production.?grade' 'Do not claim signoff-grade or production-grade. This is a preview release.'
+          check '[—–]' 'Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.'
+          # Emoji ranges, checked with a Python pass since grep classes vary.
+          python3 - <<'PY' || status=1
+          import pathlib, re, sys
+          emoji = re.compile('[\U0001F000-\U0001FAFF☀-➿️]')
+          bad = []
+          for path in list(pathlib.Path('docs').rglob('*.rst')) + list(pathlib.Path('docs').rglob('*.md')):
+              for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+                  if emoji.search(line):
+                      bad.append(f'{path}:{number}: {line.strip()}')
+          if bad:
+              print('::error::Emojis are not allowed in documentation sources.')
+              print('\n'.join(bad))
+              sys.exit(1)
+          PY
+          exit $status
+
+      - name: Upload built site
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html
+          path: docs/_build/html
+          retention-days: 7
+
+  linkcheck:
+    runs-on: ubuntu-22.04
+    # Advisory: external hosts rate-limit and go down, which should not block a
+    # documentation change.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -r docs/requirements.txt
+      - run: make -C docs preprocess
+      - run: sphinx-build -b linkcheck docs docs/_build/linkcheck

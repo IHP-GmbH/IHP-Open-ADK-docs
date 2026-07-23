@@ -1,0 +1,27 @@
+usage: pads_vs_pillars.py [-h] --chiplet CHIPLET --pillars PILLARS
+                          [--pins REF=PINS_JSON] [--gds-pads REF]
+                          [--tolerance-um TOLERANCE_UM] [--json PATH]
+                          [--strict]
+
+Verify die pad positions against the as-drawn pillar positions of the assembly's pillar manifest (<gds-stem>.pillars.json).
+
+options:
+  -h, --help            show this help message and exit
+  --chiplet CHIPLET     finalized .chiplet file (die placements)
+  --pillars PILLARS     pillar manifest (<gds-stem>.pillars.json)
+  --pins REF=PINS_JSON  per-die pin list (gds_to_kicad *.pins.json), die-local
+                        coordinates; repeatable
+  --gds-pads REF        extract that die's pads from its .chiplet layout GDS
+                        (pad_drawing/pad_text layers per
+                        config/chiplet_pads.json); repeatable; needs
+                        klayout.db
+  --tolerance-um TOLERANCE_UM
+                        pad-to-pillar distance tolerance in um (default: 1.0)
+  --json PATH           write the machine-readable report here
+  --strict              dies with a connection method but no pad source become
+                        findings instead of warnings
+
+Examples:
+  python checks/pads_vs_pillars.py --chiplet demo.chiplet \
+      --pillars build/demo_interposer.pillars.json \
+      --pins U1=chiplets/die_a.pins.json --gds-pads U2

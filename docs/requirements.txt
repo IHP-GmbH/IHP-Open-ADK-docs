@@ -1,0 +1,18 @@
+# Pinned so a Read the Docs build is reproducible. Bump deliberately.
+docutils==0.20.1
+sphinx==7.4.7
+
+# The theme the published IHP Open PDK documentation uses. It has no release on
+# PyPI, so it is pinned by commit rather than by version; the upstream project
+# publishes no tags either.
+sphinx-symbiflow-theme @ git+https://github.com/f4pga/sphinx_f4pga_theme@3f163c492ae98072ea76d18c5dc1ba251bfbfbd9
+
+# Kept installed as a fallback theme for local builds.
+sphinx-rtd-theme==2.0.0
+sphinxcontrib-bibtex==2.6.3
+myst-parser==3.0.1
+sphinx-autobuild==2024.10.3
+
+# Needed only by docs/scripts/gen_cli_usage.py: the ADK DRC runner imports
+# klayout.db at module scope, so capturing its --help requires the module.
+klayout==0.30.9

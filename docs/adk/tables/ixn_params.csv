@@ -1,0 +1,3 @@
+"IXN_spacing","Minimum edge-to-edge spacing between chiplet attachment points, in micrometres.","40","um"
+"IXN_pitch","Minimum centre-to-centre pitch between attachment points, in micrometres. Checked as a spacing of (pitch - pad_size) since KLayout has no native pitch check.","75","um"
+"IXN_pad_size","Representative attachment-pad size in micrometres, used for the pitch-to-spacing conversion.","35","um"

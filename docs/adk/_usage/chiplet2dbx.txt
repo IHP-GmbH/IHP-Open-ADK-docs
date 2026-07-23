@@ -1,0 +1,17 @@
+usage: chiplet2dbx.py [-h] --chiplet CHIPLET [--out-dir OUT_DIR] [--name NAME]
+                      [--pins REF=PINS_JSON]
+
+Export a finalized .chiplet assembly to 3Dblox (.3dbv + .3dbx) for OpenROAD read_3dbx / check_3dblox.
+
+options:
+  -h, --help            show this help message and exit
+  --chiplet CHIPLET     finalized .chiplet file to export
+  --out-dir OUT_DIR     output directory (default: alongside the input)
+  --name NAME           basename for the outputs (default: assembly.name)
+  --pins REF=PINS_JSON  per-die pin list (gds_to_kicad *.pins.json);
+                        repeatable; enables the bump map for that die
+
+Examples:
+  python openroad/chiplet2dbx.py --chiplet demo.chiplet
+  python openroad/chiplet2dbx.py --chiplet demo.chiplet --out-dir build/3dblox \
+      --pins U1=chiplets/die_a.pins.json --pins U2=chiplets/die_b.pins.json

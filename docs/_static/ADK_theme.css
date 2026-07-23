@@ -1,0 +1,118 @@
+/* Copyright 2026 IHP Open ADK Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Derived from IHP-Open-PDK-docs/docs/_static/IHP_theme.css, extended with the
+# table classes this site needs for the assembly rule listings.
+*/
+
+.red-text {
+    color: red;
+    font-weight: bold;
+}
+
+.blue-text {
+    color: blue;
+    font-weight: bold;
+}
+
+.blue-text2 {
+    color: blue;
+    font-style: italic;
+}
+
+.center {
+    text-align: center;
+}
+
+.rotated-header th:not(:first-child) {
+    writing-mode: vertical-lr;
+    transform: rotate(-180deg);
+}
+
+/* Two-column rule/description tables, as used by the PDK docs. */
+table.drc-table {
+    table-layout: fixed;
+    width: 96%;
+}
+
+table.drc-table td:nth-child(1) {
+    width: 20%;
+}
+
+table.drc-table td:nth-child(2) {
+    width: 80%;
+}
+
+/* Assembly rule tables: rule id, description, parameter, value, unit. */
+table.adk-rule-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+table.adk-rule-table td:nth-child(1) {
+    width: 12%;
+    white-space: nowrap;
+}
+
+table.adk-rule-table td:nth-child(2) {
+    width: 48%;
+}
+
+table.adk-rule-table td:nth-child(3) {
+    width: 16%;
+}
+
+table.adk-rule-table td:nth-child(4) {
+    width: 12%;
+    text-align: right;
+}
+
+table.adk-rule-table td:nth-child(5) {
+    width: 12%;
+}
+
+/* Wide reference tables (version matrix, environment precedence) should wrap
+   rather than force a horizontal scrollbar. */
+table.adk-wide-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+table.adk-wide-table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* The RTD theme caps content at 800px, which crowds the wider rule and version
+   tables. */
+.wy-nav-content {
+    max-width: 1100px;
+}
+
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal;
+}
+
+/* Figures are authored as line art on a transparent background, which is
+   unreadable once the dark theme is on. Back every figure with a light panel so
+   one source renders correctly in both themes. */
+[data-theme="dark"] .figure img,
+[data-theme="dark"] figure img,
+[data-theme="dark"] .align-center > img {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 8px;
+}

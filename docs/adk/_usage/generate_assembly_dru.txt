@@ -1,0 +1,27 @@
+usage: generate_assembly_dru.py [-h] [--interposer-adapter INTERPOSER_ADAPTER]
+                                [--interconnect-adapter INTERCONNECT_ADAPTER]
+                                [--out OUT] [--rule-params RULE_PARAMS]
+
+Generate the ADK KiCad assembly DRU section.
+
+options:
+  -h, --help            show this help message and exit
+  --interposer-adapter INTERPOSER_ADAPTER
+                        Interposer adapter shortname or .drc path. Numeric
+                        drc_rules[] overrides in the adapter are merged on top
+                        of config/rule_params.json defaults.
+  --interconnect-adapter INTERCONNECT_ADAPTER
+                        Optional interconnect adapter shortname or .drc path.
+                        Adds a provenance comment for the bump pitch/spacing
+                        axis (IXN rules, post-layout only). Omit for
+                        interposer-only output (identical to before this axis
+                        existed).
+  --out OUT             Output path. If omitted, write to stdout.
+  --rule-params RULE_PARAMS
+                        Alternate rule_params.json path (default:
+                        adk/config/rule_params.json).
+
+Examples:
+  generate_assembly_dru.py                                              # defaults, stdout
+  generate_assembly_dru.py --interposer-adapter intm4tm2    # adapter overrides
+  generate_assembly_dru.py --out assembly.kicad_dru                      # write to file

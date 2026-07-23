@@ -1,0 +1,32 @@
+[submodule "src/IHP-Open-ADK"]
+	path = src/IHP-Open-ADK
+	url = https://github.com/IHP-GmbH/IHP-Open-ADK.git
+	branch = main
+[submodule "src/ADK-Tools"]
+	path = src/ADK-Tools
+	url = https://github.com/IHP-GmbH/ADK-Tools.git
+	branch = main
+[submodule "src/chiplet-spec"]
+	path = src/chiplet-spec
+	url = https://github.com/IHP-GmbH/chiplet-spec.git
+	branch = main
+[submodule "src/OpenIntM4TM2"]
+	path = src/OpenIntM4TM2
+	url = https://github.com/IHP-GmbH/OpenIntM4TM2.git
+	branch = main
+[submodule "src/IHP-Interconnect-IntM4TM2"]
+	path = src/IHP-Interconnect-IntM4TM2
+	url = https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2.git
+	branch = main
+[submodule "src/chiplet-studio"]
+	path = src/chiplet-studio
+	url = https://github.com/IHP-GmbH/chiplet-studio.git
+	branch = main
+[submodule "src/gds2kicad"]
+	path = src/gds2kicad
+	url = https://github.com/IHP-GmbH/gds2kicad.git
+	branch = main
+[submodule "src/Chiplets-KiCad-Plugin"]
+	path = src/Chiplets-KiCad-Plugin
+	url = https://github.com/IHP-GmbH/Chiplets-KiCad-Plugin.git
+	branch = main

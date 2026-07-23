@@ -1,0 +1,7 @@
+"IXN.b","Min. attachment-point spacing is 40 um","assembly-global","IXN_spacing","40"
+"IXN.e","Min. attachment-point pitch is 75 um","assembly-global","IXN_pitch","75"
+"IXN.b.<method>","Min. attachment-point spacing for the method is the value declared for that method","per method","IXN_spacing","per method"
+"IXN.e.<method>","Min. attachment-point pitch for the method is the value declared for that method","per method","IXN_pitch","per method"
+"IXN.x.<method1>.<method2>","Min. cross-method spacing (the two methods) is the larger of the two declared spacings","cross method","IXN_spacing","per method"
+"IXN.b.unclaimed","Min. attachment-point spacing is 40 um (pads outside every method region)","pads outside every method region","IXN_spacing","40"
+"IXN.e.unclaimed","Min. attachment-point pitch is 75 um (pads outside every method region)","pads outside every method region","IXN_pitch","75"

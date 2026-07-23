@@ -1,0 +1,4 @@
+"ASM.a","Chiplet boundaries must not overlap","none (geometric)","",""
+"ASM.b","Min. chiplet-to-chiplet spacing is 50 um","ASM_b","50","um"
+"ASM.e","Min. chiplet area is 10000 um2","ASM_e","10000","um2"
+"ASM.f","Chiplet-attachment geometry overlapping a chiplet must be fully inside it","none (geometric)","",""

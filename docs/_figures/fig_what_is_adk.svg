@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1000" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="5.5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#5a6370"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="1200" height="1000" fill="#ffffff"/>
+
+  <!-- abstraction cue (left) -->
+  <line x1="36" y1="927" x2="36" y2="58" stroke="#cdd2d6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="22" y="500" fill="#aab0b5" font-size="13" letter-spacing="2" transform="rotate(-90 22 500)" text-anchor="middle">higher abstraction</text>
+
+  <!-- ===================== OUTPUT (top) ===================== -->
+  <rect x="300" y="40" width="600" height="96" rx="12" fill="#e6f3e6" stroke="#3f8f46" stroke-width="2"/>
+  <text x="600" y="80" text-anchor="middle" fill="#2c6e2f" font-size="22" font-weight="700">Assembly checked against the ADK rule deck</text>
+  <text x="600" y="110" text-anchor="middle" fill="#3a6b3d" font-size="15">GDS (interposer + chiplets)  +  assembly-DRC report / pass-fail verdict</text>
+  <line x1="600" y1="196" x2="600" y2="140" stroke="#5a6370" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== ADK META-LAYER (middle, hero) ===================== -->
+  <rect x="70" y="200" width="1060" height="536" rx="16" fill="#e8f0fb" stroke="#1f5fae" stroke-width="2.5"/>
+  <text x="600" y="248" text-anchor="middle" fill="#14457f" font-size="32" font-weight="800">IHP Open ADK</text>
+  <text x="600" y="278" text-anchor="middle" fill="#1f5fae" font-size="18" font-style="italic">the meta-layer: it governs how chiplets are assembled, not how they are designed</text>
+
+  <!-- row A: what the kit is made of -->
+  <rect x="96" y="300" width="490" height="150" rx="10" fill="#fdeede" stroke="#d08a2e" stroke-width="2"/>
+  <text x="341" y="332" text-anchor="middle" fill="#9a5a12" font-size="18" font-weight="700">Adapters: the bridge</text>
+  <text x="341" y="364" text-anchor="middle" fill="#5d4523" font-size="14.5">interposer adapter &#183; where chiplet attachment lands</text>
+  <text x="341" y="390" text-anchor="middle" fill="#5d4523" font-size="14.5">interconnect adapter &#183; method pitch and spacing</text>
+  <text x="341" y="422" text-anchor="middle" fill="#8a6a3a" font-size="13.5" font-style="italic">the only place a fab layer number is named</text>
+
+  <rect x="614" y="300" width="490" height="150" rx="10" fill="#ffffff" stroke="#1f5fae" stroke-width="2"/>
+  <text x="859" y="332" text-anchor="middle" fill="#14457f" font-size="18" font-weight="700">Shared registries + schemas</text>
+  <text x="859" y="364" text-anchor="middle" fill="#3a4a5e" font-size="14.5">rule_params &#183; interconnect &#183; boundary manifest &#183; layers</text>
+  <text x="859" y="390" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">one source of truth for every stage</text>
+  <text x="859" y="422" text-anchor="middle" fill="#7d8590" font-size="13.5" font-style="italic">a JSON schema validates each one</text>
+
+  <!-- row B: the two axes of assembly verification -->
+  <text x="600" y="480" text-anchor="middle" fill="#14457f" font-size="16" font-weight="700" letter-spacing="1">ASSEMBLY VERIFICATION HAS TWO AXES, AND NEITHER SUBSUMES THE OTHER</text>
+
+  <!-- geometric axis, shipped -->
+  <rect x="96" y="496" width="490" height="176" rx="10" fill="#ffffff" stroke="#1f5fae" stroke-width="2.5"/>
+  <text x="341" y="528" text-anchor="middle" fill="#14457f" font-size="18" font-weight="700">Geometric axis: assembly DRC</text>
+  <text x="341" y="550" text-anchor="middle" fill="#2c6e2f" font-size="12.5" font-weight="700" letter-spacing="1.2">SHIPPED IN THIS RELEASE</text>
+  <text x="341" y="580" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">ASM.*  placement</text>
+  <text x="341" y="601" text-anchor="middle" fill="#3a4a5e" font-size="14">overlap &#183; spacing &#183; area &#183; attachment</text>
+  <text x="341" y="627" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">IXN.*  interconnect</text>
+  <text x="341" y="648" text-anchor="middle" fill="#3a4a5e" font-size="14">spacing &#183; pitch &#183; cross-method</text>
+
+  <!-- connectivity axis, scope only -->
+  <rect x="614" y="496" width="490" height="176" rx="10" fill="#f4f6f8" stroke="#8a9099" stroke-width="2.5"
+        stroke-dasharray="8 5"/>
+  <text x="859" y="528" text-anchor="middle" fill="#40474e" font-size="18" font-weight="700">Connectivity axis: assembly LVS</text>
+  <text x="859" y="550" text-anchor="middle" fill="#8a5a1a" font-size="12.5" font-weight="700" letter-spacing="0.6">IN SCOPE, NOT IN THIS PREVIEW RELEASE</text>
+  <text x="859" y="580" text-anchor="middle" fill="#40474e" font-size="14.5" font-weight="600">reference &#183; the system netlist</text>
+  <text x="859" y="601" text-anchor="middle" fill="#5b6169" font-size="14">die pins and the nets that join them</text>
+  <text x="859" y="627" text-anchor="middle" fill="#40474e" font-size="14.5" font-weight="600">implementation &#183; the placed layouts</text>
+  <text x="859" y="648" text-anchor="middle" fill="#5b6169" font-size="14">pad landings plus interposer routing</text>
+
+  <!-- strip: consumes -->
+  <rect x="96" y="684" width="1008" height="38" rx="8" fill="#dce9f8" stroke="#aac4e6" stroke-width="1"/>
+  <text x="600" y="709" text-anchor="middle" fill="#1d4a82" font-size="16">Both axes read one assembly description:  .chiplet placement  +  &#60;gds-stem&#62;.boundaries.json manifest</text>
+
+  <!-- relationship label (sits above the arrowheads, clear of them) -->
+  <text x="600" y="774" text-anchor="middle" fill="#6b7178" font-size="17">Ordinary PDKs: the ADK sits one layer above these and never touches their fab rules</text>
+
+  <!-- arrows from PDKs up toward the ADK (arrowheads stop below the label) -->
+  <line x1="253" y1="846" x2="253" y2="794" stroke="#5a6370" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <line x1="600" y1="846" x2="600" y2="794" stroke="#5a6370" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <line x1="947" y1="846" x2="947" y2="794" stroke="#5a6370" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== PDKs (bottom) ===================== -->
+  <rect x="96" y="848" width="314" height="110" rx="10" fill="#eef0f2" stroke="#8a9099" stroke-width="2"/>
+  <text x="253" y="888" text-anchor="middle" fill="#2f3437" font-size="18" font-weight="700">Chiplet PDKs</text>
+  <text x="253" y="915" text-anchor="middle" fill="#525860" font-size="14.5">several technologies</text>
+  <text x="253" y="938" text-anchor="middle" fill="#525860" font-size="14.5">dies are verified silicon</text>
+
+  <rect x="443" y="848" width="314" height="110" rx="10" fill="#eef0f2" stroke="#8a9099" stroke-width="2"/>
+  <text x="600" y="888" text-anchor="middle" fill="#2f3437" font-size="18" font-weight="700">Interposer PDK</text>
+  <text x="600" y="915" text-anchor="middle" fill="#525860" font-size="14.5">IHP IntM4TM2</text>
+  <text x="600" y="938" text-anchor="middle" fill="#525860" font-size="14.5">layers, DRC rules</text>
+
+  <rect x="790" y="848" width="314" height="110" rx="10" fill="#eef0f2" stroke="#8a9099" stroke-width="2"/>
+  <text x="947" y="888" text-anchor="middle" fill="#2f3437" font-size="18" font-weight="700">Interconnect PDK</text>
+  <text x="947" y="915" text-anchor="middle" fill="#525860" font-size="14.5">Cu-pillar / micro-bump</text>
+  <text x="947" y="938" text-anchor="middle" fill="#525860" font-size="14.5">methods (pitch, spacing)</text>
+
+  <!-- footer analogy -->
+  <text x="600" y="988" text-anchor="middle" fill="#8a9099" font-size="16" font-style="italic">A PDK is to a single chip what the ADK is to a multi-chip assembly.</text>
+</svg>

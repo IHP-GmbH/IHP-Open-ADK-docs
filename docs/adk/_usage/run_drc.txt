@@ -1,0 +1,50 @@
+usage: run_drc.py [-h] --path PATH --interposer-adapter INTERPOSER_ADAPTER
+                  [--interconnect-adapter INTERCONNECT_ADAPTER]
+                  [--interconnect-methods INTERCONNECT_METHODS]
+                  [--topcell TOPCELL] [--run_dir RUN_DIR] [--threads THREADS]
+                  [--run_mode {tiling,deep,flat}] [--report REPORT]
+                  [--manifest MANIFEST] [--legacy-exchange0]
+
+Run ADK assembly DRC checks via KLayout
+
+options:
+  -h, --help            show this help message and exit
+  --path PATH           Path to the input GDS/OAS file.
+  --interposer-adapter INTERPOSER_ADAPTER
+                        Interposer adapter: a shortname (resolved against
+                        pdk_adapters/interposer/<name>.drc) or an absolute
+                        path to a .drc file.
+  --interconnect-adapter INTERCONNECT_ADAPTER
+                        Optional interconnect adapter: a shortname (resolved
+                        against pdk_adapters/interconnect/<name>.drc) or an
+                        absolute path. Adds the bump-to-bump pitch/spacing
+                        axis (IXN rules). Omit for interposer-only checking
+                        (identical to before this axis existed).
+  --interconnect-methods INTERCONNECT_METHODS
+                        Optional per-method interconnect file (<gds-
+                        stem>.ixn_methods.json, emitted by the exporter from
+                        the .chiplet's per-die connections + the interconnect
+                        PDK manifest). Scopes the IXN checks per method: each
+                        method's pitch/spacing runs on the attachment pads
+                        under ITS dies' boundaries, plus a conservative cross-
+                        method spacing check. Requires the boundary manifest.
+                        Without it the IXN axis stays assembly-global.
+  --topcell TOPCELL     Top-level cell name (auto-detected if omitted).
+  --run_dir RUN_DIR     Output directory for reports (default: timestamped
+                        subdir in cwd).
+  --threads THREADS     Threads per KLayout invocation (default: 4).
+  --run_mode {tiling,deep,flat}
+                        KLayout execution mode (default: tiling).
+  --report REPORT       Explicit report path (overrides default naming).
+  --manifest MANIFEST   Boundary manifest sidecar (<gds-
+                        stem>.boundaries.json). Auto-discovered next to --path
+                        if omitted. Holds the chiplet boundaries the assembly
+                        DRC checks (PDK-agnostic; not a fab layer).
+  --legacy-exchange0    Compat mode: read chiplet boundaries from the
+                        historical exchange0 fab layer in the GDS instead of a
+                        manifest (for pre-migration assemblies).
+
+Examples:
+  run_drc.py --path design.gds --interposer-adapter intm4tm2
+  run_drc.py --path design.gds --interposer-adapter /abs/path/to/custom.drc
+  run_drc.py --path design.gds --interposer-adapter intm4tm2 --interconnect-adapter ihp_cupillar
