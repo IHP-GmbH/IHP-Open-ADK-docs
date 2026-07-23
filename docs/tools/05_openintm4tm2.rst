@@ -28,14 +28,18 @@ passive devices and the assembly-facing features built on top of it: MIM
 capacitors, thin-film resistors, passivation and pad openings, the edge seal, and
 localized backside etch (LBE).
 
-.. figure:: /_figures/tikz_layerstack.*
+.. figure:: /_figures/ihp_interposer_stack.png
     :align: center
-    :alt: Cross-section of the IntM4TM2 interposer stack.
+    :alt: Cross-section of the IHP 130 nm IntM4TM2 aluminium BEOL interposer, showing the four aluminium metals on a silicon carrier with embedded thin-film resistor and MIM capacitor and a top passivation.
     :width: 70%
 
-    Cross-section of the interposer stack. The dashed overlay is the
-    chiplet boundary, which is assembly metadata carried by the boundary manifest
-    rather than a fabrication layer.
+    Cross-section of the IntM4TM2 interposer: four aluminium metals (Metal4,
+    Metal5, TopMetal1, TopMetal2) on a high-resistivity silicon carrier, with the
+    thin-film resistor between Metal4 and Metal5, the MIM capacitor between Metal5
+    and TopMetal1, and the top passivation. The dielectric constants and layer
+    thicknesses are the typical-corner values published in the PDK extraction
+    stackup. Cu-pillar bumps are interconnect elements attached into the pad
+    openings, not part of the fabrication stack.
 
 Three consequences follow, and they explain most of the PDK.
 
