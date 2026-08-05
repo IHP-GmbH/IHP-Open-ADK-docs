@@ -5,7 +5,7 @@ name: docs
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
   pull_request:
   workflow_dispatch:
 
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -124,7 +124,7 @@ jobs:
           retention-days: 7
 
   linkcheck:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Advisory: external hosts rate-limit and go down, which should not block a
     # documentation change.
     continue-on-error: true
@@ -141,3 +141,24 @@ jobs:
       - run: pip install -r docs/requirements.txt
       - run: make -C docs preprocess
       - run: sphinx-build -b linkcheck docs docs/_build/linkcheck
+
+  # The one required status check, named the same in every repository of the
+  # ecosystem so a ruleset can require `ci-gate` everywhere without knowing
+  # what any given workflow calls its jobs.
+  #
+  # linkcheck is deliberately not a dependency. It is continue-on-error, so its
+  # job result is success whatever the external hosts did, and depending on it
+  # would only make the required wait as long as the slowest third-party server.
+  ci-gate:
+    needs: [build]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every gating job to have succeeded
+        # `needs` alone does not gate: with `if: always()` this job runs even
+        # when a dependency failed, so the result has to be compared
+        # explicitly. Without the comparison the gate reports green after its
+        # dependencies went red.
+        run: |
+          echo "build: ${{ needs.build.result }}"
+          test "${{ needs.build.result }}" = "success"
