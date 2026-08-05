@@ -18,7 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          # Direct submodules only, matching `recursive: false` in
+          # .readthedocs.yaml. Recursive pulls ADK-Tools' own submodule set,
+          # which is the toolchain lockfile this site never reads: the KiCad
+          # fork and Chiplet Studio's vendored KLayout alone are gigabytes.
+          submodules: true
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
@@ -127,7 +131,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          # Same scope as the build job above.
+          submodules: true
 
       - uses: actions/setup-python@v5
         with:
