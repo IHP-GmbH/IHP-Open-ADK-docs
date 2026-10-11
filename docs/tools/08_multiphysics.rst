@@ -177,8 +177,8 @@ link to their location.
 Future: automated composition
 -----------------------------
 
-None of this section was used for the reference results, and none of it is
-part of the current release.
+Nothing in this section was used for the reference results, and none of it
+is part of the current release.
 
 Public tools by Volker Muehlhaus
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
