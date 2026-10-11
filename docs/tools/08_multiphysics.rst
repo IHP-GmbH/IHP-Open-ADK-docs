@@ -177,8 +177,8 @@ link to their location.
 Future: automated composition
 -----------------------------
 
-This section describes a direction. None of it was used for the reference
-results, and none of it is part of the current release.
+Nothing in this section was used for the reference results, and none of it
+is part of the current release.
 
 Public tools by Volker Muehlhaus
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,18 +220,6 @@ density. We have not run chiplet_xml_composer, the gds2palace Elmer path, the
 schema 3.x features, the chiplet groups or the setupEM topology view with these
 technologies, and none of the reference results has been reproduced through
 them.
-
-Direction
-~~~~~~~~~
-
-chiplet_xml_composer automates, for the EM stack, most of the hand steps above. The next
-step is to evaluate it on the three-technology assembly of the reference,
-including the SKY130 and GF180MCU stacks it has not yet been shown with, and to
-compare its combined stackup and the resulting solves with the composed model
-and the published results. The same comparison applies to the gds2palace Elmer
-path for thermal. Whether these tools are adopted, extended or complemented
-depends on that comparison. Two-way coupling, temperature feeding back into EM
-material data, is a further step after that.
 
 Reference
 ---------
