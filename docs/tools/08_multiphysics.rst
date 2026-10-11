@@ -62,11 +62,11 @@ because a composed model is only as credible as its weakest layer.
       - Heights and metal data
       - Dielectric and thermal data
     * - IntM4TM2 interposer
-      - Metal4 to TopMetal2 cut of the SG13G2 foundry stackup; the interposer
-        PDK ships its own Palace and openEMS stackups, see
-        :doc:`/tools/05_openintm4tm2`
-      - Foundry stackup values; thermal conductivities from the IHP thermal
-        data, density and heat capacity from literature
+      - Metal4 to TopMetal2 cut of the SG13G2 foundry stackup
+        (:doc:`/tools/05_openintm4tm2`); the PDK repository,
+        |interposer-repo|, also ships Palace and openEMS stackups
+      - Foundry stackup values; thermal conductivities from the IHP foundry
+        stackup deck, density and heat capacity from literature
     * - IHP SG13G2
       - The SG13G2 stackup distributed with gds2palace
       - As for the interposer
@@ -86,9 +86,10 @@ Composing technologies by hand
 ------------------------------
 
 The EM decks of the multi-die structures in the reference were composed by
-hand. The steps below are that procedure. They need nothing beyond a text
-editor, the per-technology XML stackups and gds2palace, and they are the part
-that automation is meant to replace (see `Future: automated composition`_).
+hand, with the heights from the height mapping of the in-house composer (see
+`What the reference results used`_). The steps below are that procedure. Done by
+hand, they need nothing beyond a text editor, the per-technology XML stackups and
+gds2palace, and they are the part that automation is meant to replace (see `Future: automated composition`_).
 
 The constraint that shapes the procedure is that a stackup file in the format
 used here (gds2palace ``schemaVersion="2.0"``) has one global offset, ``<Substrate Offset>``, which shifts every layer by the same
@@ -109,7 +110,9 @@ rewritten into the assembly frame explicitly.
 
        z_asm = z_attach + (z_ref - z_local)
 
-   so the die's top metal sits lowest and its substrate highest. A face-up die
+   so the die's top metal sits lowest and its substrate highest. The bottom and
+   top of each layer swap as well: its lower height in the assembly comes from
+   its upper height (``Zmax``) in the die stackup, and the reverse. A face-up die
    is a plain translation, ``z_asm = z_attach + z_local``.
 4. **Keep names and numbers unique.** Give every die its own range of layer
    numbers and its own name prefix (the reference decks add 1000 for the first
@@ -124,10 +127,10 @@ rewritten into the assembly frame explicitly.
 
 .. note::
    The reference decks offset the two dies' pillars by 0.5 um so that no two
-   layers of different dies share a height. Current gds2palace scopes these
-   checks per chiplet for stackups written with reference-relative positioning
-   (schema 3.0); the reference decks use absolute heights, and whether the
-   offset is still needed after a conversion has not been tested.
+   layers of different dies share a height range. The gds2palace copy used for
+   them identifies layer volumes by their exact height range, so two such layers
+   would be mistaken for one another. Whether current gds2palace still needs the
+   offset has not been tested.
 
 Thermal and EM runs
 -------------------
@@ -157,9 +160,9 @@ What the reference results used
   ``ThermalConductivity``, ``Density`` and ``HeatCapacity`` added per material
   for SG13G2 and the interposer, and tables for SKY130 and GF180MCU.
 * **gds2palace.** A development copy based on the upstream state of
-  27 March 2026 (commit ``bb95742``), with local fixes to material lookup,
-  boundary-surface handling and mesh clean-up that are not in the upstream
-  repository.
+  27 March 2026 (commit ``bb95742``), with local changes to material lookup,
+  boundary-surface handling and mesh clean-up that were not contributed
+  upstream.
 * **Multi-die EM decks.** Composed by hand as described above, one global offset
   per file.
 
@@ -180,7 +183,8 @@ results, and none of it is part of the current release.
 Public tools by Volker Muehlhaus
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The stackup format and its tools have since grown in the same direction. As of
+Upstream, the stackup format and its tools have also been extended toward
+multi-chiplet stacks. As of
 gds2palace ``main`` at ``a2ac184`` (10 October 2026), setupEM ``main`` at
 ``45d0b7d`` (7 October 2026) and chiplet_xml_composer ``master`` at ``ac0f6e1``
 (18 September 2026):
@@ -220,7 +224,7 @@ them.
 Direction
 ~~~~~~~~~
 
-chiplet_xml_composer automates, for the EM stack, the hand steps above. The next
+chiplet_xml_composer automates, for the EM stack, most of the hand steps above. The next
 step is to evaluate it on the three-technology assembly of the reference,
 including the SKY130 and GF180MCU stacks it has not yet been shown with, and to
 compare its combined stackup and the resulting solves with the composed model
@@ -237,5 +241,6 @@ Reference
 * gds2palace: `VolkerMuehlhaus/gds2palace_ihp_sg13g2
   <https://github.com/VolkerMuehlhaus/gds2palace_ihp_sg13g2>`__ (GPL-3.0)
 * setupEM: `VolkerMuehlhaus/setupEM <https://github.com/VolkerMuehlhaus/setupEM>`__
+  (GPL-3.0)
 * chiplet_xml_composer: `volkermuehlhaus-claude/chiplet_xml_composer
   <https://github.com/volkermuehlhaus-claude/chiplet_xml_composer>`__ (GPL-3.0)
