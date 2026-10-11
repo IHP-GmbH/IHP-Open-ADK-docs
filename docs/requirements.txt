@@ -15,4 +15,7 @@ sphinx-autobuild==2024.10.3
 
 # Needed only by docs/scripts/gen_cli_usage.py: the ADK DRC runner imports
 # klayout.db at module scope, so capturing its --help requires the module.
-klayout==0.30.9
+# Kept equal to the ecosystem's one KLayout, whose source of truth is
+# `ARG KLAYOUT_PIP` in the adk-tools Dockerfile. The captured transcripts
+# describe the toolchain as it ships, so they have to come from the same build.
+klayout==0.30.5
