@@ -13,3 +13,4 @@ Supported tools
     Interposer PDK (OpenIntM4TM2) <tools/05_openintm4tm2>
     Interconnect PDK <tools/06_interconnect_pdk>
     The ADK-Tools image <tools/07_adk_tools_image>
+    Multiphysics (EM and thermal) <tools/08_multiphysics>
