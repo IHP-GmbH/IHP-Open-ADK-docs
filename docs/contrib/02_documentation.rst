@@ -70,6 +70,28 @@ Review the diff in the generated tables. It tells you exactly what changed in
 the code that this site makes claims about, and therefore which prose needs
 rereading.
 
+Pages a repository keeps for this site
+--------------------------------------
+
+A repository can keep pages for this site in its own ``docs/`` folder, in
+Markdown or reStructuredText. They are built as they stand, with no copy and no
+include page in between. Three things wire one in, all in the same change:
+
+- the repository is a submodule under ``src/``, and is listed under
+  ``submodules: include`` in ``.readthedocs.yaml``, so the hosted build checks
+  it out;
+- ``docs/_repos/<name>`` is a relative symlink to ``../../src/<name>``, the
+  submodule itself and never a checkout beside this repository, so it resolves
+  in any clone with its submodules;
+- a toctree on one of this site's pages names the repository's index, as
+  ``/_repos/<name>/docs/index``.
+
+``REPO_PAGES`` in ``conf.py`` builds every ``docs/`` folder under ``_repos/``
+and nothing else from the repository. A repository whose pages live elsewhere
+adds its own patterns there. Building the pages from the repository's tree is
+what keeps their relative includes and links working: a page included from
+this site would resolve them against the including page instead.
+
 Writing conventions
 -------------------
 

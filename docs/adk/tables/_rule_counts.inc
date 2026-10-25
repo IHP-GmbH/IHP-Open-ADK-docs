@@ -2,5 +2,5 @@
 .. Regenerate with: make -C docs preprocess
 
 .. |asm-rule-count| replace:: 4
-.. |ixn-rule-count| replace:: 7
+.. |ixn-rule-count| replace:: 9
 .. |adk-config-version| replace:: 0.2.0

@@ -359,7 +359,7 @@ Board back to chiplet netlist
     python3 kicad_netlist_to_chiplet.py design.net --yaml nets.yaml --csv nets.csv
     python3 kicad_netlist_to_chiplet.py design.net --inject board.chiplet --summary
 
-Converts a KiCad S-expression netlist into chiplet-flow YAML or CSV, or injects
+Converts a KiCad S-expression netlist to YAML and/or CSV, or injects
 a ``netlist:`` section directly into an existing ``.chiplet``. Nets are
 classified as power, ground or signal by name. Footprints from the ``io_pads``
 library, or any reference prefix passed with ``--external-ref-prefix``, are
@@ -392,10 +392,8 @@ the command line. It is a single window with five tabs, in workflow order:
     before anything is generated. That review step is the point: the tool
     proposes a classification, you confirm or correct it.
 
-In the container this is what the ``gds-to-kicad`` command launches.
-``gds_to_kicad_gui.py`` and ``gds_to_kicad_symbol_gui.py`` remain as
-single-purpose windows for footprints and symbols respectively. On a headless
-machine set ``QT_QPA_PLATFORM=offscreen``.
+In the container this is what the ``gds-to-kicad`` command launches. On a
+headless machine set ``QT_QPA_PLATFORM=offscreen``.
 
 Where files are written
 -----------------------

@@ -33,21 +33,35 @@ Interposer adapter
 Location and selection
 ~~~~~~~~~~~~~~~~~~~~~~
 
-An interposer adapter is a single file::
+An interposer adapter is a single file, selected by a registry id::
 
     pdk_adapters/interposer/<basename>.drc
 
-The ``--interposer-adapter`` flag of the DRC runner accepts either form:
+The ``--interposer-adapter`` flag of the DRC runner takes a **registry id**, such
+as ``intm4tm2``, and resolves it through the ADK registry and nothing else. A
+path is refused, and so is a name ending in ``.drc``. The reason is that the
+adapter is evaluated as Ruby, and the field that names it can come from a
+downloaded ``.chiplet``: only an id someone registered on this computer may
+select the code the DRC runs. An unknown id exits 1 with the list of registered
+ids, and ``run_drc.py --list-adapters`` prints them with their decks and the
+registry that supplied each.
 
-* a **shortname**, resolved against ``pdk_adapters/interposer/``, so
-  ``intm4tm2`` loads ``pdk_adapters/interposer/intm4tm2.drc``;
-* an **explicit path** to a ``.drc`` file, absolute or relative, used as-is.
+The registry has three layers, lowest precedence first:
+``adk_registry.builtin.json`` beside the ADK, which lists the shipped adapters;
+``$XDG_CONFIG_HOME/adk-tools/registry.json``; and
+``$ADK_REGISTRY_DIR/registry.json``. To use a deck the ADK does not ship,
+register it in one of the last two and pass its id:
 
-The resolver tries the literal path first, and only if that is not an existing
-``.drc`` file does it fall back to the shortname lookup. A trailing ``.drc`` on a
-shortname is stripped, so ``intm4tm2`` and ``intm4tm2.drc`` both work. If neither
-resolves, the runner reports both the literal path and the directory candidate it
-looked for, and exits.
+.. code-block:: json
+
+    {
+      "schema": "adk-registry",
+      "version": "1.0",
+      "adapters": { "my_interposer_wip": "/abs/path/to/my_interposer.drc" }
+    }
+
+then ``--interposer-adapter my_interposer_wip``. A relative value resolves
+against the directory of the file that declares it.
 
 The same resolution is implemented in the KiCad DRU generator,
 ``kicad/dru/generate_assembly_dru.py``, so both toolchains select an adapter by
@@ -89,8 +103,10 @@ layer expressions in its top-level scope. Today the list has exactly one entry.
 
     passiv_pillar = polygons(9, 35)
     dfpad_pillar  = polygons(41, 35)
+    passiv_sbump  = polygons(9, 36)
+    dfpad_sbump   = polygons(41, 36)
 
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar)
+    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
 
 The **KLayout deck validates this, not the runner**. The runner only resolves the
 adapter path and shells out to KLayout. After the adapter source is evaluated,
@@ -165,9 +181,8 @@ Selecting an interconnect adapter
 
     pdk_adapters/interconnect/<basename>.drc
 
-``--interconnect-adapter`` uses exactly the same resolver as the interposer
-flag: a shortname resolved against ``pdk_adapters/interconnect/``, or an
-explicit path to a ``.drc`` file.
+``--interconnect-adapter`` resolves through the same registry as the
+interposer flag: a registry id such as ``ihp_cupillar``; a path is refused.
 
 Shipped interconnect adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -276,9 +291,11 @@ In this mode the deck:
    pads;
 #. checks attachment pads that fall outside every method region against the
    assembly-global adapter numbers, reported as ``IXN.b.unclaimed`` and
-   ``IXN.e.unclaimed``, and only when an interconnect adapter is also loaded. If
-   there is no adapter, those pads are simply not checked on this axis, and the
-   deck logs that fact.
+   ``IXN.e.unclaimed``, and each method's pads against those pads, reported as
+   ``IXN.x.<method>.unclaimed``; all three only when an interconnect adapter is
+   also loaded. Without an adapter those pads carry no rule, and the deck reports
+   them as ``IXN.unassociated``: a finding that they were not checked, not a
+   spacing violation.
 
 Because the method regions are resolved through per-die instance names, this
 mode **requires the boundary manifest**: legacy ``exchange0`` mode carries no
@@ -325,14 +342,18 @@ included:
     #
     # IHP 130-nm IntM4TM2 aluminum BEOL interposer adapter.
     #
-    # Declares ADK abstract inputs in terms of IHP-specific layers. IntM4TM2's
-    # chiplet-attachment mechanism is the Cu pillar, formed where the
-    # passivation opening (9/35) and the final Cu pad (41/35) overlap.
+    # Declares ADK abstract inputs in terms of IHP-specific layers. IntM4TM2
+    # supports two chiplet-attachment mechanisms: the Cu pillar, formed where the
+    # passivation opening (9/35) and the final Cu pad (41/35) overlap, and the
+    # solder bump, formed where the passivation opening (9/36) and the final Cu
+    # pad (41/36) overlap. Both feed the abstract attachment input.
 
     passiv_pillar = polygons(9, 35)
     dfpad_pillar  = polygons(41, 35)
+    passiv_sbump  = polygons(9, 36)
+    dfpad_sbump   = polygons(41, 36)
 
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar)
+    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
 
 Line by line:
 
@@ -353,22 +374,28 @@ The comment block
 ``dfpad_pillar = polygons(41, 35)``
     The final Cu pad.
 
-``chiplet_attachment_input = passiv_pillar.and(dfpad_pillar)``
-    The required abstract input. A Cu pillar exists only where both the
-    passivation opening and the pad metal are present, so the attachment region
-    is their intersection, not either layer alone. Choosing the intersection
+``passiv_sbump`` and ``dfpad_sbump``
+    The same pair for the solder bump, on datatype 36.
+
+``chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))``
+    The required abstract input. A Cu pillar or a solder bump exists only where
+    both its passivation opening and its pad metal are present, so each
+    mechanism's region is that intersection, not either layer alone, and the
+    attachment region is the union of the two. Choosing the intersection
     rather than the pad layer is the modelling decision: it makes ``ASM.f`` and
     the ``IXN`` rules operate on the geometry that actually forms a joint.
 
 Note what is *absent*: no rule, no ``output`` call, no include of another file
-and no parameter override. The two intermediate locals are a readability choice;
+and no parameter override. The four intermediate locals are a readability choice;
 the contract cares only that ``chiplet_attachment_input`` ends up defined and
 non-nil.
 
 To support a new interposer, a vendor must produce exactly this:
 
-#. **One file**, ``pdk_adapters/interposer/<name>.drc``, where ``<name>`` is the
-   short name designers will pass to ``--interposer-adapter``.
+#. **One file**, ``pdk_adapters/interposer/<name>.drc``, and a registry entry
+   for ``<name>``: in ``adk_registry.builtin.json`` when it ships with the ADK,
+   in a user registry until then (see `Location and selection`_). ``<name>`` is
+   the id designers pass to ``--interposer-adapter``.
 #. **A definition of** ``chiplet_attachment_input`` in terms of that
    interposer's own layers, modelling the region where attachment can physically
    land. If the mechanism is not a Cu pillar, say so in the header comment and
@@ -377,8 +404,8 @@ To support a new interposer, a vendor must produce exactly this:
    genuinely demands different assembly numbers than the registry defaults.
    Write them as plain literals so the KiCad generator sees them too.
 
-Nothing else. No change to any rule deck, no change to any registry, no change to
-the runner. Verify the result by running the assembly DRC on a known-good and a
+Nothing else. No change to any rule deck, to the parameter registries or to the
+runner. Verify the result by running the assembly DRC on a known-good and a
 known-bad layout for that substrate: see :doc:`/adk/05_run_drc`. The two axes are
 independent, so an interposer adapter can be validated on its own before any
 interconnect adapter exists for that substrate.

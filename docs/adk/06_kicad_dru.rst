@@ -139,10 +139,9 @@ Running the generator
         --interconnect-adapter ihp_cupillar \
         --out assembly.kicad_dru
 
-Both adapter flags accept either a shortname, resolved against
-``pdk_adapters/interposer/`` or ``pdk_adapters/interconnect/``, or a literal
-path to a ``.drc`` file. An unresolvable name fails with the two locations
-that were probed.
+Both adapter flags take a registry id, resolved through the ADK registry as
+for the DRC runner (:doc:`/adk/02_adapter_contract`); a path is refused. An
+unknown id exits 1, an unusable registry 5 or 6.
 
 .. literalinclude:: /adk/_usage/generate_assembly_dru.txt
    :language: text
@@ -221,9 +220,9 @@ not change until it opts in.
 
 The supporting entry points are importable too: ``load_defaults(path)`` and
 ``load_interconnect_defaults(path)`` read the registries,
-``resolve_adapter_path(name_or_path)`` and
-``resolve_interconnect_adapter_path(name_or_path)`` do the shortname
-resolution, and ``parse_adapter_overrides(path)`` /
+``resolve_adapter_path(adapter_id)`` and
+``resolve_interconnect_adapter_path(adapter_id)`` resolve a registry id to its
+deck, and ``parse_adapter_overrides(path)`` /
 ``parse_interconnect_overrides(path)`` extract the numeric overrides without
 applying them.
 

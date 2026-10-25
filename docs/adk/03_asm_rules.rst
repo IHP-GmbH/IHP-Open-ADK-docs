@@ -45,8 +45,8 @@ The deck evaluates two inputs and nothing else.
 ``chiplet_attachment_input``
     The region the interposer offers for chiplet attachment, declared by the
     active interposer adapter. On the IHP IntM4TM2 interposer the adapter
-    derives it from the Cu-pillar geometry, ``polygons(9, 35).and(polygons(41,
-    35))``. On a different interposer it could be a solder-bump region or a
+    derives it from the Cu-pillar and solder-bump geometry, the openings and
+    pads on datatypes 35 and 36. On a different interposer it could be a
     hybrid-bonding pad array. The rules never ask which.
 
 .. note::

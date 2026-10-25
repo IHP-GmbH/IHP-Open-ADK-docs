@@ -15,10 +15,11 @@ use Docker, :doc:`/install/02_host` derives a host installation from the same
 recipe, but it is a best-effort route.
 
 .. note::
-    There is no pre-built image to pull. The image is built locally from the
-    pinned sources with ``build.sh``. What that pins, and why the build gates
-    itself on a full regeneration of the reference design, is described in
-    :doc:`/tools/07_adk_tools_image`.
+    There is no image to pull from a registry. The alpha release comes with an
+    image archive to load, as :doc:`/install/00_release` describes; otherwise
+    the image is built locally from the pinned sources with ``build.sh``.
+    What that pins, and why the build gates itself on a full regeneration of
+    the reference design, is described in :doc:`/tools/07_adk_tools_image`.
 
 Prerequisites
 -------------

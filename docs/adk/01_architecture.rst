@@ -79,21 +79,24 @@ Three abstract inputs exist today.
         Defaults to ``chiplet_attachment_input`` when no adapter narrows it.
 
 ``chiplet_attachment_input`` is **semantic, not technology-specific**. On the
-IHP IntM4TM2 interposer it is derived from Cu pillars, formed where the
-passivation opening and the final Cu pad overlap:
+IHP IntM4TM2 interposer it is derived from its two attachment mechanisms, the
+Cu pillar and the solder bump, each formed where a passivation opening and a
+final Cu pad overlap:
 
 .. code-block:: ruby
 
     passiv_pillar = polygons(9, 35)
     dfpad_pillar  = polygons(41, 35)
+    passiv_sbump  = polygons(9, 36)
+    dfpad_sbump   = polygons(41, 36)
 
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar)
+    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
 
 That is the entire executable content of
 ``pdk_adapters/interposer/intm4tm2.drc``; the rest of the file is its SPDX
-header and a comment saying which mechanism the region models. On a
-different substrate the same abstract input might be built from solder-bump
-openings, or from a hybrid-bonding pad array. The rule never cares which, which
+header and a comment saying which mechanisms the region models. On a
+different substrate the same abstract input might be built from a
+hybrid-bonding pad array. The rule never cares which, which
 is what lets one rule deck check assemblies built on substrates the deck has
 never heard of.
 
@@ -136,12 +139,13 @@ Adding an interposer
 --------------------
 
 A new interposer plugs in by adding **one adapter file** under
-``pdk_adapters/interposer/``. Nothing in the rule decks is edited.
+``pdk_adapters/interposer/`` and one registry entry that names it. Nothing in
+the rule decks is edited.
 
 Selection happens at run time:
 
-* at the DRC runner, ``--interposer-adapter <name>``, resolved against
-  ``pdk_adapters/interposer/`` or taken as an explicit path to a ``.drc`` file;
+* at the DRC runner, ``--interposer-adapter <id>``, a registry id resolved
+  through the ADK registry; a path is refused;
 * through the orchestrator, from the ``.chiplet`` assembly file's
   ``interposer.adapter`` field.
 

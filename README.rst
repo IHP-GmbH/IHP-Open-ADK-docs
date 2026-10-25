@@ -38,7 +38,7 @@ This repository holds only documentation. The code it documents lives in the
 repositories pinned as submodules under ``src/``:
 
 - `IHP-Open-ADK <https://github.com/IHP-GmbH/IHP-Open-ADK>`__, the assembly rules and tooling
-- `chiplet-spec <https://github.com/IHP-GmbH/chiplet-spec>`__, the ``.chiplet`` interchange format
+- `chiplet-system-spec <https://github.com/IHP-GmbH/chiplet-system-spec>`__, the ``.chiplet`` interchange format
 - `OpenIntM4TM2 <https://github.com/IHP-GmbH/OpenIntM4TM2>`__, the interposer PDK
 - `IHP-Interconnect-IntM4TM2 <https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2>`__, the attachment method registry
 - `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__, the KiCad fork

@@ -11,7 +11,8 @@ Chiplet Studio and the ``pads_vs_pillars`` check read it, the pipeline
 orchestrator reads its adapter axes to build the DRC command line, and
 ``chiplet2dbx`` translates it into 3Dblox.
 
-The format is YAML, the current ``format_version`` is ``"1.0"``, and the
+The format is YAML. An assembly file carries ``format_version`` ``"1.0"``; a
+source file, one with a top-level ``system`` block, carries ``"1.1"``. The
 specification lives in the |spec-repo| repository at
 ``docs/CHIPLET_FORMAT_SPEC.md``, alongside the normative coordinate-frame
 contract described in :doc:`/formats/03_coordinate_frames`.
@@ -396,7 +397,8 @@ never touch the filesystem.
 
 Hard errors in the reference validator:
 
-1. ``format_version`` must be ``"1.0"``.
+1. ``format_version`` must be a quoted ``"MAJOR.MINOR"`` with major 1. A
+   minor above the reader's (``1.1``) is accepted with a warning.
 2. ``assembly.name`` is required and must not be empty.
 3. Every component has a non-empty ``id`` and a non-empty ``type``.
 4. Every ``interfaces[]`` entry has an ``id`` and a ``type``, and the type is
@@ -477,7 +479,8 @@ in that gate.
 
 The ADK vendors the Python library at ``vendor/chiplet_format_io/`` and reaches
 it by putting ``vendor/`` on ``sys.path``. The vendored copy is
-|vendored-reader-state|. ``chiplet2dbx`` imports it and re-exports
+|vendored-reader-state|; that copy knows format 1.0 only, so the ADK tools
+read a ``"1.1"`` file with a warning. ``chiplet2dbx`` imports it and re-exports
 ``load_chiplet``; ``pads_vs_pillars`` imports ``chiplet2dbx`` first so that the
 vendored package is on the path, then imports the library itself, so that there
 is one copy on the path and one import home rather than two.

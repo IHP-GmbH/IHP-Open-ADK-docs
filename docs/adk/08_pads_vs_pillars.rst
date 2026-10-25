@@ -54,8 +54,9 @@ is a usage error, as is repeating either flag for one reference.
 
 The manifest is validated after the ``.chiplet`` is loaded, and before any pad
 source is read or any matching runs. ``schema`` must be
-``adk-pillar-manifest`` and ``version`` must be exactly ``1.0.0``: an exact
-string match, never a range. ``units`` must be ``um``, every coordinate must be
+``adk-pillar-manifest`` and ``version`` must be exactly ``1.0.0`` or ``1.1.0``:
+an exact string match against that set, never a range. 1.1.0 only adds the
+optional ``methods`` block, which this check does not read. ``units`` must be ``um``, every coordinate must be
 a finite number, and ``diameter_um`` must be positive. Non-finite coordinates
 are rejected at read time on purpose, because a comparison against ``NaN`` is
 false and would make every distance check pass.
@@ -291,7 +292,7 @@ Importable entry points
 .. code-block:: python
 
     load_chiplet(path) -> dict
-    load_pillar_manifest(path) -> dict          # validated, exact version pin
+    load_pillar_manifest(path) -> dict          # validated, exact version set
     load_pads_config(path=None) -> dict         # pad layer vocabulary
     extract_gds_pads(gds_path) -> [{"name", "x_um", "y_um"}, ...]
     transform_pads(component, pads) -> [{"name", "x_um", "y_um"}, ...]

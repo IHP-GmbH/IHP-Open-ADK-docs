@@ -438,7 +438,8 @@ Relationship to the ADK
 The ADK assembly DRC is interposer-agnostic *and* method-agnostic. It reaches the
 method through a second adapter axis, orthogonal to the interposer axis.
 
-Each method names an ``adapter`` in the manifest, and the ADK looks up
+Each method names an ``adapter`` in the manifest, and the ADK resolves that id
+through its registry, which maps the shipped ids to
 ``pdk_adapters/interconnect/<adapter>.drc``. The lookup uses the manifest's
 ``adapter`` field, not the method id: ``cupillar_opt1``,
 ``cupillar_opt2`` and ``cupillar_opt3`` all resolve to ``ihp_cupillar``. The ADK

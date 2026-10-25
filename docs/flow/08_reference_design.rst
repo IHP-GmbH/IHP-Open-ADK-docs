@@ -335,7 +335,7 @@ ten informational results across ten checks over two devices, with ``passed``
 true.
 
 ``reports/two_die_interposer_assembly_drc.lyrdb`` records the assembly DRC. It
-carries eleven rule categories and no violation items:
+carries thirteen rule categories and no violation items:
 
 .. code-block:: text
 
@@ -344,12 +344,15 @@ carries eleven rule categories and no violation items:
     IXN.b.vendorx_microbump    IXN.e.vendorx_microbump
     IXN.x.cupillar_opt1.vendorx_microbump
     IXN.b.unclaimed            IXN.e.unclaimed
+    IXN.x.cupillar_opt1.unclaimed
+    IXN.x.vendorx_microbump.unclaimed
 
 That list is the interesting part. The per-method categories show the two dies
 being checked at their own numbers; ``IXN.x`` is the conservative cross-method
 spacing between the two bump fields, at the larger of the two spacings; and the
 ``unclaimed`` categories cover any attachment pad that falls under no die's
-boundary, checked with the assembly-level adapter's numbers.
+boundary, checked with the assembly-level adapter's numbers, among themselves and
+against each method's pads.
 
 Reproducibility
 ---------------

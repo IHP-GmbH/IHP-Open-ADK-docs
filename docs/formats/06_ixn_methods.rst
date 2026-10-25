@@ -237,9 +237,10 @@ With the sidecar loaded, ``8_2_interconnect.drc`` switches from assembly-global
 mode to per-method mode: per-method spacing and pitch inside each method's
 region, a cross-method separation between every pair of regions, and the
 adapter's assembly-global numbers on anything no method claims, reported as
-``IXN.b.unclaimed`` and ``IXN.e.unclaimed``. If no interconnect adapter was
-loaded, those unclaimed pads are not checked on this axis at all, and the deck
-says so in its log. :doc:`/adk/04_ixn_rules` gives the rule names and the region
+``IXN.b.unclaimed`` and ``IXN.e.unclaimed``, with each method checked against
+those pads as ``IXN.x.<method>.unclaimed``. If no interconnect adapter was
+loaded, the unclaimed pads are not checked on this axis, and the deck reports
+them as ``IXN.unassociated``. :doc:`/adk/04_ixn_rules` gives the rule names and the region
 construction.
 
 Two constraints follow from that. The sidecar requires the boundary manifest,

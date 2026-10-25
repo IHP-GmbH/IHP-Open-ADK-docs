@@ -80,10 +80,9 @@ The parse itself is not implemented in Chiplet Studio. ``src/formats/`` is a thi
 consumer that delegates ``.chiplet`` reading and validation to the vendored
 Apache-2.0 ``chiplet_format_io`` reference library, a copy of the specification
 repository's reader, and maps the resulting document into the studio's own
-``Assembly`` model. That vendoring is |vendored-reader-state|. A file the
-specification rejects is rejected here for the same reason and with the same
-message, so the viewer cannot quietly accept something the rest of the flow will
-not. See :doc:`/formats/01_chiplet`.
+``Assembly`` model. A file that library rejects is rejected here for the same
+reason and with the same message, so the viewer cannot quietly accept something
+the rest of the flow will not. See :doc:`/formats/01_chiplet`.
 
 Autosave runs on a timer, and a crash-recovery dialog offers the recovered
 assembly on the next start. A recovered assembly is deliberately detached from

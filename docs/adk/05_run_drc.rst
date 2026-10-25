@@ -54,14 +54,10 @@ That runs the |asm-rule-count| ASM rules and nothing else. The boundary manifest
 is discovered next to ``design.gds``, the top cell is auto-detected, and the
 report lands in ``/tmp/adk_drc``.
 
-``--interposer-adapter`` takes either form:
-
-* a **shortname**, resolved against ``pdk_adapters/interposer/<name>.drc``, so
-  ``intm4tm2`` finds the shipped IHP IntM4TM2 adapter; or
-* an **explicit path** to a ``.drc`` file, used as given.
-
-The resolver tries the literal path first and the shortname second, and if
-neither exists it reports both candidates it looked for.
+``--interposer-adapter`` takes a registry id: ``intm4tm2`` is the shipped IHP
+IntM4TM2 adapter. A path is refused. ``--list-adapters`` prints the registered
+ids, and :doc:`/adk/02_adapter_contract` says how to register a deck of your
+own.
 
 Adding the interconnect axis
 ----------------------------
@@ -88,8 +84,8 @@ sidecar:
         --interconnect-methods design.ixn_methods.json \
         --run_dir /tmp/adk_drc
 
-``--interconnect-adapter`` resolves the same way as the interposer flag, against
-``pdk_adapters/interconnect/``. Unlike the manifest, the methods file is never
+``--interconnect-adapter`` takes a registry id too, such as ``ihp_cupillar``, and
+resolves through the same registry. Unlike the manifest, the methods file is never
 auto-discovered: you pass it explicitly or the axis stays assembly-global.
 
 .. tip::
@@ -97,8 +93,8 @@ auto-discovered: you pass it explicitly or the axis stays assembly-global.
     Passing both, as above, is the combination that leaves nothing unchecked.
     The methods file gives each die the numbers its own method demands; the
     adapter supplies the fallback for attachment geometry no method claims. With
-    a methods file and no adapter, unclaimed pads are simply not checked on this
-    axis, and the deck logs a line saying so.
+    a methods file and no adapter, unclaimed pads are not checked on this axis,
+    and the deck reports them as ``IXN.unassociated`` findings.
 
 Command-line reference
 ----------------------
@@ -114,7 +110,7 @@ Flags in detail
     an absolute path.
 
 ``--interposer-adapter`` (required)
-    Shortname or path, as described above.
+    A registry id, as described above.
 
 ``--interconnect-adapter``
     Optional. Enables the IXN axis. Omit it and the evaluated deck is identical
@@ -311,20 +307,24 @@ Exit codes
     * - Code
       - Meaning
     * - ``0``
-      - The run completed and the report contains no violations.
+      - The deck ran to the end and the report contains no violations.
     * - ``1``
-      - The run completed and the report contains violations.
+      - The deck ran to the end and the report contains violations.
     * - ``2``
-      - A tooling failure with no more specific code available.
-    * - other
-      - KLayout's own non-zero exit code, passed through.
+      - The deck aborted, or wrote no report. The log says
+        ``ADK DRC engine failure``.
+    * - ``5``, ``6``
+      - An adapter registry file is unusable, or a registered id names a deck
+        that is not there (``5``); a registry declares a version this ADK cannot
+        read (``6``).
+    * - ``7``
+      - An internal error while resolving the adapter.
 
-The distinction between the last two rows is worth being precise about. When the
-KLayout subprocess exits non-zero, for example because an adapter did not
-declare a required input, or the deck raised on an unresolvable die instance,
-the runner does not dump a Python traceback on top of an error KLayout has
-already printed. It returns KLayout's exit code, falling back to ``2`` if that
-code was somehow zero.
+An aborted deck exits ``2``, not with KLayout's own code. KLayout exits ``1``
+when a deck raises, for example because an adapter did not declare a required
+input or a method names an unknown die instance, and ``1`` is the code for
+violations; the aborted run also leaves an empty report that would read as
+clean. ``2`` keeps both of those apart from a verdict.
 
 .. note::
 
@@ -376,11 +376,10 @@ to their identifying phrase.
     The extension check passed but KLayout could not parse the stream.
     Truncated or mislabelled file.
 
-``Interposer adapter not found: '<name>'.``
-    The message lists both candidates that were tried, the literal path and
-    ``pdk_adapters/interposer/<name>.drc``. The same message with
-    ``Interconnect`` names the other axis and directory. Note that the IHP
-    interposer adapter is ``intm4tm2`` and has no aliases.
+``unknown adapter id '<name>'. Registered adapter ids: ...``
+    The id is in no registry layer; the message lists the ids that are. A path,
+    or a name ending in ``.drc``, is refused with its own message. Note that the
+    IHP interposer adapter is ``intm4tm2`` and has no aliases.
 
 ``Boundary manifest not found: <path>``
     The sidecar is missing. Regenerate it with the producer, point at it with

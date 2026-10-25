@@ -526,3 +526,14 @@ Troubleshooting
     * - Plugin absent from External Plugins
       - Check the symlink, then *Tools > External Plugins > Refresh Plugins*.
         A failed import prints its traceback to KiCad's stdout.
+
+The plugin's own pages
+----------------------
+
+The plugin repository keeps its README, its command reference and its status
+for this site. They are built from the pinned checkout as they stand.
+
+.. toctree::
+    :maxdepth: 2
+
+    /_repos/Chiplets-KiCad-Plugin/docs/index

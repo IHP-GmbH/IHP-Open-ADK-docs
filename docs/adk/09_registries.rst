@@ -25,10 +25,10 @@ the ``VERSION`` file and every ``config/*.json`` version key equal it. A skew
 between them fails CI.
 
 The sidecar schemas version independently, because they describe a data contract
-between separate tools rather than the ADK release. All three currently stand at
-``1.0.0``, and their readers pin them **exactly**: a boundary manifest, a
-per-method interconnect file or a pillar manifest whose ``version`` is anything
-other than the pinned string is rejected rather than best-effort parsed. See
+between separate tools rather than the ADK release, and their readers pin them
+**exactly**: a boundary manifest or a per-method interconnect file whose
+``version`` is not ``1.0.0``, or a pillar manifest whose ``version`` is neither
+``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed. See
 :doc:`/tools/07_adk_tools_image` for the full version matrix.
 
 .. note::

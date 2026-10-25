@@ -171,7 +171,7 @@ to the offending geometry.
 A category with no items is a rule that ran and found nothing, so the category
 list is a record of *what was checked*; read it before concluding that a rule you
 expected was actually evaluated. The reference design's committed report carries
-eleven rule categories and no items.
+thirteen rule categories and no items.
 
 Viewing chiplet boundaries
 --------------------------

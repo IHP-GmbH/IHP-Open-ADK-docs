@@ -254,7 +254,7 @@ ties each one to the exact GDS it was generated from.
 ``layout/<stem>.pillars.json``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Cu-pillar manifest, schema ``adk-pillar-manifest``, version ``1.0.0``. One
+The Cu-pillar manifest, schema ``adk-pillar-manifest``, version ``1.1.0``. One
 record per placed bump, as drawn:
 
 .. code-block:: json

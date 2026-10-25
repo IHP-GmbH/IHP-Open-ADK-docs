@@ -51,6 +51,8 @@ IXN_RULES = {
     "IXN.x.<method1>.<method2>": ("IXN_spacing", "um", "", "cross method"),
     "IXN.b.unclaimed": ("IXN_spacing", "um", "", "pads outside every method region"),
     "IXN.e.unclaimed": ("IXN_pitch", "um", "", "pads outside every method region"),
+    "IXN.x.<method>.unclaimed": ("IXN_spacing", "um", "", "method vs pads outside every method region"),
+    "IXN.unassociated": ("", "", "", "pads outside every method region, no adapter"),
 }
 
 OUTPUT_CALL = re.compile(
@@ -93,11 +95,13 @@ def clean_description(rule_id, description, values):
     description = description.replace("#{m1}", "method 1").replace("#{m2}", "method 2")
 
     if per_method:
-        replacement = (
-            "the larger of the two declared spacings"
-            if rule_id.startswith("IXN.x")
-            else "the value declared for that method"
-        )
+        if rule_id.endswith(".unclaimed"):
+            replacement = "the larger of the method's and the adapter's spacing"
+        elif rule_id.startswith("IXN.x"):
+            replacement = "the larger of the two declared spacings"
+        else:
+            replacement = "the value declared for that method"
+
         # Swallow the trailing unit too: the placeholder text already reads as
         # a quantity, so "is <placeholder> um" would be ungrammatical.
         description = re.sub(r"#\{[^}]*\}(\s*um2?)?", replacement, description)
@@ -196,12 +200,18 @@ def main():
         "IXN.x.<method1>.<method2>",
         "IXN.b.unclaimed",
         "IXN.e.unclaimed",
+        "IXN.x.<method>.unclaimed",
+        "IXN.unassociated",
     ]
     ixn_rows = []
     for rule_id in ixn_order:
         param, unit, note, mode = IXN_RULES[rule_id]
-        source = "adapter default" if "unclaimed" in rule_id or "<" not in rule_id else "methods manifest"
-        value = fmt(ixn_values[param]) if source == "adapter default" else "per method"
+        if not param:
+            value = "none (coverage finding)"
+        elif "<" in rule_id:
+            value = "per method"
+        else:
+            value = fmt(ixn_values[param])
         ixn_rows.append([rule_id, ixn_found[rule_id], mode, param, value])
     write_csv(os.path.join(DOCS_DIR, "adk", "tables", "ixn_rules.csv"), ixn_rows)
 

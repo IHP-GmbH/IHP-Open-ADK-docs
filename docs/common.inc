@@ -4,7 +4,7 @@
 .. |current-status| replace:: **Preview Release**
 .. |adk-repo| replace:: `IHP-GmbH/IHP-Open-ADK <https://github.com/IHP-GmbH/IHP-Open-ADK>`__
 .. |tools-repo| replace:: `IHP-GmbH/ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__
-.. |spec-repo| replace:: `IHP-GmbH/chiplet-spec <https://github.com/IHP-GmbH/chiplet-spec>`__
+.. |spec-repo| replace:: `IHP-GmbH/chiplet-system-spec <https://github.com/IHP-GmbH/chiplet-system-spec>`__
 .. |interposer-repo| replace:: `IHP-GmbH/OpenIntM4TM2 <https://github.com/IHP-GmbH/OpenIntM4TM2>`__
 .. |interconnect-repo| replace:: `IHP-GmbH/IHP-Interconnect-IntM4TM2 <https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2>`__
 .. |studio-repo| replace:: `IHP-GmbH/chiplet-studio <https://github.com/IHP-GmbH/chiplet-studio>`__

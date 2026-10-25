@@ -114,6 +114,20 @@ exclude_patterns = [
     "**/_usage/*.txt",
 ]
 
+# A source repository that keeps pages for this site is linked whole as
+# _repos/<name>, a symlink to its checkout under src/. Its pages then build as
+# documents of their own, so the relative includes and links in them resolve as
+# they do in the repository. Only those pages are built from it.
+REPO_PAGES = ["_repos/*/docs/**"]
+include_patterns = [
+    entry if os.path.isfile(os.path.join(DOCS_DIR, entry)) else entry + "/**"
+    for entry in os.listdir(DOCS_DIR)
+    if entry != "_repos"
+] + REPO_PAGES
+
+# Links to a heading within a Markdown page, as the repositories' READMEs use.
+myst_heading_anchors = 3
+
 # -- GitHub integration ------------------------------------------------------
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"

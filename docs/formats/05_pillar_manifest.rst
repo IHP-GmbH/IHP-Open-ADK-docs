@@ -73,9 +73,9 @@ Top level
    * - ``version``
      - yes
      - string
-     - Exact ``"1.0.0"``. The schema only types it as a string; the exact
-       value is pinned by ``checks/pads_vs_pillars.py``. See
-       `Version policy`_.
+     - ``"1.1.0"`` from the current producer; readers accept exactly
+       ``"1.0.0"`` or ``"1.1.0"``. The schema only types it as a string; the
+       set is pinned by ``checks/pads_vs_pillars.py``. See `Version policy`_.
    * - ``units``
      - yes
      - string
@@ -93,6 +93,12 @@ Top level
      - no
      - string
      - Basename of the assembly GDS this sidecar describes.
+   * - ``methods``
+     - no
+     - object
+     - Since 1.1.0. The attachment rules the pillars were placed and checked
+       against, keyed by method id, with the field names the assembly DRC uses
+       (``IXN_spacing``, ``IXN_pitch``, ``IXN_pad_size``).
 
 Pillar entries
 ~~~~~~~~~~~~~~
@@ -231,8 +237,10 @@ hand-edited manifests.
 Version policy
 --------------
 
-Readers pin the version with an **exact string match** against ``"1.0.0"``. Any
-other value, a missing field included, is a hard error, never a warning. This
+Readers pin the version with an **exact string match** against the set
+``"1.0.0"``, ``"1.1.0"``. Any other value, a missing field included, is a hard
+error, never a warning. 1.1.0 only adds the optional ``methods`` block, so a
+reader that does not use it accepts both. This
 mirrors the boundary manifest policy and for the same reason: a stale manifest
 silently reinterpreted under new semantics could pass an assembly whose pillars
 no longer sit where the checker believes they do.
@@ -267,7 +275,7 @@ same change set:
      - ``PILLAR_MANIFEST_VERSION``
    * - IHP-Open-ADK
      - ``checks/pads_vs_pillars.py``
-     - ``SUPPORTED_PILLAR_MANIFEST_VERSION``
+     - ``SUPPORTED_PILLAR_MANIFEST_VERSIONS``
 
 Example
 -------
@@ -276,7 +284,7 @@ Example
 
     {
       "schema": "adk-pillar-manifest",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "generator": "hyp_to_gds.py",
       "assembly_gds": "board_complete.gds",
       "units": "um",
@@ -300,7 +308,14 @@ Example
           "diameter_um": 44,
           "moved_by_auto_resolve": false
         }
-      ]
+      ],
+      "methods": {
+        "cupillar_opt1": {
+          "IXN_spacing": 40.0,
+          "IXN_pitch": 75.0,
+          "IXN_pad_size": 44.0
+        }
+      }
     }
 
 Using it
