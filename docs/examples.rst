@@ -57,4 +57,5 @@ Pages in each folder:
   schematic, the system and assembly files, the board and the interposer GDS.
 
 The pages of the three-day workshop built on these examples are in the
-``workshop/`` folder of adk-examples, starting at its ``README.md``.
+``workshop/`` folder of adk-examples, starting at its ``README.md``. They are a
+draft until the release the workshop uses.
