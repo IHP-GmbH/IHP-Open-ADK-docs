@@ -55,3 +55,6 @@ Pages in each folder:
   the form the run's map opens.
 - ``INSPECTION.md``: a signed run, opened and followed net by net through the
   schematic, the system and assembly files, the board and the interposer GDS.
+
+The pages of the three-day workshop built on these examples are in the
+``workshop/`` folder of adk-examples, starting at its ``README.md``.
