@@ -304,7 +304,7 @@ PDK data exactly as the image pinned them:
 .. code-block:: bash
 
     docker run --rm -it \
-        -v ~/git/Chiplets-KiCad-Plugin:/opt/adk-tools/chiplet_kicad_plugin \
+        -v /path/to/Chiplets-KiCad-Plugin:/opt/adk-tools/chiplet_kicad_plugin \
         -v ~/adk-work:/work -w /work \
         --user "$(id -u):$(id -g)" -e HOME=/tmp \
         adk-tools:dev

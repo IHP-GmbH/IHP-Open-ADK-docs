@@ -494,13 +494,7 @@ fork, the Chiplet Studio viewer, the KiCad plugin) are GPL because they link or
 derive from GPL software. The formats are not.
 
 Everything in the specification repository is licensed under the Apache
-License 2.0, and IHP makes an explicit additional grant: anyone may implement
-readers, writers, converters or any other tools that consume or produce files
-in these formats, under **any** license of their choosing, open source or
-proprietary, royalty free. IHP asserts no patents over the formats themselves
-and will not use patents it may hold to prevent conformant implementations.
-Apache-2.0's patent grant in Section 3 applies to the material in the
-repository.
+License 2.0.
 
 The practical consequence: a GPL constraint can only ever reach you through a
 *tool* you chose to build on, for example by embedding KiCad or KLayout. It

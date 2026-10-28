@@ -498,7 +498,7 @@ takes precedence:
 
 .. code-block:: bash
 
-    git clone git@github.com:IHP-GmbH/IHP-Interconnect-IntM4TM2.git
+    git clone https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2.git
     export INTERCONNECT_PDK_ROOT="$PWD/IHP-Interconnect-IntM4TM2"
 
 What the rest of the toolchain takes from it:
