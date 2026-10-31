@@ -138,7 +138,9 @@ Three environment variables control it:
       - Host directory mounted at ``/work``. Created on first run.
     * - ``ADK_MEM_LIMIT``
       - ``20g``
-      - Hard memory ceiling for the container and everything in it.
+      - Hard memory ceiling for the container and everything in it. Do not set
+        it below ``2g``: at ``1g``, ``packaging-flow edit`` is killed for lack
+        of memory (exit -9).
 
 Graphics
 --------
