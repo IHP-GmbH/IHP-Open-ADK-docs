@@ -31,8 +31,12 @@ Start from the template board
 
 The interposer technology ships a template board at
 ``libs.tech/kicad/interposer_template.kicad_pcb``. Copy it into your project's
-``kicad/`` directory under your board name and open it with the ADK KiCad
-build.
+``kicad/`` directory under your board name, copy
+``interposer_template.kicad_dru`` and ``interposer_template.kicad_pro`` beside
+it under the same name (``<board>.kicad_dru`` and ``<board>.kicad_pro``), and
+open the board with the ADK KiCad build. The two files carry the metal rules,
+the board setup and the net classes; KiCad picks them up only when they are
+named after the board.
 
 Starting from the template matters for one specific reason. The HYP-to-GDS
 converter maps board copper layers onto interposer metals **by name**. A board
@@ -201,12 +205,25 @@ renders them into the interposer GDS and injects them under the interposer
 component in the ``.chiplet``. Nothing else is needed to make them appear
 downstream. The reference design places 35 wire-bond pads, 100 by 100 um.
 
+On a board you draw by hand, each pad's reference is its I/O pad id. A board
+that ``interposer-pnr`` drew from a system sheet is different: its pads are
+``chiplet_carrier`` footprints whose id travels in a hidden ``IO_PAD_ID``
+field, and the export reads them by that field. It refuses such a pad without
+the field, and two pads with the same id. On any board, the export refuses an
+I/O pad footprint whose pads carry different nets, an unconnected pad
+included.
+
 Route
 -----
 
-Routing is ordinary KiCad routing on layers with unusual numbers. The reference
-design uses per-metal net classes, because KiCad carries a track width and a
-clearance per net class rather than per layer:
+Routing is ordinary KiCad routing on layers with unusual numbers. KiCad
+carries a track width and a clearance per net class rather than per layer, so
+the template's project file ships one net class per metal, named after it
+(``TopMetal2``, ``TopMetal1``, ``Metal5``, ``Metal4``), with that metal's
+minimum width and space and a via of the level that lands on it. ``Default``
+takes the TopMetal2 values, which are legal on every layer.
+
+The reference design uses its own per-metal classes:
 
 .. list-table::
     :header-rows: 1
@@ -267,7 +284,13 @@ Check while you design
 Two checks run inside KiCad, before any export.
 
 **KiCad's own DRC** checks the board rules: clearances, track widths, unrouted
-nets, courtyard collisions.
+nets, courtyard collisions. With the template's ``.kicad_dru`` beside the
+board, it also checks each metal's minimum width and clearance, and it warns on
+two interposer rules that rest on one track or pad: ``TM2.bR``, the larger
+TopMetal2 clearance next to a wide track or a wide, long pad, and ``Slt.c``, a
+track too wide to stay unslit. A track that needs slits gets them in KLayout,
+with the slit macro on the exported GDS; no flow step cuts them. The rules file
+and its gaps are described in :doc:`/tools/05_openintm4tm2`.
 
 **The generated ADK assembly rules** check the placement rules the ADK owns.
 Generate the section and append it to your project's ``.kicad_dru``:
@@ -278,8 +301,9 @@ Generate the section and append it to your project's ``.kicad_dru``:
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
-Append it below the ``(version 1)`` line your ``.kicad_dru`` opens with; KiCad
-ignores a rules file without that line and says nothing. The generated block is small on purpose, and its header says why:
+Append it below the ``(version 1)`` line of your ``.kicad_dru``, the one you
+copied from the template; KiCad ignores a rules file without that line and says
+nothing. The generated block is small on purpose, and its header says why:
 
 .. code-block:: text
 
@@ -329,7 +353,9 @@ mirror is deliberately incomplete:
 * the interconnect pitch and spacing rules operate on the as-drawn bumps, which
   do not exist until the export generates them;
 * the interposer technology's own fabrication rules run on the GDS, not on the
-  board.
+  board. KiCad mirrors only the metal widths and clearances and the two
+  warnings above, and it misses violations of those too (a clearance is flagged
+  only once it is more than KiCad's DRC epsilon under the rule).
 
 A board that passes KiCad DRC is ready to export, not verified.
 :doc:`/flow/06_verification_stages` lays out which check runs when.

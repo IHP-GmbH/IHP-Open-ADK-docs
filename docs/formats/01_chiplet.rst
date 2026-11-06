@@ -11,8 +11,11 @@ Chiplet Studio and the ``pads_vs_pillars`` check read it, the pipeline
 orchestrator reads its adapter axes to build the DRC command line, and
 ``chiplet2dbx`` translates it into 3Dblox.
 
-The format is YAML. An assembly file carries ``format_version`` ``"1.0"``; a
-source file, one with a top-level ``system`` block, carries ``"1.1"``. The
+The format is YAML. A writer stamps ``format_version`` with the lowest minor
+the content needs. An assembly file is written ``"1.0"``, or ``"1.1"`` when an
+interface uses the ``solder_bump`` type. A source file, one with a top-level
+``system`` block, is written ``"1.1"``, or a later minor up to ``"1.5"`` when
+it uses something that minor added (see `Source documents`_). The
 specification lives in the |spec-repo| repository at
 ``docs/CHIPLET_FORMAT_SPEC.md``, alongside the normative coordinate-frame
 contract described in :doc:`/formats/03_coordinate_frames`.
@@ -20,12 +23,14 @@ contract described in :doc:`/formats/03_coordinate_frames`.
 .. note::
 
     The schema described on this page and on
-    :doc:`/formats/02_chiplet_components` is the whole of ``format_version``
-    ``"1.0"``.
-    The 2026 revisions to the specification document did not change the
-    on-disk format; they wrote down parts of the existing schema that had
-    never been documented, and added one new optional field
-    (``attachment_surface_z``) with a backward-compatible fallback.
+    :doc:`/formats/02_chiplet_components` is the whole of the assembly
+    document. The 2026 revisions under ``"1.0"`` wrote down parts of the
+    existing schema that had never been documented and added optional fields
+    with backward-compatible fallbacks (``attachment_surface_z`` among them).
+    Minor 1.1 tagged ``solder_bump`` with its minor and closed
+    ``assembly.units`` to ``um``; no later minor changes the assembly
+    document. Minors 1.1 to 1.5 otherwise add content to source documents
+    only.
 
 
 What the format is for
@@ -113,8 +118,9 @@ File structure
 --------------
 
 A ``.chiplet`` file always carries ``format_version`` and an ``assembly``
-block. Every other top-level block is optional. The reference reader recognises
-ten top-level keys.
+block. Every other top-level block is optional. The format defines thirteen
+top-level keys. The eleven below make up an assembly; the other two, ``system``
+and ``unplaced``, exist only in a source document (see `Source documents`_).
 
 .. list-table:: Root-level keys
     :header-rows: 1
@@ -128,8 +134,9 @@ ten top-level keys.
     * - ``format_version``
       - yes
       - string
-      - Format version, currently ``"1.0"``. A different value is a hard
-        error.
+      - Quoted ``"MAJOR.MINOR"``. An assembly is written ``"1.0"`` unless its
+        content needs ``"1.1"``. A reader accepts a higher minor of its major
+        with a warning and refuses any other major.
     * - ``assembly``
       - yes
       - object
@@ -146,6 +153,10 @@ ten top-level keys.
       - no
       - array
       - The placed components.
+    * - ``interposer``
+      - no
+      - object
+      - Interposer-axis adapter: a single ``adapter`` id.
     * - ``interconnect``
       - no
       - object
@@ -170,21 +181,21 @@ ten top-level keys.
 Key order is not significant: readers are key driven and accept the sections in
 any order. The reference writer emits them in the order ``format_version``,
 ``_metadata``, ``assembly``, ``technologies``, ``interconnect``,
-``connection_stacks``, ``components``, ``interfaces``, ``netlist``, ``flow``.
+``connection_stacks``, ``components``, ``interfaces``, ``netlist``, ``flow``;
+the KiCad exporter writes ``interposer`` right after ``assembly``.
 
 The rest of this page covers the three blocks that describe the assembly as a
-whole, the path convention, and what a conforming reader and writer must do.
-``components`` and the five optional blocks are on
+whole, the path convention, source documents, and what a conforming reader and
+writer must do. ``components`` and the five optional blocks are on
 :doc:`/formats/02_chiplet_components`.
 
 .. note::
 
-    The ADK toolchain writes one additional top-level block that the
-    specification does not list: ``interposer:`` with a single ``adapter:``
-    field, naming the interposer DRC adapter for the assembly. The reference
-    reader does not model it, does not reject it, and round-trips it with the
-    rest of the document. The pipeline orchestrator reads it to build the
-    ``--interposer-adapter`` flag; see :doc:`/adk/02_adapter_contract`.
+    The ``interposer:`` block names the interposer DRC adapter for the
+    assembly with its single ``adapter:`` field, a registry id and never a
+    file path. The KiCad exporter writes it, and the pipeline orchestrator
+    reads it to build the ``--interposer-adapter`` flag; see
+    :doc:`/adk/02_adapter_contract`.
 
 
 The assembly block
@@ -223,9 +234,9 @@ Metadata about the package as a whole.
       - Last modification date, ISO 8601.
     * - ``units``
       - no
-      - ``""``
-      - Unit of measurement. The format sets no default; tools conventionally
-        write ``um``, and the ADK checks accept only ``um``.
+      - ``um``
+      - Unit of length. ``um`` is the only value: an absent key means ``um``,
+        and the reference readers refuse any other value.
     * - ``assembly_gds``
       - no
       - ``""``
@@ -238,7 +249,7 @@ Metadata about the package as a whole.
 
 .. tip::
 
-    Write ``units: um`` even though the format does not require it. The two
+    Write ``units: um`` even though the format lets you leave it out. The two
     ADK consumers treat the field differently, and the stricter one is the
     reason to write it: ``chiplet2dbx`` requires ``assembly.units`` to be
     exactly ``um`` and rejects an absent key along with a wrong one, so an
@@ -386,6 +397,126 @@ in the message.
 for the discovery walk to accept it, and how to set them.
 
 
+Source documents
+----------------
+
+A ``.chiplet`` with a top-level ``system`` block is a **source**, not an
+assembly. It names the dies, where they sit and how their ports are wired, and
+a tool called the elaborator derives the assembly from it and from each die's
+contract. A source carries ``format_version``, ``_metadata`` marked
+``finalize_required: true``, ``assembly`` (``name`` and an optional
+``description``), optionally ``interposer`` and ``flow``, and ``system``. It
+never carries a block the elaborator derives: ``technologies``,
+``connection_stacks``, ``components``, ``interconnect``, ``interfaces`` or
+``netlist``.
+
+``system`` holds the carrier (its technology, top cell and size), one item
+per die instance (its die folder, centre position, rotation and interconnect
+method), and the wiring: buses, links, power and ground rails, ports left on
+their own or left open, and the external pins on the carrier edges. Net names
+are the author's; net membership is always derived.
+
+Every assembly reader refuses a source, whatever it is told to allow, and it
+refuses before the version check so the message says what the file is. Only a
+source reader reads one. The reader, the checks and the elaborator are the
+``chiplet_system_description`` package in the specification repository's
+``description/`` directory, and ``packaging-flow`` drives them.
+
+Minors after 1.1
+~~~~~~~~~~~~~~~~
+
+Minors 1.2 to 1.5 each add optional source content. A writer stamps the lowest
+minor the content needs, so a source that uses none of it stays at ``"1.1"``,
+and a source stamped below the minor of something it uses is refused with a
+finding that names the minor. This page covers the three minors a placement
+or routing run depends on.
+
+.. list-table:: Source minors covered here
+    :header-rows: 1
+    :widths: 12 88
+    :class: adk-wide-table
+
+    * - Minor
+      - Adds
+    * - ``1.3``
+      - The unplaced source. A die may omit ``at`` and ``rotation`` together,
+        the carrier may omit ``size``, ``external`` may omit its ``edges``,
+        and ``system.dies`` may be absent or empty. The root key
+        ``unplaced: {pins: [...]}``, written after ``system``, holds the
+        external entries no edge carries yet. ``packaging-flow place`` fills
+        the placement in, and the stamp drops back once nothing is left
+        unplaced.
+    * - ``1.4``
+      - ``admission`` on a die item: a relative path to a ``.json`` file for a
+        die the run does not build. The file holds ``reason``, ``scope`` and
+        ``not_verified`` (a list of the checks the run does not verify for that
+        die). What an admission allows is the consuming flow's decision; the
+        format states no verdict.
+    * - ``1.5``
+      - A rail's routing requirement: ``width_um``, or ``amps`` together with
+        ``current_density_ma_per_um``, never both forms. The router turns the
+        pair into a width; the source never computes one.
+
+The source reader reads an unplaced source and a check reports each unplaced
+thing as a note, but the elaborator refuses it until it is placed:
+
+.. code-block:: yaml
+
+    format_version: "1.3"
+    _metadata:
+      finalize_required: true
+      finalizer: "packaging-flow run"
+    assembly:
+      name: demo
+    system:
+      carrier: {technology: intm4tm2, top_cell: CF_CARRIER}
+      dies:
+        - {id: U1, die: dies/DRIVER, method: wire_bond}
+      rails:
+        - {name: VDD, class: power, ports: [U1.VDD]}
+        - {name: VSS, class: ground, ports: [U1.VSS]}
+      external:
+        profile: intm4tm2_wire_bond_v0
+    unplaced:
+      pins: [U1.CLK, VDD, VSS]
+
+A rail states its requirement on its own line, in either form:
+
+.. code-block:: yaml
+
+    format_version: "1.5"
+    # _metadata, assembly and the rest of system as in any source
+    system:
+      rails:
+        - {name: GND, class: ground, width_um: 20, ports: [U1.VSS, U2.VSS]}
+        - {name: VDD, class: power, amps: 1.5, current_density_ma_per_um: 75, ports: [U1.VDD, U2.VDD]}
+
+Every item of ``dies``, ``buses``, ``links``, ``rails``, ``alone`` and ``open``
+is one line holding a flow mapping, as above. The source reader holds that line
+rule on the text, which is why the examples are written this way.
+
+Reading a newer source
+~~~~~~~~~~~~~~~~~~~~~~
+
+A source reader that meets a source stamped above its own minor skips a key it
+does not know, on a list item or on ``system`` itself, and reports it as a
+note; at or below its own minor an unknown key is refused. A root key is never
+skipped. That is why ``unplaced`` is a root key: a reader older than 1.3
+refuses the file rather than reading on without those external pins. A skipped rail
+requirement would route the rail at the layer minimum, so a flow that routes
+from a source checks that its reader carries the 1.5 keys and refuses a
+reading that skipped any of them.
+
+The carrier
+~~~~~~~~~~~
+
+Elaboration refuses a source whose carrier technology is not IntM4TM2. The
+finding carries the code ``carrier_unsupported_technology`` and its message
+starts with ``CARRIER_UNSUPPORTED_TECHNOLOGY``. IntM4TM2 is the only carrier
+this release models, and the KiCad export plugin refuses a system on another
+carrier with the same id.
+
+
 Validation rules
 ----------------
 
@@ -398,34 +529,43 @@ never touch the filesystem.
 Hard errors in the reference validator:
 
 1. ``format_version`` must be a quoted ``"MAJOR.MINOR"`` with major 1. A
-   minor above the reader's (``1.1``) is accepted with a warning.
+   minor above the highest the reader implements is accepted with a warning,
+   and the reader ignores what it does not know. A document stamped below the
+   minor that added something it uses (``solder_bump`` below ``"1.1"``, for
+   example) is refused.
 2. ``assembly.name`` is required and must not be empty.
 3. Every component has a non-empty ``id`` and a non-empty ``type``.
-4. Every ``interfaces[]`` entry has an ``id`` and a ``type``, and the type is
-   one of ``micro_bump``, ``copper_pillar``, ``tsv``, ``wire_bond``. C++
-   reference only; the Python validator accepts an unknown type.
+4. Every ``interfaces[]`` entry has an ``id`` and a non-empty ``type``. Which
+   types are allowed is a writer rule, held by the schema: ``micro_bump``,
+   ``copper_pillar``, ``tsv``, ``wire_bond`` and ``solder_bump``. Both
+   reference readers carry any other type as written and report it as a
+   warning, so a consumer that cannot act on it refuses that interface, not
+   the file.
 5. Every ``netlist.nets[]`` entry has a ``name``. C++ reference only; the
    Python validator accepts a nameless net.
 6. A file whose ``_metadata.finalize_required`` is ``true`` is refused unless
-   intermediate files are explicitly allowed.
+   intermediate files are explicitly allowed. A source document, one with a
+   ``system`` block, is refused by every assembly read path whatever the
+   caller allows.
+7. ``assembly.units``, when present, must be ``um``.
 
 Reader behaviour that warns or falls back rather than failing:
 
-7. New files should declare ``anchor`` on every component. A reader defaults an
+8. New files should declare ``anchor`` on every component. A reader defaults an
    absent ``anchor`` to ``bbox_center`` and warns.
-8. An absent or unresolved ``connection`` falls back to the interposer's
+9. An absent or unresolved ``connection`` falls back to the interposer's
    ``attachment_surface_z``, or to ``dimensions.thickness`` when that field is
    absent.
-9. A reader must warn, or reject, when any ``position.x`` or ``position.y``
-   exceeds 1e5 um in magnitude. This is the leak guard for un-converted
-   absolute coordinates.
+10. A reader must warn, or reject, when any ``position.x`` or ``position.y``
+    exceeds 1e5 um in magnitude. This is the leak guard for un-converted
+    absolute coordinates.
 
 Consumer-level expectations, not enforced by the reference library:
 
-10. Component ``id`` values are unique.
-11. Component ``type`` is one of the four canonical values.
-12. A ``technology`` reference names a defined technology id.
-13. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+11. Component ``id`` values are unique.
+12. Component ``type`` is one of the four canonical values.
+13. A ``technology`` reference names a defined technology id.
+14. A ``layout`` or ``layer_properties`` path exists at the resolved location.
 
 
 Reading and writing .chiplet files
@@ -471,6 +611,18 @@ permit a ``finalize_required`` document, and ``validate=False`` to skip
 checking entirely. ``dumps`` preserves key insertion order and emits canonical
 YAML.
 
+The Python package also carries helper modules that the tools around the
+format share, so that each rule lives in one place. Two concern the names a
+KiCad sheet carries. ``chiplet_format_io.footprint_ids`` (reader release
+1.17.0) builds the footprint ids a sheet names, ``chiplet_dies:<cell>`` and
+``chiplet_carrier:EXT_PAD_<um>um``, and refuses a cell name that a KiCad 9
+footprint name cannot hold, such as one with ``%``, ``$``, ``/`` or
+whitespace. ``chiplet_format_io.sheet_names`` (reader release 1.21.0) holds
+the rule for net, pin and pad names on a sheet: a plain first character, then
+plain characters and ``[N]`` digit subscripts. A bus-style name such as
+``IO[0].pad`` therefore reads back from a sheet as itself, while a range such
+as ``B[0..3]`` is refused.
+
 The output is semantically equivalent to, but not byte-identical to, what the
 GPL host tools write. The KiCad fork exporter and the KiCad plugin writer are
 locked to each other by a byte-exact parity gate; the reference library is an
@@ -482,6 +634,8 @@ it by putting ``vendor/`` on ``sys.path``. The vendored copy is
 |vendored-reader-state|. Its ``format_version`` floor is |vendored-reader-formats|:
 the ADK tools read a file of that major at or below the floor silently, a
 higher minor of the same major with a warning, and refuse any other major.
+They read assemblies only, so they refuse a source document. The vendored copy
+is the reader module alone, without the helper modules.
 ``chiplet2dbx`` imports it and re-exports
 ``load_chiplet``; ``pads_vs_pillars`` imports ``chiplet2dbx`` first so that the
 vendored package is on the path, then imports the library itself, so that there

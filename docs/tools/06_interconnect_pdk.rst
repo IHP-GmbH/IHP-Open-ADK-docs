@@ -7,7 +7,8 @@ The interconnect PDK owns the **post-fabrication** elements that join a chiplet
 to an interposer: Cu pillars, solder bumps and microbumps. It is a separate
 repository from the interposer PDK, and that separation is the point of it.
 
-Repository: |interconnect-repo|. Apache-2.0, version 0.1.0.
+Repository: |interconnect-repo|. Apache-2.0. The pinned version is in the
+version table on :doc:`/tools/07_adk_tools_image`.
 
 .. warning::
    IHP-Interconnect-IntM4TM2 is a |current-status|. The ``vendorx_microbump``

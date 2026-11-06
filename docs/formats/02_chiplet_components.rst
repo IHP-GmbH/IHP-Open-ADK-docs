@@ -268,8 +268,10 @@ interfaces
 ~~~~~~~~~~
 
 A list of typed die-to-die and bond interfaces. Each entry needs an ``id`` and
-a ``type``, and the type is checked against a closed vocabulary:
-``micro_bump``, ``copper_pillar``, ``tsv``, ``wire_bond``.
+a ``type``. The type comes from a closed vocabulary: ``micro_bump``,
+``copper_pillar``, ``tsv``, ``wire_bond`` and, from format ``"1.1"``,
+``solder_bump``. A file that uses ``solder_bump`` is stamped ``"1.1"``; one
+stamped ``"1.0"`` that uses it is refused.
 
 .. code-block:: yaml
 
@@ -280,9 +282,12 @@ a ``type``, and the type is checked against a closed vocabulary:
         to:   {component: interposer, surface: top, port_layer: Metal5}
         physical: {pitch: 45.0, diameter: 25.0, height: 24.0}
 
-``from``, ``to`` and ``physical`` are optional. The C++ reference validator
-rejects an unknown ``type``; the Python reference validator does not check the
-vocabulary and will accept one.
+``from``, ``to`` and ``physical`` are optional. The vocabulary binds writers,
+and the schema enforces it. Both reference readers carry a type outside it as
+the string the file wrote and report it as a warning rather than refusing the
+file; a consumer that cannot act on that type refuses the interface. Each
+reader exports the list for that purpose (``KNOWN_INTERFACE_TYPES`` in
+Python, ``kKnownInterfaceTypes`` in C++).
 
 netlist
 ~~~~~~~
