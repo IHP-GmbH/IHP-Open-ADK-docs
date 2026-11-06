@@ -178,7 +178,6 @@ Step 0: open what is already there
 
 From the host, using the launcher in the ADK-Tools checkout:
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet; "$ADK_TOOLS_ROOT/run.sh" kicad example/kicad/two_die_interposer.kicad_pro
 
 .. code-block:: bash
 
@@ -256,7 +255,6 @@ Normally this is the Chiplet Export plugin inside pcbnew, with its output
 directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
 the same export the image build runs, is:
 
-.. RUN-ON-IMAGE: /opt/adk-tools/venv/bin/python3 /opt/adk-tools/chiplet_kicad_plugin/plugins/chiplet_export/tests/regenerate_wirebond_demo.py --board example/kicad/two_die_interposer.kicad_pcb --output-dir example/outputs
 
 .. code-block:: bash
 
@@ -339,7 +337,6 @@ carrying the 3Dblox commands. See :doc:`/flow/06_verification_stages`.
 Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. RUN-ON-IMAGE: adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 .. code-block:: bash
 

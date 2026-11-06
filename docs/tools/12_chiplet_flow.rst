@@ -82,7 +82,6 @@ Your die project is a LibreLane project whose configuration
 ``meta.flow: Chiplet``. Ask first what a build would be, which starts nothing,
 then build it and emit the ready die:
 
-.. RUN-ON-IMAGE: chiplet-die-flow build-die --instance <die> --technology sg13g2 --run-dir <die_project> --plan
 .. code-block:: bash
 
     chiplet-die-flow build-die --instance <die> --technology sg13g2 \
@@ -109,7 +108,6 @@ LibreLane ``Classic`` flow fails there at its Magic stream-out. The
 
 A LibreLane run you already have becomes a ready die in two steps:
 
-.. RUN-ON-IMAGE: PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow die-view --config <config.yaml> --run-dir <run> -o <view.json> && PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow emit-ready-die --view <view.json> --run-dir <run> --instance <die> --opening-purpose aperture --output <ready_die>
 .. code-block:: bash
 
     PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow die-view \
@@ -169,7 +167,6 @@ packaging-flow's job: it starts ``chiplet-die-flow build-die`` as a process
 for each die a run builds. ``run``, ``resume``, ``status`` and ``verify`` here
 print one line naming packaging-flow and exit 1. Output from version 0.1.0:
 
-.. RUN-ON-IMAGE: chiplet-die-flow run; echo "exit=$?"
 .. code-block:: text
 
     chiplet-die-flow run: runs are packaging-flow's; use packaging-flow run

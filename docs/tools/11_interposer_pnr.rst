@@ -74,7 +74,6 @@ so the run's records stay as they are. The run itself records the exact
 command line of every step in its manifest, which is the one to read when a
 result differs.
 
-.. RUN-ON-IMAGE: mkdir -p /tmp/pnr && PINS="--pins U1=$EX/inputs/dies/CF_DRIVER_LS/pins.json --pins U2=$EX/inputs/dies/CF_ECHO_CX_BONDPAD/pins.json" && interposer-pnr place-check --chiplet $WD/design.chiplet $PINS --out /tmp/pnr/placement.json && interposer-pnr bumps --chiplet $WD/design.chiplet $PINS --out /tmp/pnr/bumps.json && interposer-pnr route --chiplet $WD/design.chiplet --tech ihp_sg13g2_intm4tm2_rdl2 --bumps /tmp/pnr/bumps.json --work-dir /tmp/pnr/work --out /tmp/pnr/traces.json --report /tmp/pnr/route.json && interposer-pnr export --traces /tmp/pnr/traces.json --tech ihp_sg13g2_intm4tm2_rdl2 --out /tmp/pnr/design.draft.kicad_pcb --report /tmp/pnr/export.json && interposer-pnr report --placement /tmp/pnr/placement.json --bumps /tmp/pnr/bumps.json --route /tmp/pnr/route.json --export /tmp/pnr/export.json --out /tmp/pnr/run.json; echo "exit=$?"
 .. code-block:: bash
 
     mkdir -p /tmp/pnr

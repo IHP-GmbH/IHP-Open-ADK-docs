@@ -16,7 +16,6 @@ prerequisites in full.
 1. Build the image
 ------------------
 
-.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git "$ADK_TOOLS_ROOT"; cd "$ADK_TOOLS_ROOT"; ./stage-sources.sh --check && ./stage-die-views.sh --check; nix build .#openroad .#librelane .#librelane-python .#sg13g2-pdk .#cosim-devshell .#mixsim-ngspice .#mixsim-iverilog .#sg13g2-osdi .#gtkwave .#gaw .#xschem .#vams-devshell; ./build.sh; export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
 
 .. code-block:: bash
 
@@ -52,7 +51,6 @@ assembly DRC passes.
 two-die test design from the clone into your work directory once, then run the
 test:
 
-.. RUN-ON-IMAGE: mkdir -p ~/adk-work && cp -r "$ADK_TOOLS_ROOT/examples/two_die_interposer" ~/adk-work/example; "$ADK_TOOLS_ROOT/run.sh" adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 .. code-block:: bash
 
@@ -69,7 +67,6 @@ That single line is the evidence that the toolchain works on your machine.
 3. Look at the assembly
 -----------------------
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
 
 .. code-block:: bash
 
@@ -85,7 +82,6 @@ The same design opens in the board tool with
 4. Start your own design
 ------------------------
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" adk-new-project my_design
 
 .. code-block:: bash
 

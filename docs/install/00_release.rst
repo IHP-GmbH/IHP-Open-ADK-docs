@@ -54,7 +54,6 @@ checkout is the release you run, at the release tag ``v2026.11``; the
 ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
 clone, or in the directory ``STAGE_SIBLINGS`` names.
 
-.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git "$ADK_TOOLS_ROOT"; cd "$ADK_TOOLS_ROOT"; ./stage-sources.sh --check && ./stage-die-views.sh --check
 
 .. code-block:: bash
 
@@ -80,7 +79,6 @@ Build it as :doc:`/install/01_container` describes, from ``nix build`` to
 ``./build.sh``, in the clone and with the same ``STAGE_DIE_VIEWS_DIR``. Then
 read the ID of the image you built:
 
-.. RUN-ON-IMAGE: export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
 
 .. code-block:: bash
 
@@ -101,7 +99,6 @@ it made (the work directory, the image, the display, the caps and the release
 lock it held the image to). Your build is not the reference image, so one of
 those lines names both IDs:
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" --examples "$ADK_EXAMPLES_ROOT" true
 
 .. code-block:: text
 

@@ -528,7 +528,6 @@ interpreter that can ``import pcbnew``, which means the KiCad fork's
 interpreter; the image's command already does. The worker Python for the GDS
 step is resolved separately through the discovery chain.
 
-.. RUN-ON-IMAGE: chiplet-export --board /path/to/board.kicad_pcb --output-dir /path/to/outputs
 
 .. code-block:: bash
 
@@ -567,7 +566,6 @@ override the corresponding options.
 A board ``interposer-pnr export`` drew against a sheet takes its export report,
 exactly as the dialog's field does (:ref:`chiplet_export_report`):
 
-.. RUN-ON-IMAGE: chiplet-export --board pnr/<system>.draft.kicad_pcb --system-chiplet design.chiplet --export-report pnr/export.json --output-dir out/export
 
 .. code-block:: bash
 

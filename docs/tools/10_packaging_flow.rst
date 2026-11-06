@@ -59,7 +59,6 @@ Checking the input
 
 ``validate`` reads a ``system.chiplet`` without running anything:
 
-.. RUN-ON-IMAGE: packaging-flow validate $EX/system.chiplet
 .. code-block:: bash
 
     packaging-flow validate $EX/system.chiplet
@@ -72,7 +71,6 @@ the file. A refusing line here is one a run would stop on.
 A run
 -----
 
-.. RUN-ON-IMAGE: packaging-flow run $EX/system.chiplet --tier full --view-store "$ADK_DIE_VIEWS"
 .. code-block:: bash
 
     packaging-flow run $EX/system.chiplet --tier full --view-store "$ADK_DIE_VIEWS"
@@ -94,7 +92,7 @@ The run is a fixed list of stages. The ones you see in ``status`` include
 ``spec``, ``elaborate``, ``terminals``, ``admit:<instance>`` (or ``build`` and
 ``emit`` for a die built in the run), ``place-check``, ``bumps``, ``route``,
 ``export``, ``gds``, ``drc``, ``terminal-map``, ``assembly-lvs``,
-``package-drc``, ``signoff`` and ``verdict``, with a ``halt:<gate>`` row at
+``package-drc``, ``signoff-check`` and ``verdict``, with a ``halt:<gate>`` row at
 each checkpoint. A design finding before a checkpoint does not stop the run:
 it is recorded on its row, and the run is not green.
 
@@ -110,7 +108,6 @@ signature while what it signed is unchanged: ``map`` names each gate it reused
 and the run that signed it, and the run halts at the first gate whose signature
 no longer holds.
 
-.. RUN-ON-IMAGE: packaging-flow map $RUN; packaging-flow verify-run $RUN --gate die:U1; packaging-flow verify-sign $RUN --gate die:U1; packaging-flow resume $RUN
 .. code-block:: bash
 
     packaging-flow map $RUN
@@ -136,7 +133,6 @@ Before the interposer signature, look at the board. At that halt the run
 copies it under ``$RUN/review/board/``, and ``verify-open`` opens a result by
 its id. ``review-copy <board> <folder>`` makes another copy wherever you name.
 
-.. RUN-ON-IMAGE: packaging-flow verify-open $RUN board interposer.board
 .. code-block:: bash
 
     packaging-flow verify-open $RUN board interposer.board
@@ -151,7 +147,6 @@ The verdict
 
 After the last signature, ``resume`` writes the verdict. Then:
 
-.. RUN-ON-IMAGE: packaging-flow status $RUN; packaging-flow verify $WD/manifest.json; packaging-flow review-levels $WD $RUN/review
 .. code-block:: bash
 
     packaging-flow status $RUN
@@ -203,7 +198,6 @@ express as a resolved input reads ``INCONCLUSIVE`` and names the cause.
 Out of a run, ``lvs-bundle`` and ``lvs-verify`` do the same on a completed
 run's copies:
 
-.. RUN-ON-IMAGE: packaging-flow lvs-bundle $WD --output /tmp/lvs; packaging-flow lvs-verify /tmp/lvs
 .. code-block:: bash
 
     packaging-flow lvs-bundle $WD --output /tmp/lvs
@@ -237,7 +231,6 @@ command and when it applies. ``tasks --vscode --out <folder>`` writes them as
 ``.vscode/tasks.json`` under that folder, and refuses to overwrite a different
 one. Output from version 0.1.0:
 
-.. RUN-ON-IMAGE: packaging-flow tasks
 .. code-block:: text
 
     run: packaging-flow run {system} (always, on the system file)

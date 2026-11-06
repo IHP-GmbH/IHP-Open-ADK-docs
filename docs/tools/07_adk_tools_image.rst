@@ -323,7 +323,6 @@ Schema version of each sidecar
     ``format_version`` or schema version of the file involved when the problem
     is about a file rather than a tool.
 
-    .. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" adk-tools; "$ADK_TOOLS_ROOT/run.sh" cat /opt/adk-tools/manifest.json
 
     .. code-block:: bash
 
@@ -342,7 +341,6 @@ Updating a clone
 
 To run a newer release, check out its tag and build it.
 
-.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; cd "$ADK_TOOLS_ROOT"; git fetch --tags; git checkout v2026.11; git submodule update --init --recursive; ./stage-sources.sh --check && ./stage-die-views.sh --check; ./build.sh
 
 A release clone sits on its tag, not on a branch, so fetch the tags and check
 out the new one rather than pulling:
@@ -419,7 +417,6 @@ For iterating on a Python tool, do not rebuild at all. Bind-mount your working
 checkout over the baked-in copy, which keeps every other tool, the venv and the
 PDK data exactly as the image pinned them:
 
-.. RUN-ON-IMAGE: docker run --rm -it -v /path/to/Chiplets-KiCad-Plugin:/opt/adk-tools/chiplet_kicad_plugin -v ~/adk-work:/work -w /work --user "$(id -u):$(id -g)" -e HOME=/tmp "$ADK_TOOLS_IMAGE"
 
 .. code-block:: bash
 

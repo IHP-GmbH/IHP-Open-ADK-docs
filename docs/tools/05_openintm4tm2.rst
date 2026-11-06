@@ -318,7 +318,6 @@ against on this stack), or the space from design metal to the ring.
 ``--require_sealring`` turns on the presence rules, which need the
 ``sealring`` deck in the same run:
 
-.. RUN-ON-IMAGE: (in a writable scratch dir holding the sealring.gds from the sealring.py example below) /opt/adk-tools/venv/bin/python3 "$INTERPOSER_PDK_ROOT/libs.tech/klayout/tech/drc/run_drc.py" --path sealring.gds --deck sealring --require_sealring ; expect no violations
 
 .. code-block:: bash
 
@@ -550,7 +549,6 @@ Adding the seal ring headlessly
 ``input`` it adds the ring to the only top cell of that layout; without it, it
 writes a layout whose single ``sealring_top`` cell holds only the ring.
 
-.. RUN-ON-IMAGE: (in a writable scratch dir) klayout -zz -rx -r "$INTERPOSER_PDK_ROOT/libs.tech/klayout/tech/scripts/sealring.py" -rd length=1000 -rd width=800 -rd output=sealring.gds
 
 .. code-block:: bash
 

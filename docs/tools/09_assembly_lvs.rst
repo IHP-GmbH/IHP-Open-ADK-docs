@@ -105,7 +105,6 @@ The engine carries a minimal input, one die on a carrier with one net. Inside
 the image, copy the input to a folder of your own, generate its two layouts
 there, and verify it:
 
-.. RUN-ON-IMAGE: mkdir -p /tmp/alvs-minimal && cp /opt/adk-tools/staging/assembly-lvs/examples/minimal/resolved.yaml /tmp/alvs-minimal/ && /opt/adk-tools/venv/bin/python3 /opt/adk-tools/staging/assembly-lvs/examples/minimal/make_layouts.py --out /tmp/alvs-minimal && assembly-lvs verify /tmp/alvs-minimal/resolved.yaml; echo $?
 
 .. code-block:: bash
 
@@ -126,7 +125,6 @@ there, and verify it:
 The folder now holds ``resolved.lvs.json`` and ``resolved.lvs.lvsdb`` beside
 the input. Move the die off its landing and run it again:
 
-.. RUN-ON-IMAGE: sed -i 's/position_um: \[50, 50\]/position_um: [150, 50]/' /tmp/alvs-minimal/resolved.yaml && assembly-lvs verify /tmp/alvs-minimal/resolved.yaml; echo $?
 
 .. code-block:: bash
 

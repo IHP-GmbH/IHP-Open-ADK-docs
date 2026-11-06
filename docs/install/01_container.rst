@@ -56,7 +56,6 @@ Build the image
 
 The ADK-Tools README, section Build, gives the whole sequence:
 
-.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git "$ADK_TOOLS_ROOT"; cd "$ADK_TOOLS_ROOT"; ./stage-sources.sh --check && ./stage-die-views.sh --check; nix build .#openroad .#librelane .#librelane-python .#sg13g2-pdk .#cosim-devshell .#mixsim-ngspice .#mixsim-iverilog .#sg13g2-osdi .#gtkwave .#gaw .#xschem .#vams-devshell; ./build.sh; export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
 
 .. code-block:: bash
 
@@ -147,7 +146,6 @@ Run the image
 
 With ``ADK_TOOLS_IMAGE`` set to the ID of your build:
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" true; "$ADK_TOOLS_ROOT/run.sh" --examples "$ADK_EXAMPLES_ROOT" true; "$ADK_TOOLS_ROOT/run.sh" bash < /dev/null
 
 .. code-block:: bash
 
@@ -247,7 +245,6 @@ Chiplet Studio, gds2kicad and KLayout a stable context.
 If you do have a GPU and want hardware acceleration, pass the device through
 and opt back in:
 
-.. RUN-ON-IMAGE: docker run --rm -it --device /dev/dri -e LIBGL_ALWAYS_SOFTWARE=0 -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v ~/adk-work:/work -w /work --user "$(id -u):$(id -g)" -e HOME=/tmp --memory 8g --memory-swap 8g --cpus 4 "$ADK_TOOLS_IMAGE"
 
 .. code-block:: bash
 
@@ -295,7 +292,6 @@ overwritten.
 Scaffold a project
 ------------------
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" adk-new-project my_design
 
 .. code-block:: bash
 
@@ -343,7 +339,6 @@ List the tools
 Inside the container, ``adk-tools`` prints the available commands with the
 pinned revision of each, the data roots, and the layout of ``/work``:
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" adk-tools
 
 .. code-block:: bash
 
@@ -422,7 +417,6 @@ like the other GUIs.
 The interposer KLayout technology is pre-registered, so exported interposer and
 assembly GDS files open with named, coloured layers:
 
-.. RUN-ON-IMAGE (after the self test below has copied example/): "$ADK_TOOLS_ROOT/run.sh" klayout -n intm4tm2 example/outputs/layout/two_die_interposer_interposer.gds
 
 .. code-block:: bash
 
@@ -438,7 +432,6 @@ carries no demo. The board it is written for is the two-die test design in the
 clone's ``examples/two_die_interposer``. Copy it into the work directory once,
 on the host, then run the test:
 
-.. RUN-ON-IMAGE: mkdir -p ~/adk-work && cp -r "$ADK_TOOLS_ROOT/examples/two_die_interposer" ~/adk-work/example; "$ADK_TOOLS_ROOT/run.sh" adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 .. code-block:: bash
 
