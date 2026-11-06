@@ -335,11 +335,11 @@ ten informational results across ten checks over two devices, with ``passed``
 true.
 
 ``reports/two_die_interposer_assembly_drc.lyrdb`` records the assembly DRC. It
-carries thirteen rule categories and no violation items:
+carries fourteen rule categories and no violation items:
 
 .. code-block:: text
 
-    ASM.a  ASM.b  ASM.e  ASM.f
+    ASM.a  ASM.b  ASM.e  ASM.f  ASM.g
     IXN.b.cupillar_opt1        IXN.e.cupillar_opt1
     IXN.b.vendorx_microbump    IXN.e.vendorx_microbump
     IXN.x.cupillar_opt1.vendorx_microbump
@@ -352,7 +352,9 @@ being checked at their own numbers; ``IXN.x`` is the conservative cross-method
 spacing between the two bump fields, at the larger of the two spacings; and the
 ``unclaimed`` categories cover any attachment pad that falls under no die's
 boundary, checked with the assembly-level adapter's numbers, among themselves and
-against each method's pads.
+against each method's pads. ``ASM.g`` reads ``Min. die edge to wire-bond pad
+distance is 200.0 um``, not ``not applicable``: the interposer adapter declares
+wire-bond pads, so the rule ran on them and found none closer than 200 um to a die.
 
 Reproducibility
 ---------------

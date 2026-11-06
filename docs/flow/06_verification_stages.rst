@@ -58,15 +58,17 @@ Stage 1: KiCad design-time rules
 footprints.
 
 The ADK generates a DRU section from the same rule registry the KLayout deck
-reads, and you paste it into the project's ``.kicad_dru``:
+reads, and you append it to the project's ``.kicad_dru``, below its
+``(version 1)`` line. The section has no header of its own, and KiCad ignores
+a rules file without one without saying so:
 
 .. code-block:: bash
 
     python kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
-        --out assembly.kicad_dru
+        --out adk_section.txt
 
-**What it proves.** That no two chiplet footprints are closer than the assembly
+**What it proves.** That no two die footprints are closer than the assembly
 spacing rule, enforced as a ``courtyard_clearance`` constraint, plus overlap,
 which KiCad's native courtyard collision check already covers. It proves this
 at the moment of the drag, with no export and no external tool run.
@@ -165,7 +167,9 @@ supplied.
 **What it proves.** That the geometry actually present in the assembly layout
 satisfies the assembly rules: chiplet boundaries do not overlap and keep their
 spacing, no degenerate boundary polygon slipped through, attachment geometry
-that overlaps a chiplet lies fully inside it, and the attachment pads meet the
+that overlaps a chiplet lies fully inside it, no wire-bond pad on the carrier
+sits too close to a die (when the interposer adapter declares its pads), and
+the attachment pads meet the
 pitch and spacing of the method that owns them. With a per-method file the
 numbers are scoped per die group instead of assembly-wide, so a fine-pitch
 vendor method is not checked against a coarse Cu-pillar pitch.

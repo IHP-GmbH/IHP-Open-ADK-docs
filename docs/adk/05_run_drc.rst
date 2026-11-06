@@ -416,6 +416,30 @@ to their identifying phrase.
     The adapter was evaluated but did not define the required abstract input.
     See :doc:`/adk/02_adapter_contract`.
 
+``Interposer adapter (<path>) declares 'wire_bond_pad_input' as something other than a lambda taking a layout source.``
+    ``wire_bond_pad_input`` must be a lambda over a layout source, reading its
+    layers from that source (``src.polygons(...)``). See
+    :doc:`/adk/02_adapter_contract`.
+
+``Interposer adapter (<path>) 'wire_bond_pad_input' returned <class>, not a layer.``
+    The lambda ran but did not return a DRC layer. Return the result of
+    ``src.polygons(...)`` or a layer built from it.
+
+``ASM.g: boundary manifest record <N> names no cell and no instance or no source_die ...``
+    The deck cannot name that die's cell, so it cannot read the carrier pads
+    apart from it. Regenerate the manifest with a current producer.
+
+``ASM.g: boundary manifest record <instance> names die cell "<name>", which is not in the layout ...``
+    The die cell name the deck derived from the manifest is not in the GDS.
+    The name is the record's ``cell``, otherwise ``<instance>_<source_die>``,
+    with ``_flipped`` when the record mirrors. A hand-built layout must name its
+    die cells that way; a mismatch usually means the manifest belongs to a
+    different layout. See :doc:`/adk/03_asm_rules`.
+
+``ADK rule parameters have no 'ASM_g'``
+    ``config/rule_params.json`` predates ASM.g. Use the ADK's own file, or add
+    the key.
+
 ``Interconnect adapter (<path>) must set interconnect_rules['IXN_pitch'].``
     An interconnect adapter is a parameter pack and must set all three of
     ``IXN_spacing``, ``IXN_pitch`` and ``IXN_pad_size``. The message names the

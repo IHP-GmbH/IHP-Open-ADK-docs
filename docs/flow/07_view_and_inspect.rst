@@ -173,7 +173,7 @@ description reads ``<rule> : not applicable: <reason>``: that rule did not run,
 as ``ASM.g`` on an interposer that declares no wire-bond pads. So the category
 list is a record of *what was checked*; read it before concluding that a rule you
 expected was actually evaluated. The reference design's committed report carries
-thirteen rule categories and no items.
+fourteen rule categories and no items.
 
 Viewing chiplet boundaries
 --------------------------

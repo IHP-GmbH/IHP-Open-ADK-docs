@@ -479,8 +479,10 @@ in that gate.
 
 The ADK vendors the Python library at ``vendor/chiplet_format_io/`` and reaches
 it by putting ``vendor/`` on ``sys.path``. The vendored copy is
-|vendored-reader-state|; that copy knows format 1.0 only, so the ADK tools
-read a ``"1.1"`` file with a warning. ``chiplet2dbx`` imports it and re-exports
+|vendored-reader-state|. Its ``format_version`` floor is |vendored-reader-formats|:
+the ADK tools read a file of that major at or below the floor silently, a
+higher minor of the same major with a warning, and refuse any other major.
+``chiplet2dbx`` imports it and re-exports
 ``load_chiplet``; ``pads_vs_pillars`` imports ``chiplet2dbx`` first so that the
 vendored package is on the path, then imports the library itself, so that there
 is one copy on the path and one import home rather than two.

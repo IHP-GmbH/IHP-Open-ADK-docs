@@ -170,16 +170,17 @@ apply for anything but a plain literal, so it refuses rather than guesses:
   other overrides before it);
 * a computed value, for example ``drc_rules['ASM_b'] = base * 1.5``, exponent
   or underscore digits, a trailing ``;``, ``store`` or ``merge!``, or a
-  continued line is refused, and so is a comment line that names a rule
-  table;
+  continued line is refused, and so is a comment that names a rule table,
+  on its own line or after an override;
 * an override targeting a key that is not in ``config/rule_params.json``, or a
   negative value, is refused.
 
 Placement reads no adapter: interposer-pnr legalizes to ``ASM_b`` and the
 packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
-from ``config/rule_params.json``. So the packaging flow refuses a run whose
-adapter overrides ``ASM_b`` or ``ASM_g``, since the deck would check a
-different value than placement used. The ADK's adapter README lists the exact
+from ``config/rule_params.json``. So a packaging-flow run that dispatches the
+deck refuses an interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a
+value other than the registry's, since the deck would check a different value
+than placement used. The ADK's adapter README lists the exact
 override form. See :doc:`/adk/06_kicad_dru`.
 
 What interposer adapters must NOT do

@@ -45,7 +45,9 @@ The assembly-placement parameter registry: the numbers the ``ASM`` rules use.
 dictionary, which the interposer adapter may then override and which
 ``8_1_assembly.drc`` reads. ``kicad/dru/generate_assembly_dru.py`` loads the same
 file as its defaults. Both consumers apply adapter overrides, which is what makes
-the KLayout and KiCad checks agree. See :doc:`/adk/02_adapter_contract`.
+the KLayout and KiCad checks agree. Placement reads it too, without overrides:
+interposer-pnr legalizes to ``ASM_b`` and the packaging flow keeps wire-bond pads
+``ASM_g`` from each die. See :doc:`/adk/02_adapter_contract`.
 
 .. csv-table:: Assembly rule parameters
     :file: tables/asm_params.csv

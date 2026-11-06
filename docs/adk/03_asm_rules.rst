@@ -236,15 +236,20 @@ not interposer pads. So the adapter declares ``wire_bond_pad_input`` as a
 lambda over a layout source, and ``klayout/drc/rule_decks/wire_bond_pads.drc``
 calls it once, on a source with every die cell the boundary manifest names
 pruned from the hierarchy. Each die cell is matched by its exact name, never by
-a pattern. The deck refuses the run when a named die cell is not in the
-layout, since reading past an unknown die would read its pads. Excluding by
+a pattern. The name is the manifest record's ``cell`` when it carries one,
+otherwise ``<instance>_<source_die>``, with ``_flipped`` appended when the
+record's transform sets ``mirror_x``: the names the exporter gives die cells. A
+hand-built GDS must name its die cells the same way. The deck refuses the run
+when a named die cell is not in the layout, since reading past an unknown die
+would read its pads. Excluding by
 position instead would drop a carrier pad drawn under a die, which is the worst
 case this rule exists for, so a pad under a die is read and flagged.
 
 .. important::
 
     An interposer adapter that declares no ``wire_bond_pad_input`` runs ASM.g as
-    **not applicable**, not as passed. The report carries an ``ASM.g`` category
+    **not applicable**, not as passed, and so does a run in legacy
+    ``exchange0`` mode, which has no boundary manifest to name the die cells. The report carries an ``ASM.g`` category
     with no item and the description ``ASM.g : not applicable: the interposer
     adapter declares no wire-bond pads``, and ``run_drc.py`` lists it as not
     checked, apart from the rules that passed. A reader of the report must not
@@ -342,9 +347,10 @@ lists the exact form. See :doc:`/adk/06_kicad_dru`.
 Placement does not read adapters. interposer-pnr legalizes to ``ASM_b`` and the
 packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
 from ``config/rule_params.json``. So that placement and the deck never work to
-two different numbers, the packaging flow refuses a run whose interposer
-adapter overrides ``ASM_b`` or ``ASM_g``, and says the deck would check a
-different value than placement used.
+two different numbers, a packaging-flow run that dispatches the deck refuses an
+interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
+the registry's, and says the deck would check a different value than placement
+used.
 
 The shipped ``intm4tm2`` adapter overrides no value; an IntM4TM2 run therefore
 checks the registry defaults.

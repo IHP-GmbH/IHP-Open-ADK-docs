@@ -56,9 +56,10 @@ IXN_RULES = {
     "IXN.unassociated": ("", "", "", "pads outside every method region, no adapter"),
 }
 
+# One call on one line. The rule id never contains a quote, so the match can
+# not run on into the next call when this one passes a variable instead.
 OUTPUT_CALL = re.compile(
-    r"""\.output\(\s*(['"])(?P<rid>.+?)\1\s*,\s*(['"])(?P<desc>.+?)\3\s*\)""",
-    re.DOTALL,
+    r"""\.output\(\s*(['"])(?P<rid>[^'"\n]+)\1\s*,\s*(['"])(?P<desc>[^\n]+?)\3\s*\)""",
 )
 
 # A message the deck builds once and outputs under a variable, as ASM.g does:
@@ -138,13 +139,19 @@ def clean_description(rule_id, description, values):
 def parse_deck(path, values):
     """Return {rule_id: description} for every output() call in a rule deck."""
     text = read_text(path)
-    messages = {m.group("var"): m.group("desc") for m in MESSAGE_ASSIGNMENT.finditer(text)}
+    messages = {}
+    for m in MESSAGE_ASSIGNMENT.finditer(text):
+        messages.setdefault(m.group("var"), set()).add(m.group("desc"))
     outputs = [(m.group("rid"), m.group("desc")) for m in OUTPUT_CALL.finditer(text)]
     for match in OUTPUT_VARIABLE.finditer(text):
         if match.group("var") not in messages:
             fail("{} outputs {} under {}, which is never assigned a message".format(
                 path, match.group("rid"), match.group("var")))
-        outputs.append((match.group("rid"), messages[match.group("var")]))
+        assigned = messages[match.group("var")]
+        if len(assigned) != 1:
+            fail("{} assigns {} more than one message: {}".format(
+                path, match.group("var"), sorted(assigned)))
+        outputs.append((match.group("rid"), next(iter(assigned))))
     found = {}
     for raw_id, raw_description in outputs:
         rule_id = normalise(raw_id)
@@ -189,8 +196,7 @@ def main():
     # The deck interpolates local Ruby variables into its messages, not the
     # registry key names, so map both spellings to the shipped default.
     asm_interp = dict(asm_values)
-    asm_interp.update({"asm_b_value": asm_values["ASM_b"], "asm_e_value": asm_values["ASM_e"],
-                       "asm_g_value": asm_values["ASM_g"]})
+    asm_interp.update({key.lower() + "_value": value for key, value in asm_values.items()})
     ixn_interp = dict(ixn_values)
     ixn_interp.update(
         {
@@ -247,15 +253,14 @@ def main():
     write_csv(os.path.join(DOCS_DIR, "adk", "tables", "ixn_rules.csv"), ixn_rows)
 
     # Parameter registry tables, one row per tunable value.
+    units = {param: unit for param, unit, _ in ASM_RULES.values() if param}
     param_rows = []
     for key in sorted(asm_values):
+        if key not in units:
+            fail("rule_params.json has {}, which no rule in this generator reads. "
+                 "Add the rule to ASM_RULES.".format(key))
         param_rows.append(
-            [
-                key,
-                rule_params["rule_descriptions"][key],
-                fmt(asm_values[key]),
-                "um2" if key.endswith("_e") else "um",
-            ]
+            [key, rule_params["rule_descriptions"][key], fmt(asm_values[key]), units[key]]
         )
     write_csv(os.path.join(DOCS_DIR, "adk", "tables", "asm_params.csv"), param_rows)
 

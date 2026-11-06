@@ -144,9 +144,7 @@ provenance comment naming the adapter and restating that ``IXN.b`` and
     #     intra-footprint bump rules with no KiCad courtyard equivalent; they are
     #     enforced post-layout only by the ADK KLayout deck (8_2_interconnect.drc).
 
-With no interconnect adapter the interconnect block is skipped entirely and
-the output is byte-identical to what the generator produced before the
-interconnect axis existed.
+With no interconnect adapter the interconnect block is skipped entirely.
 
 Running the generator
 ---------------------
@@ -187,7 +185,7 @@ execute it. It reads the overrides with the ADK's own parser,
 
 .. code-block:: ruby
 
-    drc_rules['ASM_b'] = 250.0     # interconnect adapters use interconnect_rules[...]
+    drc_rules['ASM_b'] = 250.0     # this interposer's own chiplet spacing
 
 and merges those on top of the JSON defaults. The parser cannot know what the
 deck would apply for anything else, so it refuses rather than guesses:
@@ -200,8 +198,9 @@ deck would apply for anything else, so it refuses rather than guesses:
   skipped.
 - Overrides sit above any other code in the adapter, at most once per name,
   and a line that continues one (led by ``.``, ``&.``, ``&&``, ``||``, ``and``
-  or ``or``) is refused. A comment line that names a rule table is refused
-  anywhere in the file; write a commented-out override without the table name.
+  or ``or``) is refused. A comment that names a rule table is refused
+  anywhere in the file, as a line of its own or after an override; write a
+  commented-out override without the table name.
 - An override key that is not already a known rule is a hard error. A
   lowercased ``asm_b`` would otherwise be silently dropped and the template
   would emit the default, which looks like a working override and is not.
@@ -242,9 +241,12 @@ directories carry no ``__init__.py``), so put the generator's directory on
         interconnect_adapter_name=None,   # interconnect provenance label
     ) -> str
 
-New options arrive as trailing keyword arguments with defaults, so an importer
-written against an older ADK keeps working across releases and its output does
-not change until it opts in.
+New options arrive as trailing keyword arguments with defaults, so a call
+written against an older ADK keeps working. The output does follow the rules:
+ADK 0.3.0 writes the ``ASM.b`` clearance as ``0.2mm`` for die footprints only.
+A custom template passed through ``template_dir`` must change too, since the
+``num`` filter is gone: write a length as ``{{ value | mm }}``, not
+``{{ value | num }}um``.
 
 The supporting entry points are importable too: ``load_defaults(path)`` and
 ``load_interconnect_defaults(path)`` read the registries,
