@@ -235,7 +235,7 @@ Consumer 1: bump maps for the 3Dblox export
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py --chiplet design.chiplet \
+    python3 openroad/chiplet2dbx.py --chiplet design.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
@@ -282,7 +282,7 @@ Consumer 2: pad positions for the alignment check
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py --chiplet design.chiplet \
+    python3 checks/pads_vs_pillars.py --chiplet design.chiplet \
         --pillars build/design_interposer.pillars.json \
         --pins U1=chiplets/die_a.pins.json
 

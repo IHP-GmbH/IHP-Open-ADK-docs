@@ -152,15 +152,15 @@ Running the generator
 .. code-block:: bash
 
     # Defaults from config/rule_params.json, to stdout
-    python kicad/dru/generate_assembly_dru.py
+    python3 kicad/dru/generate_assembly_dru.py
 
     # Merge the interposer adapter's overrides and write the section to a file
-    python kicad/dru/generate_assembly_dru.py \
+    python3 kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
     # Add the interconnect-axis provenance comment
-    python kicad/dru/generate_assembly_dru.py \
+    python3 kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
         --out adk_section.txt

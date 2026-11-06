@@ -33,7 +33,7 @@ explicitly:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
         --interconnect-methods board_complete.ixn_methods.json

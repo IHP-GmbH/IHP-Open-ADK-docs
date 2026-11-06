@@ -189,7 +189,7 @@ From the command line:
 
 .. code-block:: bash
 
-    python klayout/macros/boundaries_to_rdb.py \
+    python3 klayout/macros/boundaries_to_rdb.py \
         outputs/layout/two_die_interposer_complete.gds
 
 Pass the assembly GDS and the sidecar is auto-discovered next to it by the same

@@ -45,7 +45,7 @@ The minimal invocation
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --run_dir /tmp/adk_drc
@@ -66,7 +66,7 @@ Supply an interconnect adapter to add the bump-to-bump pitch and spacing checks:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
@@ -77,7 +77,7 @@ sidecar:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
@@ -197,7 +197,7 @@ behaviour, reading the boundary from that layer instead of from a sidecar.
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path old_design.gds \
         --interposer-adapter intm4tm2 \
         --legacy-exchange0
@@ -347,7 +347,7 @@ A shell wrapper therefore looks like this:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --run_dir "$RUN_DIR"

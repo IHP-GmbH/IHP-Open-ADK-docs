@@ -33,11 +33,11 @@ the runner's module tree). An explicit path always wins:
 .. code-block:: bash
 
     # auto-discovery
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2
 
     # explicit sidecar
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2 \
         --manifest /elsewhere/board_complete.boundaries.json
 

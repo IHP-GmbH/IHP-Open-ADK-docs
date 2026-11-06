@@ -88,12 +88,12 @@ Running the exporter
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet demo.chiplet \
         --out-dir build/3dblox
 
     # Bump-aware export: one pin list per die
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet demo.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/die_a.pins.json \

@@ -198,7 +198,7 @@ Running the check
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py \
+    python3 checks/pads_vs_pillars.py \
         --chiplet demo.chiplet \
         --pillars build/demo_interposer.pillars.json \
         --pins U1=chiplets/die_a.pins.json \

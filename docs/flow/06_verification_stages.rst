@@ -72,7 +72,7 @@ a rules file without one without saying so:
 
 .. code-block:: bash
 
-    python kicad/dru/generate_assembly_dru.py \
+    python3 kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
@@ -106,7 +106,7 @@ any layout file.
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet two_die_interposer.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/metal_test_chiplet.pins.json \
@@ -159,7 +159,7 @@ Stage 3: the KLayout assembly DRC
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path outputs/layout/two_die_interposer_complete.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
@@ -221,7 +221,7 @@ pad source per die.
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py \
+    python3 checks/pads_vs_pillars.py \
         --chiplet outputs/two_die_interposer.chiplet \
         --pillars outputs/layout/two_die_interposer_complete.pillars.json \
         --pins U1=chiplets/metal_test_chiplet.pins.json \
