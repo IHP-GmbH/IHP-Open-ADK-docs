@@ -6,18 +6,24 @@ Reference design
 ``two_die_interposer`` is the worked example of the whole flow: two dies mounted
 face down on an IntM4TM2 interposer, attached by two *different* interconnect
 methods, with wire-bond I/O pads at the interposer edge. It ships in the
-|tools-repo| repository under ``examples/two_die_interposer/`` and is baked into
-the ADK-Tools image at ``/opt/adk-tools/examples/two_die_interposer``. On first
-container start a disposable copy is seeded at ``/work/example``.
+|tools-repo| repository under ``examples/two_die_interposer/``, where it is
+also the test design the image build checks itself against. The runtime image
+does not carry it. Copy it once from your ADK-Tools checkout into the folder
+``run.sh`` mounts at ``/work``, as :doc:`/quickstart` does:
+
+.. code-block:: bash
+
+    mkdir -p ~/adk-work
+    cp -r "$ADK_TOOLS_ROOT/examples/two_die_interposer" ~/adk-work/example
 
 It is also the template ``adk-new-project`` scaffolds, so its directory layout
 is the recommended one for your own designs.
 
 .. tip::
-    Work on the seeded copy under ``/work/example``, not on
-    ``/opt/adk-tools/examples``. The seeded copy is disposable: delete
-    ``~/adk-work/example`` on the host and the next container start reseeds it
-    from the image.
+    The copy, ``/work/example`` inside the container, is yours and disposable:
+    delete ``~/adk-work/example`` on the host and copy it again from the
+    checkout when you want it back. The container starts in ``/work``, so the
+    ``example/`` paths on this page name that copy.
 
 What the demo assembles
 -----------------------
@@ -62,6 +68,7 @@ Directory tree
 
     two_die_interposer/
       README.md
+      carrier_drc_baseline.json              the build's interposer-deck baseline
       chiplets/                              gds2kicad prior-step inputs
         README.md
         Metal_Test.gds                       the full die layout, shared by U1 and U2
@@ -80,6 +87,8 @@ Directory tree
         fp-lib-table
       outputs/                               everything the export writes
         two_die_interposer.chiplet           open this in Chiplet Studio
+        two_die_interposer.chiplet.exportcontent.sha256
+                                             digest for the previous-export guard
         MANIFEST.md                          index of the products
         layout/
           two_die_interposer_interposer.gds
@@ -95,14 +104,14 @@ Directory tree
 Four more paths appear once you regenerate, and are deliberately not tracked:
 ``outputs/two_die_interposer.hyp``, ``outputs/layout/two_die_interposer_complete.gds``,
 ``outputs/reports/assembly_drc/`` (the DRC scratch directory) and
-``outputs/logs/``. Everything else is committed on purpose, so a fresh clone
+``outputs/logs/``. Everything else is committed on purpose, so a fresh copy
 opens in Chiplet Studio and carries its DRC results without a rebuild.
 
 .. note::
     To open ``two_die_interposer_complete.gds`` in KLayout, or run the assembly
     DRC yourself, regenerate the outputs first. The ``*_complete.*.json``
     sidecars *are* shipped, so the boundary and pillar manifests can be read
-    straight from a clone.
+    straight from a fresh copy.
 
 What each file is
 -----------------
@@ -125,8 +134,9 @@ reviewed symbol-layout fields ``side`` and ``type``, which cannot be re-extracte
 from a footprint. That is why the file exists rather than being derived.
 
 ``metal_test_chiplet.g2kproj`` is a saved gds-to-kicad session bundling the
-inputs, the layer selections and the embedded pin list. It stores
-image-absolute paths, so it is meant for use inside the container.
+inputs, the layer selections and the embedded pin list. Its two GDS paths are
+relative to the session file, so a copy opens wherever it sits, but its layer
+properties path is the image's, so it is meant for use inside the container.
 
 ``kicad/``
 ~~~~~~~~~~
@@ -163,10 +173,12 @@ Step 0: open what is already there
 
 From the host, using the launcher in the ADK-Tools checkout:
 
+.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet; "$ADK_TOOLS_ROOT/run.sh" kicad example/kicad/two_die_interposer.kicad_pro
+
 .. code-block:: bash
 
-    ./run.sh chiplet-studio example/outputs/two_die_interposer.chiplet
-    ./run.sh kicad          example/kicad/two_die_interposer.kicad_pro
+    "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
+    "$ADK_TOOLS_ROOT/run.sh" kicad          example/kicad/two_die_interposer.kicad_pro
 
 Or from a shell inside the container, where both tools are on the path. Expect
 Chiplet Studio to show the interposer slab with two dies standing off it on
@@ -228,20 +240,25 @@ Step 3: export and generate the GDS
 
 Normally this is the Chiplet Export plugin inside pcbnew, with its output
 directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
-which is exactly what the image build runs, is:
+the same export the image build runs, is:
+
+.. RUN-ON-IMAGE: /opt/adk-tools/venv/bin/python3 /opt/adk-tools/chiplet_kicad_plugin/plugins/chiplet_export/tests/regenerate_wirebond_demo.py --board example/kicad/two_die_interposer.kicad_pcb --output-dir example/outputs
 
 .. code-block:: bash
 
-    python3 /opt/adk-tools/chiplet_kicad_plugin/tests/regenerate_wirebond_demo.py \
-        --require-drc \
-        --board   example/kicad/two_die_interposer.kicad_pcb \
+    /opt/adk-tools/venv/bin/python3 \
+        /opt/adk-tools/chiplet_kicad_plugin/plugins/chiplet_export/tests/regenerate_wirebond_demo.py \
+        --board      example/kicad/two_die_interposer.kicad_pcb \
         --output-dir example/outputs
 
 One command drives the whole chain: the HyperLynx writer produces the ``.hyp``,
 the chiplet writer produces the intermediate ``.chiplet``, ``hyp_to_gds``
 produces both GDS files with their sidecars and finalises the ``.chiplet``, and
-the ADK assembly DRC runs on the complete GDS. ``--require-drc`` makes a DRC
-failure a non-zero exit, which is what turns this into a build gate.
+the ADK assembly DRC runs on the complete GDS. The DRC is required by default:
+when the files are written but the DRC does not pass, the script exits 3, which
+is what turns it into a build gate. ``--allow-drc-fail`` turns that 3 into 0.
+``--require-drc``, which older callers still pass, is accepted and changes
+nothing.
 
 The script prints the resolved artefact paths as it goes, and echoes the worker
 command lines it runs, so it doubles as a way to see the exact ``hyp_to_gds``
@@ -309,17 +326,20 @@ carrying the 3Dblox commands. See :doc:`/flow/06_verification_stages`.
 Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. RUN-ON-IMAGE: adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
+
 .. code-block:: bash
 
-    adk-smoke
+    adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
-``adk-smoke`` verifies that the ``intm4tm2`` KLayout technology is registered
-and its layer properties resolve, then exports the demo end to end into a
-throwaway directory with ``--require-drc`` and asserts the DRC passed. It is the
-fastest way to tell whether a container, or a hand-assembled toolchain, is
-wired correctly. On success it ends with the line
-``adk-smoke: PASS (export + assembly DRC green)``; any failure exits non-zero
-before that.
+``adk-smoke`` takes one board and has no default, because the runtime image
+carries no demo; without a board it exits 2 and says where to copy this design
+from. It verifies that the ``intm4tm2`` KLayout technology is registered and
+its layer properties resolve, then exports the board end to end into a
+throwaway directory and fails unless the assembly DRC passed. It is the
+fastest way to tell whether a container is wired correctly. On success it ends
+with the line ``adk-smoke: PASS (export + assembly DRC green)``; any failure
+exits non-zero before that.
 
 What the committed reports say
 ------------------------------
@@ -373,8 +393,8 @@ manifests are compared with ``assembly_gds_sha256`` dropped, for the same
 reason. Per-run artefacts, the logs, the DRC scratch directory, the ``.lyrdb``,
 the complete GDS and the ``.hyp``, are ignored.
 
-The gate exists because the runtime image bakes the tracked deliverables rather
-than the regeneration, so a tracked set that had drifted from what the current
+The gate exists because the checkout ships the tracked deliverables, not the
+build's regeneration, so a tracked set that had drifted from what the current
 board and toolchain produce could ship on a green build. A stale ``.chiplet`` and
 a missing pillar manifest reached a release candidate that way.
 
