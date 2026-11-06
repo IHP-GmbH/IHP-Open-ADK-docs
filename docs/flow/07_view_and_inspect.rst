@@ -192,6 +192,11 @@ From the command line:
     python3 klayout/macros/boundaries_to_rdb.py \
         outputs/layout/two_die_interposer_complete.gds
 
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 Pass the assembly GDS and the sidecar is auto-discovered next to it by the same
 rule the runner uses; pass the manifest ``.json`` directly if it lives
 elsewhere. The output is a ``.lyrdb`` next to the manifest, or wherever ``-o``

@@ -42,6 +42,11 @@ KLayout's Python module to read GDS, and PyQt6 for the GUIs:
 A system KLayout with its bindings on ``PYTHONPATH`` works too. In the container
 none of this applies: run ``gds-to-kicad`` and the GUI opens.
 
+The scripts on this page sit under ``$GDS_TO_KICAD_ROOT`` in the tools image;
+run them with ``/opt/adk-tools/venv/bin/python3``, which carries the modules
+they import (KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 The schematic tools and ``kicad_pcb_to_iopads.py`` import two readers that
 ship vendored in the clone, so they need nothing else:
 ``_vendor/chiplet_format_io``, the ``.chiplet`` reader at release 1.21.0

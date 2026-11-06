@@ -76,6 +76,11 @@ a rules file without one without saying so:
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 **What it proves.** That no two die footprints are closer than the assembly
 spacing rule, enforced as a ``courtyard_clearance`` constraint, plus overlap,
 which KiCad's native courtyard collision check already covers. It proves this

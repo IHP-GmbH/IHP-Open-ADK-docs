@@ -159,6 +159,12 @@ From a die GDS
         --lyp-file pdk.lyp --pad-layer TopMetal2.drawing \
         --extract-pins die.pins.json
 
+In the tools image the gds2kicad scripts sit under ``$GDS_TO_KICAD_ROOT`` and
+the ADK ones under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 Pads are extracted from the pad layer, names are paired to pad polygons by
 proximity to text labels, and ``classify_pin`` assigns an initial symbol side
 and type. The result is meant to be reviewed: names from a real die are often

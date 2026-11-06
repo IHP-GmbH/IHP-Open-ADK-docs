@@ -38,6 +38,11 @@ explicitly:
         --interconnect-adapter ihp_cupillar \
         --interconnect-methods board_complete.ixn_methods.json
 
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 Omitting it is a supported configuration: the interconnect axis then runs
 assembly-global with the adapter's numbers, exactly as it did before per-method
 scoping existed. The KiCad export pipeline passes the file automatically when it

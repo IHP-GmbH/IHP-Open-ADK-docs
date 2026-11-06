@@ -165,6 +165,11 @@ Running the generator
         --interconnect-adapter ihp_cupillar \
         --out adk_section.txt
 
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 Both adapter flags take a registry id, resolved through the ADK registry as
 for the DRC runner (:doc:`/adk/02_adapter_contract`); a path is refused. An
 unknown id exits 1, an unusable registry 5 or 6.

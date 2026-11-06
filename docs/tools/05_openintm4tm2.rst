@@ -190,6 +190,11 @@ CLI wrapper rather than invoked directly:
 
     python3 libs.tech/klayout/tech/drc/run_drc.py --path <layout.gds> --topcell <cell>
 
+In the tools image this PDK is ``$INTERPOSER_PDK_ROOT``; run its scripts with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 The runset always loads ``layers_def.drc`` first, then concatenates the selected
 rule decks and evaluates the whole thing as a single Ruby string. That single
 ``eval`` is deliberate: Ruby's ``load`` runs in main scope and separate ``eval``

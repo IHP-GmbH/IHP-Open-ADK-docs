@@ -347,6 +347,11 @@ Bump macros for OpenROAD
 
     python3 libs.tech/openroad/python/bump_lef_generator.py cupillar_opt1 TopMetal2
 
+In the tools image this PDK is ``$INTERCONNECT_PDK_ROOT``; run its scripts with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 .. code-block:: python
 
     from bump_lef_generator import bump_macro_name, render_bump_lef

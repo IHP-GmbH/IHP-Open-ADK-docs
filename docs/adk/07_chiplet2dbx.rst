@@ -99,6 +99,11 @@ Running the exporter
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
 
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 .. literalinclude:: /adk/_usage/chiplet2dbx.txt
    :language: text
 
