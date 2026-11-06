@@ -409,6 +409,12 @@ The version numbers come from the manifest baked into the image at build time.
 Quote that block when reporting a problem: it identifies the exact combination
 of revisions you are running.
 
+Scripts the pages run with ``python3``, such as the ADK checks, the gds2kicad
+converters and the PDK DRC runner, import ``klayout``, ``yaml`` or ``jinja2``.
+Only the image's venv carries them, so inside the container run those scripts
+with ``/opt/adk-tools/venv/bin/python3``; the system ``python3`` on the path stops with
+``ModuleNotFoundError``.
+
 Two text editors are bundled for in-container edits of files under ``/work``:
 ``vim`` in the terminal, and ``featherpad``, a light Qt GUI editor that needs X
 like the other GUIs.

@@ -301,6 +301,9 @@ Generate the section and append it to your project's ``.kicad_dru``:
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
+In the tools image, run it with ``/opt/adk-tools/venv/bin/python3``
+(:doc:`/install/01_container`).
+
 Append it below the ``(version 1)`` line of your ``.kicad_dru``, the one you
 copied from the template; KiCad ignores a rules file without that line and says
 nothing. The generated block is small on purpose, and its header says why:

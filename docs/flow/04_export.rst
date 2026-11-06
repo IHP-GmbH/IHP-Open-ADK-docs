@@ -114,15 +114,15 @@ as :doc:`/install/01_container` describes:
     adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 To export a specific board headless, run the command the dialog's **Run** stands
-for:
+for. From ``/work``, on the board you drew in a project ``adk-new-project`` made:
 
-.. RUN-ON-IMAGE: chiplet-export --board my_design/kicad/my_design.kicad_pcb --output-dir my_design/outputs
+.. RUN-ON-IMAGE: chiplet-export --board heterogenic-designs/my_design/kicad/my_design.kicad_pcb --output-dir heterogenic-designs/my_design/outputs
 
 .. code-block:: bash
 
     chiplet-export \
-        --board       my_design/kicad/my_design.kicad_pcb \
-        --output-dir  my_design/outputs
+        --board       heterogenic-designs/my_design/kicad/my_design.kicad_pcb \
+        --output-dir  heterogenic-designs/my_design/outputs
 
 It always writes the complete assembly GDS and always runs the assembly DRC.
 Exit 0 means the files were written and the DRC passed, exit 1 that nothing

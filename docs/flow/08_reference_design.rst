@@ -198,8 +198,9 @@ Step 1: the gds2kicad prior steps
 These run once per die, before any board work, and produce the KiCad library the
 board is built on. They are reproducible from the shipped inputs, and the image
 build gates them against the committed library. Run them from the die's input
-folder; they write next to their inputs, so compare what they produce with the
-library under ``example/kicad/`` rather than writing over it:
+folder; they write into it, so compare what they produce with the library under
+``example/kicad/`` rather than writing over it. They run under the image's venv
+Python, which carries the ``klayout`` module the system ``python3`` lacks:
 
 .. code-block:: bash
 
@@ -209,7 +210,7 @@ The die footprint, read straight out of the curated GDS:
 
 .. code-block:: bash
 
-    python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad.py" Metal_Test_stripped.gds \
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad.py" Metal_Test_stripped.gds \
         --layer TopMetal2.drawing --text-layer-number 134/25 \
         --lyp-file "$GDS_TO_KICAD_ROOT/pdks/sg13g2.lyp" --flip-chip \
         -o metal_test_chiplet.kicad_mod
@@ -218,7 +219,7 @@ The die symbol, from the reviewed pin list, with no GDS involved:
 
 .. code-block:: bash
 
-    python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad_symbol.py" \
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad_symbol.py" \
         --from-pin-list metal_test_chiplet.pins.json \
         -o Metal_Test.kicad_sym
 
@@ -226,8 +227,8 @@ The wire-bond I/O pad, generated parametrically rather than converted:
 
 .. code-block:: bash
 
-    python3 "$GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py" \
-        --io-class wire_bond --size 100x100
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py" \
+        --io-class wire_bond --size 100x100 --out-dir .
 
 The same three steps are available from the ``gds-to-kicad`` GUI, and
 ``metal_test_chiplet.g2kproj`` reopens the session at exactly the state that
@@ -315,7 +316,7 @@ pad source per die:
 
 .. code-block:: bash
 
-    python3 $ADK_ROOT/checks/pads_vs_pillars.py \
+    /opt/adk-tools/venv/bin/python3 $ADK_ROOT/checks/pads_vs_pillars.py \
         --chiplet example/outputs/two_die_interposer.chiplet \
         --pillars example/outputs/layout/two_die_interposer_complete.pillars.json \
         --pins U1=example/chiplets/metal_test_chiplet.pins.json \
@@ -326,7 +327,7 @@ The 3Dblox export, whose own consistency checks run without OpenROAD installed:
 
 .. code-block:: bash
 
-    python3 $ADK_ROOT/openroad/chiplet2dbx.py \
+    /opt/adk-tools/venv/bin/python3 $ADK_ROOT/openroad/chiplet2dbx.py \
         --chiplet example/outputs/two_die_interposer.chiplet \
         --out-dir build/3dblox \
         --pins U1=example/chiplets/metal_test_chiplet.pins.json \

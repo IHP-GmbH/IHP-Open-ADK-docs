@@ -320,6 +320,9 @@ against on this stack), or the space from design metal to the ring.
     python3 tech/drc/run_drc.py --path <layout.gds> \
         --deck sealring --require_sealring
 
+In the tools image the tree is ``$INTERPOSER_PDK_ROOT/libs.tech/klayout`` and
+the runner needs ``/opt/adk-tools/venv/bin/python3`` (:doc:`/install/01_container`).
+
 ``SEAL.REQ.1`` and ``SEAL.REQ.2`` report a missing ``EdgeSeal`` or seal ring
 boundary (39/4). ``SEAL.REQ.3_<layer>`` reports a ring layer that is not a
 closed loop inside ``EdgeSeal``. ``SEAL.REQ.4`` reports a fabricated shape
