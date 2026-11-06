@@ -117,13 +117,15 @@ checking a placed chiplet is therefore represented only by
 There is no chiplet-side layer stack for an adapter to map.
 
 The |asm-rule-count| assembly rules the deck ships treat all chiplets uniformly
-through that boundary and need nothing more:
+through that boundary and need nothing more of the chiplet:
 
 * ``ASM.a``, chiplet boundaries must not overlap.
 * ``ASM.b``, minimum chiplet-to-chiplet spacing.
 * ``ASM.e``, minimum chiplet area, a degenerate-polygon sanity check.
 * ``ASM.f``, attachment geometry that overlaps a chiplet boundary must sit
   fully inside it.
+* ``ASM.g``, minimum distance from a chiplet boundary to an interposer
+  wire-bond pad, checked when the interposer adapter declares its pads.
 
 None of them can be improved by knowing which PDK a chiplet came from.
 
@@ -186,10 +188,10 @@ interconnect adapter and no per-method file, the eval chain is
 
 .. code-block:: text
 
-    layers_def.drc  ->  interposer adapter  ->  validation  ->  8_1_assembly.drc
+    layers_def.drc  ->  interposer adapter  ->  validation  ->  wire_bond_pads.drc  ->  8_1_assembly.drc
 
-which is byte-identical to the deck as it stood before the axis existed:
-``8_2_interconnect.drc`` is simply not concatenated. The interconnect axis
+with no interconnect segment in it: ``8_2_interconnect.drc`` is simply not
+concatenated. The interconnect axis
 governs the attachment *method*, not chiplet contents, so it leaves the "why
 there is no chiplet adapter" reasoning intact. :doc:`/adk/04_ixn_rules` gives the
 conditions under which each part is appended.
@@ -229,9 +231,13 @@ joined with newlines:
     layers_def.drc              chiplet_boundary, from the manifest or, in
                                 compat mode, from the legacy exchange0 layer
     <interposer adapter>        declares chiplet_attachment_input;
+                                MAY declare wire_bond_pad_input;
                                 MAY override drc_rules entries
     <generated validation>      raises unless every required input is
                                 defined? and non-nil
+    wire_bond_pads.drc          the adapter's wire-bond pads, read from the
+                                carrier with every die cell pruned, or ASM.g
+                                marked not applicable
     <interconnect adapter>      only if one was selected; sets interconnect_rules
     <generated validation>      only if one was selected; raises unless every
                                 required IXN_* key is present
@@ -281,13 +287,14 @@ and apply adapter overrides the same way.
 ``config/rule_params.json`` and ``config/interconnect.json`` are shared. The
 KLayout deck loads them into ``drc_rules`` and ``interconnect_rules``; the KiCad
 generator loads the same defaults and merges the adapter's literal numeric
-overrides, but only when invoked with the matching adapter flag, so without the
+overrides, read by the ADK's own parser, which refuses any form it cannot
+read, but only when invoked with the matching adapter flag, so without the
 flag you get the registry defaults rather than the adapter's view.
 :doc:`/adk/06_kicad_dru` gives the merge grammar and its consequences.
 
 The agreement covers the one ``ASM`` parameter both tools consume, ``ASM_b``.
-``ASM.a`` is left to KiCad's native courtyard collision check, ``ASM.e`` and
-``ASM.f`` have no KiCad equivalent, and the template emits no ``IXN`` constraint
+``ASM.a`` is left to KiCad's native courtyard collision check, ``ASM.e``,
+``ASM.f`` and ``ASM.g`` have no KiCad equivalent, and the template emits no ``IXN`` constraint
 at all, because the interconnect checks are post-layout geometry checks; the
 interconnect adapter's name appears in the generated file only as a provenance
 comment. See :doc:`/adk/06_kicad_dru`.

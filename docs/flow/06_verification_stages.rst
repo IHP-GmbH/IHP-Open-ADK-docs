@@ -74,7 +74,8 @@ at the moment of the drag, with no export and no external tool run.
 **What it cannot prove.** It is a partial mirror of the deck, by design and by
 declaration. Of the |asm-rule-count| assembly rules, only ``ASM.b`` has a clean
 KiCad expression; ``ASM.a`` is delegated to KiCad's own courtyard collision;
-``ASM.e`` and ``ASM.f`` have no DRU equivalent and are post-layout only. The
+``ASM.e``, ``ASM.f`` and ``ASM.g`` have no DRU equivalent and are post-layout
+only. The
 entire interconnect axis is post-layout: at design time the attachment pads do
 not exist yet, because ``hyp_to_gds`` generates them from the pin lists later.
 

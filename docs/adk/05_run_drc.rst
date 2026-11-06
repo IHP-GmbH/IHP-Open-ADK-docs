@@ -285,8 +285,14 @@ entry zooms the layout view to the offending geometry and highlights it.
 
 The category names are exactly the rule names, and the description string
 alongside each category carries the number that was checked, for example
-``ASM.b : Min. chiplet-to-chiplet spacing is 50.0 um``. That is the fastest way
+``ASM.b : Min. chiplet-to-chiplet spacing is 200.0 um``. That is the fastest way
 to confirm which value an adapter override actually put into effect.
+
+A rule the deck did not apply has a category too, with no item and a
+description that says why, for example ``ASM.g : not applicable: the
+interposer adapter declares no wire-bond pads``. ``run_drc.py`` lists such a
+rule in its log as ``ADK DRC not checked``, apart from the rules that passed.
+An empty category with that description is not a pass.
 
 .. tip::
 

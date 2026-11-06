@@ -19,12 +19,16 @@ options:
                         comment for the bump pitch/spacing axis (IXN rules,
                         post-layout only). Omit for interposer-only output
                         (identical to before this axis existed).
-  --out OUT             Output path. If omitted, write to stdout.
+  --out OUT             Output path for the section. If omitted, write to
+                        stdout.
   --rule-params RULE_PARAMS
                         Alternate rule_params.json path (default:
                         adk/config/rule_params.json).
 
 Examples:
-  generate_assembly_dru.py                                              # defaults, stdout
-  generate_assembly_dru.py --interposer-adapter intm4tm2    # adapter overrides
-  generate_assembly_dru.py --out assembly.kicad_dru                      # write to file
+  generate_assembly_dru.py                                   # defaults, stdout
+  generate_assembly_dru.py --interposer-adapter intm4tm2     # adapter overrides
+  generate_assembly_dru.py --out adk_section.txt             # write the section to a file
+
+The output is a section for a project's .kicad_dru, which starts with a
+(version 1) line; KiCad ignores a rules file without one, silently.

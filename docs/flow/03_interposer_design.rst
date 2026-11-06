@@ -276,9 +276,10 @@ Generate the section and append it to your project's ``.kicad_dru``:
 
     python3 ${ADK_ROOT}/kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
-        --out assembly_rules.kicad_dru
+        --out adk_section.txt
 
-The generated block is small on purpose, and its header says why:
+Append it below the ``(version 1)`` line your ``.kicad_dru`` opens with; KiCad
+ignores a rules file without that line and says nothing. The generated block is small on purpose, and its header says why:
 
 .. code-block:: text
 
@@ -286,26 +287,30 @@ The generated block is small on purpose, and its header says why:
     #   * ASM.a (chiplet boundary overlap) -- enforced by KiCad's native
     #     courtyard collision check; no rule emitted here.
     #   * ASM.b (chiplet-to-chiplet spacing) -- emitted below.
-    #   * ASM.e (chiplet minimum area) and ASM.f (attachment geometry inside
-    #     chiplet) have no clean KiCad DRU equivalent and are enforced
-    #     post-layout only by the ADK KLayout deck (adk/klayout/drc).
+    #     Only die footprints (those with a GDS_FILE field) are held to it: a
+    #     pad footprint drawn with a courtyard (a library or hand-drawn one; the
+    #     flow's own pad footprints carry none) is not a chiplet.
+    #   * ASM.e (chiplet minimum area), ASM.f (attachment geometry inside
+    #     chiplet) and ASM.g (die edge to wire-bond pad) have no clean KiCad DRU
+    #     equivalent and are enforced post-layout only by the ADK KLayout deck
+    #     (adk/klayout/drc). ASM.g would need a courtyard on the pad, which the
+    #     flow's wire-bond pad footprints do not carry.
 
 So one rule is emitted, chiplet-to-chiplet spacing, expressed as a courtyard
-clearance:
+clearance between die footprints:
 
 .. code-block:: text
 
     (rule "ASM.b - Chiplet min spacing"
-      (constraint courtyard_clearance (min 50um))
-      (condition "A.Type == 'Footprint' && B.Type == 'Footprint'"))
+      (constraint courtyard_clearance (min 0.2mm))
+      (condition "A.Type == 'Footprint' && B.Type == 'Footprint' && A.getField('GDS_FILE') != '' && B.getField('GDS_FILE') != ''"))
 
 .. note::
-   The 50 um default is an ADK engineering default. It is not a foundry rule
-   and carries no recorded provenance from one. Override it through the rule
-   parameters or an adapter if your assembly process says otherwise. The
-   interconnect pitch and spacing defaults are different in this respect: those
-   do trace to the bumping vendor's Cu-pillar table. See
-   :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
+   The 200 um of ``ASM_b`` is the ADK's assembly rule, not a foundry rule. A
+   technology with its own number states it in its interposer adapter, as that
+   technology's own rule. The interconnect pitch and spacing defaults are
+   different in this respect: those do trace to the bumping vendor's Cu-pillar
+   table. See :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
 The generator and the KLayout deck read the same rule-parameter registry and
 apply adapter overrides identically, so the number you see while routing is the

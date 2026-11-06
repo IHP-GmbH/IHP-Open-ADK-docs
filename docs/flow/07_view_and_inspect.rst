@@ -164,11 +164,13 @@ To inspect it:
 
 The browser lists one category per rule, using the rule identifier and its
 message as they were rendered at run time, for example ``ASM.b : Min.
-chiplet-to-chiplet spacing is 50.0 um`` or ``IXN.x.cupillar_opt1.vendorx_microbump
+chiplet-to-chiplet spacing is 200.0 um`` or ``IXN.x.cupillar_opt1.vendorx_microbump
 : Min. cross-method spacing ... is 40.0 um``. Selecting an item zooms the layout
 to the offending geometry.
 
-A category with no items is a rule that ran and found nothing, so the category
+A category with no items is a rule that ran and found nothing, unless its
+description reads ``<rule> : not applicable: <reason>``: that rule did not run,
+as ``ASM.g`` on an interposer that declares no wire-bond pads. So the category
 list is a record of *what was checked*; read it before concluding that a rule you
 expected was actually evaluated. The reference design's committed report carries
 thirteen rule categories and no items.

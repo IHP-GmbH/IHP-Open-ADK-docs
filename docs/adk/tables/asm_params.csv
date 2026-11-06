@@ -1,2 +1,3 @@
-"ASM_b","Minimum spacing between chiplets, in micrometres. Edge-to-edge between adjacent chiplet boundary polygons.","50","um"
+"ASM_b","Minimum spacing between chiplets, in micrometres. Edge-to-edge between adjacent chiplet boundary polygons.","200","um"
 "ASM_e","Minimum chiplet area, in square micrometres. Chiplet boundary polygons below this threshold are flagged.","10000","um2"
+"ASM_g","Minimum distance from a chiplet boundary to an interposer wire-bond pad, in micrometres. Euclidean, edge to edge; a pad that touches or overlaps a boundary is flagged. Pads are read from the carrier only, never from a die layout.","200","um"

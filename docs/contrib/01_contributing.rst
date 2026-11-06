@@ -42,9 +42,9 @@ once it is.
 
 #. **Die spacing before a run** (chiplet-system-spec). The system planner of
    its system description already refuses overlapping dies and dies outside
-   the carrier. Spacing between dies, rule ASM.b, whose value the interposer
-   PDK sets, is checked only later, at the placement check. Read the rule's
-   value from the interposer PDK and report a pair of dies closer than that as
+   the carrier. Spacing between dies, rule ASM.b, whose value the ADK's rule
+   parameters set, is checked only later, at the placement check. Read the rule's
+   value from the ADK's rule parameters and report a pair of dies closer than that as
    a finding of the plan, before any run starts.
 
 #. **A placement edit** (packaging-flow). ``packaging-flow edit`` writes

@@ -6,5 +6,5 @@
 .. |interposer-layer-names| replace:: 29
 .. |interposer-layer-entries| replace:: 158
 .. |interposer-rule-decks| replace:: 20
-.. |adk-test-count| replace:: 363
-.. |adk-test-files| replace:: 17
+.. |adk-test-count| replace:: 387
+.. |adk-test-files| replace:: 18

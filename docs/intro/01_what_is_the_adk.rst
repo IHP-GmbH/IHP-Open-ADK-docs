@@ -203,5 +203,6 @@ A note on maturity
    The ADK is a |current-status|. The interposer process has been fabricated
    several times at IHP, which is a statement about process maturity rather than
    about a complete assembly. The assembly rule values shipped in the registries
-   are engineering defaults, not foundry-sanctioned assembly rules. Read
+   are the ADK's own rules and engineering defaults, not foundry-sanctioned
+   assembly rules. Read
    :doc:`/adk/09_registries` before treating any number here as a specification.

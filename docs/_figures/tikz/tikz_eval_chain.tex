@@ -72,19 +72,20 @@
 \def\ya{0}        \def\yb{-2.00}   % 1 layers_def.drc
 \def\yc{-3.30}                     % 2 interposer adapter
 \def\yd{-4.60}                     % 3 generated validation
-\def\ye{-5.90}                     % 4 interconnect adapter
-\def\yf{-7.20}                     % 5 generated IXN validation
-\def\yg{-8.30}                     % 6 8_1_assembly.drc
-\def\yh{-9.40}                     % 7 8_2_interconnect.drc
+\def\yw{-5.60}                     % 3a wire_bond_pads.drc
+\def\ye{-6.90}                     % 4 interconnect adapter
+\def\yf{-8.20}                     % 5 generated IXN validation
+\def\yg{-9.30}                     % 6 8_1_assembly.drc
+\def\yh{-10.40}                     % 7 8_2_interconnect.drc
 
 \def\yFtop{0.38}
-\def\yFbot{-10.00}
+\def\yFbot{-11.00}
 
 % ------------------------------------------------------------- outer frame --
 \draw[rounded corners=5pt, draw=IHPfg, line width=1.3pt]
     (-0.32, \yFtop) rectangle (10.32, \yFbot);
 \node[font=\sffamily\scriptsize\bfseries, text=IHPfg, anchor=center]
-    at (5, -9.71) {joined with newlines and evaluated once};
+    at (5, -10.71) {joined with newlines and evaluated once};
 
 % ------------------------------------------------------------------- slabs --
 % 1 -- layers_def.drc
@@ -100,7 +101,7 @@
 \draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\yc) -- (\XS,\yb);
 \node[adkname] at (\XN, -2.65) {\textless{}interposer adapter\textgreater{}};
 \node[adkdesc] at (\XD, -2.65) {declares \adkT{chiplet\_attachment\_input};
-    MAY override \adkT{drc\_rules} entries};
+    MAY declare \adkT{wire\_bond\_pad\_input}; MAY override \adkT{drc\_rules}};
 
 % 3 -- generated validation
 \draw[draw=cValid!50, fill=cValid!7, line width=0.7pt] (\XL,\yd) rectangle (\XR,\yc);
@@ -110,12 +111,19 @@
 \node[adkdesc] at (\XD, -3.95) {one \adkT{raise ... unless defined?(name) \&\&
     !name.nil?} per \adkT{required\_inputs} entry};
 
+% 3a -- wire_bond_pads.drc
+\draw[draw=IHPfg!55, fill=IHPfg!5, line width=0.7pt] (\XL,\yw) rectangle (\XR,\yd);
+\draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\yw) -- (\XS,\yd);
+\node[adkname] at (\XN, -5.10) {wire\_bond\_pads.drc};
+\node[adkdesc] at (\XD, -5.10) {the adapter's wire-bond pads, read from the
+    carrier with every die cell pruned, or ASM.g not applicable};
+
 % 4 -- interconnect adapter (conditional)
 \draw[draw=IHPfg!55, fill=IHPfg!3, line width=0.7pt, dash pattern=on 1.6pt off 1.2pt]
-    (\XL,\ye) rectangle (\XR,\yd);
-\draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\ye) -- (\XS,\yd);
-\node[adkname] at (\XN, -5.25) {\textless{}interconnect adapter\textgreater{}};
-\node[adkdesc] at (\XD, -5.25) {sets \adkT{interconnect\_rules}; MAY narrow
+    (\XL,\ye) rectangle (\XR,\yw);
+\draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\ye) -- (\XS,\yw);
+\node[adkname] at (\XN, -6.25) {\textless{}interconnect adapter\textgreater{}};
+\node[adkdesc] at (\XD, -6.25) {sets \adkT{interconnect\_rules}; MAY narrow
     \adkT{interconnect\_region}};
 
 % 5 -- generated IXN validation (conditional)
@@ -123,22 +131,22 @@
     (\XL,\yf) rectangle (\XR,\ye);
 \draw[draw=cValid, line width=1.8pt] (\XL,\yf) -- (\XL,\ye);
 \draw[draw=cValid!25, line width=0.3pt] (\XS,\yf) -- (\XS,\ye);
-\node[adknamev] at (\XN, -6.55) {generated IXN\\validation};
-\node[adkdesc] at (\XD, -6.55) {raises unless \adkT{IXN\_spacing},
+\node[adknamev] at (\XN, -7.55) {generated IXN\\validation};
+\node[adkdesc] at (\XD, -7.55) {raises unless \adkT{IXN\_spacing},
     \adkT{IXN\_pitch} and \adkT{IXN\_pad\_size} are all present};
 
 % 6 -- 8_1_assembly.drc
 \draw[draw=IHPfg!55, fill=IHPfg!5, line width=0.7pt] (\XL,\yg) rectangle (\XR,\yf);
 \draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\yg) -- (\XS,\yf);
-\node[adkname] at (\XN, -7.75) {8\_1\_assembly.drc};
-\node[adkdesc] at (\XD, -7.75) {the ASM rules};
+\node[adkname] at (\XN, -8.75) {8\_1\_assembly.drc};
+\node[adkdesc] at (\XD, -8.75) {the ASM rules};
 
 % 7 -- 8_2_interconnect.drc (conditional)
 \draw[draw=IHPfg!55, fill=IHPfg!3, line width=0.7pt, dash pattern=on 1.6pt off 1.2pt]
     (\XL,\yh) rectangle (\XR,\yg);
 \draw[draw=IHPaccent!25, line width=0.3pt] (\XS,\yh) -- (\XS,\yg);
-\node[adkname] at (\XN, -8.85) {8\_2\_interconnect.drc};
-\node[adkdesc] at (\XD, -8.85) {the IXN rules};
+\node[adkname] at (\XN, -9.85) {8\_2\_interconnect.drc};
+\node[adkdesc] at (\XD, -9.85) {the IXN rules};
 
 % ------------------------------------------------------------------ inputs --
 \node[adkcard] (ca) at (-2.20, -0.55) {\adkT{config/layers.json} and
@@ -148,44 +156,44 @@
     \adkT{boundary\_manifest}; mandatory unless \adkT{legacy\_exchange0}};
 \node[adkcard] (cc) at (-2.20, -2.95) {\adkT{-rd adapter=...}; a missing or
     non-existent adapter aborts the run};
-\node[adkcard] (cd) at (-2.20, -5.25) {\adkT{config/interconnect.json} loads
+\node[adkcard] (cd) at (-2.20, -6.25) {\adkT{config/interconnect.json} loads
     into \adkT{interconnect\_rules}; tolerated if absent};
 
 \draw[adkarrow] (ca.east) -- (\XL, -0.55);
 \draw[adkarrow] (cb.east) -- (\XL, -1.45);
 \draw[adkarrow] (cc.east) -- (\XL, -2.65);
-\draw[adkarrow] (cd.east) -- (\XL, -5.25);
+\draw[adkarrow] (cd.east) -- (\XL, -6.25);
 
 % ------------------------------------------------------------------ braces --
-% Always-evaluated group: slabs 1, 2, 3 and 6.
-\draw[adkbrace]  (\XB, \ya) -- (\XB, \yd);
+% Always-evaluated group: slabs 1, 2, 3, 3a and 6.
+\draw[adkbrace]  (\XB, \ya) -- (\XB, \yw);
 \draw[adkbrace]  (\XB, \yf) -- (\XB, \yg);
 % Conditional group: slabs 4, 5 and 7.
-\draw[adkbracec] (\XB, \yd) -- (\XB, \yf);
+\draw[adkbracec] (\XB, \yw) -- (\XB, \yf);
 \draw[adkbracec] (\XB, \yg) -- (\XB, \yh);
 
-\node[adklbl] at (\XT, -2.30) {\textbf{\textcolor{IHPaccent!95!black}{Always
-    evaluated.}} With neither supplied, the evaluated source is byte-identical
-    to the deck as it stood before the axis existed.};
-\node[adklbl] at (\XT, -5.90) {\textbf{\textcolor{IHPaccent!95!black}{Appended
+\node[adklbl] at (\XT, -2.80) {\textbf{\textcolor{IHPaccent!95!black}{Always
+    evaluated.}} With neither supplied, no interconnect segment is
+    evaluated.};
+\node[adklbl] at (\XT, -6.90) {\textbf{\textcolor{IHPaccent!95!black}{Appended
     only}} when an interconnect adapter and/or a per-method methods file is
     supplied; the adapter and its validation need an adapter, \adkT{8\_2} needs
     either.};
 
-\node[adklbl, font=\sffamily\tiny\itshape] at (\XT, -7.75) {always evaluated};
-\node[adklbl, font=\sffamily\tiny\itshape] at (\XT, -8.85) {appended only};
+\node[adklbl, font=\sffamily\tiny\itshape] at (\XT, -8.75) {always evaluated};
+\node[adklbl, font=\sffamily\tiny\itshape] at (\XT, -9.85) {appended only};
 
 % ------------------------------------------------------------ consequences --
-\node[adknote] (na) at (2.55, -10.42) {\textbf{All locals are shared.}
+\node[adknote] (na) at (2.55, -11.42) {\textbf{All locals are shared.}
     \adkT{drc\_rules}, \adkT{interconnect\_rules}, \adkT{boundary\_manifest}
     and \adkT{adk\_layers} are wrapper locals the adapter and the rule decks
     see directly.};
-\node[adknote] (nb) at (7.65, -10.42) {\textbf{Validation runs in the adapter's
+\node[adknote] (nb) at (7.65, -11.42) {\textbf{Validation runs in the adapter's
     own scope}, so a stale adapter fails loudly, by name, before any rule
     runs.};
 
-\draw[adkarrow, color=IHPfg!45] (2.55, \yFbot) -- (2.55, -10.42);
-\draw[adkarrow, color=IHPfg!45] (7.65, \yFbot) -- (7.65, -10.42);
+\draw[adkarrow, color=IHPfg!45] (2.55, \yFbot) -- (2.55, -11.42);
+\draw[adkarrow, color=IHPfg!45] (7.65, \yFbot) -- (7.65, -11.42);
 
 \end{tikzpicture}
 \end{document}

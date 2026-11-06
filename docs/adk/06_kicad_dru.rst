@@ -26,8 +26,8 @@ rules to stdout or to a file.
 What the generator produces
 ---------------------------
 
-One self-describing section, ready to be pasted into a project's
-``.kicad_dru`` file or appended by a larger generator. With the defaults and
+One self-describing section, ready to be appended to a project's
+``.kicad_dru`` file or by a larger generator. With the defaults and
 no adapter:
 
 .. code-block:: text
@@ -42,13 +42,18 @@ no adapter:
     #   * ASM.a (chiplet boundary overlap) -- enforced by KiCad's native
     #     courtyard collision check; no rule emitted here.
     #   * ASM.b (chiplet-to-chiplet spacing) -- emitted below.
-    #   * ASM.e (chiplet minimum area) and ASM.f (attachment geometry inside
-    #     chiplet) have no clean KiCad DRU equivalent and are enforced
-    #     post-layout only by the ADK KLayout deck (adk/klayout/drc).
+    #     Only die footprints (those with a GDS_FILE field) are held to it: a
+    #     pad footprint drawn with a courtyard (a library or hand-drawn one; the
+    #     flow's own pad footprints carry none) is not a chiplet.
+    #   * ASM.e (chiplet minimum area), ASM.f (attachment geometry inside
+    #     chiplet) and ASM.g (die edge to wire-bond pad) have no clean KiCad DRU
+    #     equivalent and are enforced post-layout only by the ADK KLayout deck
+    #     (adk/klayout/drc). ASM.g would need a courtyard on the pad, which the
+    #     flow's wire-bond pad footprints do not carry.
 
     (rule "ASM.b - Chiplet min spacing"
-      (constraint courtyard_clearance (min 50um))
-      (condition "A.Type == 'Footprint' && B.Type == 'Footprint'"))
+      (constraint courtyard_clearance (min 0.2mm))
+      (condition "A.Type == 'Footprint' && B.Type == 'Footprint' && A.getField('GDS_FILE') != '' && B.getField('GDS_FILE') != ''"))
 
 The coverage comment is part of the rendered output on purpose. A ``.kicad_dru``
 file travels with the project and is read by people who never see this page, so
@@ -60,10 +65,26 @@ locate or replace a previously appended ADK section.
 
 .. note::
 
-    The ``50um`` in the emitted constraint is the ``ASM_b`` default. It is an
-    engineering default with no recorded foundry provenance, not a fab rule.
-    See :doc:`/adk/03_asm_rules` for what the value means and
-    :doc:`/adk/02_adapter_contract` for how an interposer adapter replaces it.
+    The ``0.2mm`` in the emitted constraint is ``ASM_b``, 200 um, the ADK's
+    assembly rule and not a foundry rule. Every length goes out in mm: KiCad
+    applies no clearance written in ``um`` or ``nm`` and reports no error. See
+    :doc:`/adk/03_asm_rules` for what the value means and
+    :doc:`/adk/02_adapter_contract` for how an interposer adapter states its
+    own.
+
+The condition holds only die footprints to the clearance, the ones with a
+``GDS_FILE`` field. A pad footprint drawn with a courtyard, a library or
+hand-drawn one, is not a chiplet, and at 200 um two such pads at a 150 um
+pitch would otherwise be reported.
+
+.. warning::
+
+    The section has no ``(version 1)`` header. It goes below the one the
+    project's ``.kicad_dru`` opens with, and KiCad ignores a rules file that
+    lacks it without saying so. A template passed through ``template_dir``
+    must write every length with the ``mm`` filter: nothing checks the
+    template for it, and KiCad silently applies no clearance written in
+    ``um``.
 
 Coverage matrix
 ---------------
@@ -85,8 +106,9 @@ Coverage matrix
     * - ``ASM.b``
       - ``courtyard_clearance`` constraint, emitted
       - Chiplet-to-chiplet edge spacing maps cleanly onto a courtyard clearance
-        between two footprints. This is the only rule with a faithful KiCad
-        expression, and the only one the generator writes.
+        between two die footprints, the ones with a ``GDS_FILE`` field. This is
+        the only rule with a faithful KiCad expression, and the only one the
+        generator writes.
     * - ``ASM.e``
       - Not mirrored, post-layout only
       - Minimum chiplet area is a property of the boundary polygon recorded in
@@ -97,6 +119,12 @@ Coverage matrix
       - Chiplet-attachment geometry containment is a relation between drawn
         interposer artwork and a chiplet boundary. The artwork does not exist
         in the KiCad board at all, so there is nothing to constrain there.
+    * - ``ASM.g``
+      - Not mirrored, post-layout only
+      - Die edge to wire-bond pad would be a courtyard clearance between a die
+        and a pad footprint, which needs a courtyard on the pad. The flow's
+        wire-bond pad footprints carry none, so the rule is evaluated by the
+        KLayout deck on the finished carrier.
     * - ``IXN.*``
       - Not mirrored, KLayout only
       - The interconnect axis constrains attachment points inside a footprint,
@@ -128,16 +156,16 @@ Running the generator
     # Defaults from config/rule_params.json, to stdout
     python kicad/dru/generate_assembly_dru.py
 
-    # Merge the interposer adapter's overrides and write a file
+    # Merge the interposer adapter's overrides and write the section to a file
     python kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
-        --out assembly.kicad_dru
+        --out adk_section.txt
 
     # Add the interconnect-axis provenance comment
     python kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
-        --out assembly.kicad_dru
+        --out adk_section.txt
 
 Both adapter flags take a registry id, resolved through the ADK registry as
 for the DRC runner (:doc:`/adk/02_adapter_contract`); a path is refused. An
@@ -146,44 +174,44 @@ unknown id exits 1, an unusable registry 5 or 6.
 .. literalinclude:: /adk/_usage/generate_assembly_dru.txt
    :language: text
 
-Append the rendered section to the project's ``.kicad_dru``. KiCad reads that
-file per project, so the rules apply to the board you are placing chiplets on
+Append the rendered section to the project's ``.kicad_dru``, below its
+``(version 1)`` line. KiCad reads that file per project, so the rules apply to the board you are placing chiplets on
 and to nothing else.
 
 How adapter overrides are merged
 --------------------------------
 
 An interposer adapter is Ruby, read by the KLayout deck. The generator does not
-execute it. It scans the file line by line for complete numeric assignments of
-the form:
+execute it. It reads the overrides with the ADK's own parser,
+``adk_rule_params.py``, which accepts one form per line:
 
 .. code-block:: ruby
 
-    drc_rules['ASM_b'] = 75.0      # interconnect adapters use interconnect_rules[...]
+    drc_rules['ASM_b'] = 250.0     # interconnect adapters use interconnect_rules[...]
 
-and merges those on top of the JSON defaults. The narrow grammar is
-deliberate:
+and merges those on top of the JSON defaults. The parser cannot know what the
+deck would apply for anything else, so it refuses rather than guesses:
 
-- Only a **complete** numeric literal matches. Scientific notation
-  (``30.0e3``), Ruby underscore grouping (``1_000``), a unit suffix (``30um``)
-  and computed expressions (``30.0 + margin``) do not match and are ignored,
-  rather than being truncated to a misleading partial number.
+- Only a **complete** decimal literal is read, with no leading zero in its
+  integer part, since Ruby reads ``0250`` as octal. Scientific notation
+  (``2.5e2``), Ruby underscore grouping (``1_000``), a trailing ``;``,
+  ``store``, ``merge!`` and computed expressions (``200.0 + margin``) are
+  refused with an error that names the line, never read as a partial number or
+  skipped.
+- Overrides sit above any other code in the adapter, at most once per name,
+  and a line that continues one (led by ``.``, ``&.``, ``&&``, ``||``, ``and``
+  or ``or``) is refused. A comment line that names a rule table is refused
+  anywhere in the file; write a commented-out override without the table name.
 - An override key that is not already a known rule is a hard error. A
   lowercased ``asm_b`` would otherwise be silently dropped and the template
   would emit the default, which looks like a working override and is not.
 - A negative value is a hard error. A spacing or area constraint cannot be
   negative.
-- Comment lines are skipped.
 
-Values are rendered as fixed-point decimals with trailing zeros stripped:
-``50.0`` becomes ``50``, ``30.5`` stays ``30.5``. Scientific notation is never
-emitted, because KiCad's DRU length-literal parser cannot read it.
-
-.. tip::
-
-    If an adapter expresses a rule value as a computed Ruby expression, the
-    KLayout deck will honour it and the KiCad output will not. Keep the values
-    an adapter intends to expose to KiCad as plain literals.
+Lengths are rendered in mm, as fixed-point decimals to 1 nm with trailing zeros
+stripped: 200 um becomes ``0.2mm``. Scientific notation is never emitted,
+because KiCad's DRU length-literal parser cannot read it, and a nonzero length
+that would round to 0 is refused rather than written as no clearance.
 
 Importing the renderer
 ----------------------
@@ -202,7 +230,7 @@ directories carry no ``__init__.py``), so put the generator's directory on
     section = render_assembly_rules(load_defaults(), adapter_name="intm4tm2")
 
 ``render_assembly_rules`` returns a string ready to append to a
-``.kicad_dru``. Its signature is append-only:
+``.kicad_dru``, below its ``(version 1)`` line. Its signature is append-only:
 
 .. code-block:: python
 

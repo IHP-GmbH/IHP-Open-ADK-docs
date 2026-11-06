@@ -37,6 +37,7 @@ ASM_RULES = {
     "ASM.b": ("ASM_b", "um", ""),
     "ASM.e": ("ASM_e", "um2", ""),
     "ASM.f": (None, "", "none (geometric)"),
+    "ASM.g": ("ASM_g", "um", ""),
 }
 
 # Interconnect rule identifiers. The per-method forms are built at run time
@@ -59,6 +60,21 @@ OUTPUT_CALL = re.compile(
     r"""\.output\(\s*(['"])(?P<rid>.+?)\1\s*,\s*(['"])(?P<desc>.+?)\3\s*\)""",
     re.DOTALL,
 )
+
+# A message the deck builds once and outputs under a variable, as ASM.g does:
+# ``asm_g_message = "ASM.g : ..."`` then ``.output('ASM.g', asm_g_message)``.
+MESSAGE_ASSIGNMENT = re.compile(
+    r"""^\s*(?P<var>[a-z_]\w*)\s*=\s*(['"])(?P<desc>.+?)\2\s*$""",
+    re.MULTILINE,
+)
+OUTPUT_VARIABLE = re.compile(
+    r"""\.output\(\s*(['"])(?P<rid>.+?)\1\s*,\s*(?P<var>[a-z_]\w*)\s*\)""",
+)
+
+# The description a deck gives a rule it did not apply ("ASM.g : not
+# applicable: <reason>"). It is a run status, not what the rule checks, so it
+# does not go in the rule table; the prose says when it happens.
+NOT_APPLICABLE = "not applicable: "
 
 
 def normalise(rule_id):
@@ -121,11 +137,25 @@ def clean_description(rule_id, description, values):
 
 def parse_deck(path, values):
     """Return {rule_id: description} for every output() call in a rule deck."""
+    text = read_text(path)
+    messages = {m.group("var"): m.group("desc") for m in MESSAGE_ASSIGNMENT.finditer(text)}
+    outputs = [(m.group("rid"), m.group("desc")) for m in OUTPUT_CALL.finditer(text)]
+    for match in OUTPUT_VARIABLE.finditer(text):
+        if match.group("var") not in messages:
+            fail("{} outputs {} under {}, which is never assigned a message".format(
+                path, match.group("rid"), match.group("var")))
+        outputs.append((match.group("rid"), messages[match.group("var")]))
     found = {}
-    for match in OUTPUT_CALL.finditer(read_text(path)):
-        rule_id = normalise(match.group("rid"))
-        description = strip_prefix(match.group("rid"), match.group("desc"))
-        found[rule_id] = clean_description(rule_id, description, values)
+    for raw_id, raw_description in outputs:
+        rule_id = normalise(raw_id)
+        description = strip_prefix(raw_id, raw_description)
+        if description.startswith(NOT_APPLICABLE):
+            continue
+        description = clean_description(rule_id, description, values)
+        if found.get(rule_id, description) != description:
+            fail("{} gives {} two messages: {!r} and {!r}".format(
+                path, rule_id, found[rule_id], description))
+        found[rule_id] = description
     if not found:
         fail("no output() calls parsed from {}".format(path))
     return found
@@ -159,7 +189,8 @@ def main():
     # The deck interpolates local Ruby variables into its messages, not the
     # registry key names, so map both spellings to the shipped default.
     asm_interp = dict(asm_values)
-    asm_interp.update({"asm_b_value": asm_values["ASM_b"], "asm_e_value": asm_values["ASM_e"]})
+    asm_interp.update({"asm_b_value": asm_values["ASM_b"], "asm_e_value": asm_values["ASM_e"],
+                       "asm_g_value": asm_values["ASM_g"]})
     ixn_interp = dict(ixn_values)
     ixn_interp.update(
         {
