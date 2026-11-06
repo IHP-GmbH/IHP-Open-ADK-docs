@@ -413,25 +413,38 @@ each die render with its own option's heights.
 The standalone DRC deck
 -----------------------
 
-``libs.tech/klayout/tech/drc/rule_decks/`` carries a small self-contained deck so
-the interconnect PDK owns its rules and can be exercised in isolation:
+``libs.tech/klayout/tech/drc/rule_decks/`` carries a small deck so the
+interconnect PDK owns its rules:
 
 * ``layers_def_3d.drc`` defines the 500-range body layers.
 * ``bump_pitch.drc`` derives the attachment region from the IHP UBM openings and
   checks the selected method's ``IXN.b`` (spacing) and ``IXN.e`` (pitch).
 * ``interconnect_rules.json`` holds the values, mirrored from the manifest.
 
+In this release ``bump_pitch.drc`` does not run on its own: it sets neither a
+``source`` nor a ``report``, so KLayout has no layout to read and nowhere to
+write its markers. Run the same ``IXN.b`` and ``IXN.e`` rules through the ADK
+assembly DRC, from an ADK checkout, on an exported assembly and the methods file
+beside it:
+
 .. code-block:: bash
 
-    klayout -b -r bump_pitch.drc -rd method=cupillar_opt2 ...
+    python3 klayout/drc/run_drc.py \
+        --path board_complete.gds \
+        --interposer-adapter intm4tm2 \
+        --interconnect-adapter ihp_cupillar \
+        --interconnect-methods board_complete.ixn_methods.json
+
+In the tools image the same check is ``adk-drc`` with these arguments. See
+:doc:`/adk/05_run_drc`.
 
 .. note::
-   This deck is not the canonical assembly check. The canonical one runs in the
-   ADK over the abstract ``chiplet_attachment_input`` region, which is why it
-   works on substrates this deck has never heard of. ``bump_pitch.drc`` hardcodes
-   the IHP UBM openings and exists so the rules are testable here. Both convert
-   pitch to a spacing the same way, ``min_space = min_pitch - pad_size``, because
-   KLayout has no native pitch check. See :doc:`/adk/04_ixn_rules`.
+   ``bump_pitch.drc`` is not the canonical assembly check. The canonical one runs
+   in the ADK over the abstract ``chiplet_attachment_input`` region, which is why
+   it works on substrates this deck has never heard of. ``bump_pitch.drc``
+   hardcodes the IHP UBM openings. Both convert pitch to a spacing the same way,
+   ``min_space = min_pitch - pad_size``, because KLayout has no native pitch
+   check. See :doc:`/adk/04_ixn_rules`.
 
 Relationship to the ADK
 -----------------------

@@ -437,10 +437,11 @@ shorts. MIM capacitors are extracted as ``cap_cmim`` devices: bottom plate on
 Metal5, top plate on TopMetal1 through the ``Vmim`` via array, with parameters
 ``w``, ``l``, ``A``, ``P`` and parallel multiplicity ``m``.
 
-.. code-block:: bash
-
-    python3 tech/lvs/run_lvs.py --layout=<layout.gds>                       # connectivity only
-    python3 tech/lvs/run_lvs.py --layout=<layout.gds> --netlist=<ref.spice> # with compare
+.. note::
+   In this release the deck does not run on an exported interposer: it stops at
+   ``intm4tm2.lvs:92`` with "Netlist contains more than a single top circuit",
+   because the pinless pad and pillar cells extract as extra top circuits. The
+   LVS this release supports on an assembly is ``assembly-lvs``, below.
 
 A reference netlist is optional. When one is given, KLayout's netlist compare
 runs in strict port mode in addition to the label checks, so a device terminal
