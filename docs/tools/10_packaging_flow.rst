@@ -105,7 +105,10 @@ A run halts at four gates in turn: ``die:<instance>`` (one per die), then
 ``interposer``, ``assembly`` and ``external``. ``verify`` reports them as
 ``level 1`` (chiplet) to ``level 4`` (external). At each halt the run exits 2
 with a ``GatePending`` line that names the gate and the command that signs it.
-A halt is not a failure.
+A halt is not a failure. A later run of the same design reuses a gate's
+signature while what it signed is unchanged: ``map`` names each gate it reused
+and the run that signed it, and the run halts at the first gate whose signature
+no longer holds.
 
 .. RUN-ON-IMAGE: packaging-flow map $RUN; packaging-flow verify-run $RUN --gate die:U1; packaging-flow verify-sign $RUN --gate die:U1; packaging-flow resume $RUN
 .. code-block:: bash
@@ -200,10 +203,10 @@ express as a resolved input reads ``INCONCLUSIVE`` and names the cause.
 Out of a run, ``lvs-bundle`` and ``lvs-verify`` do the same on a completed
 run's copies:
 
-.. RUN-ON-IMAGE: packaging-flow lvs-bundle $RUN --output /tmp/lvs; packaging-flow lvs-verify /tmp/lvs
+.. RUN-ON-IMAGE: packaging-flow lvs-bundle $WD --output /tmp/lvs; packaging-flow lvs-verify /tmp/lvs
 .. code-block:: bash
 
-    packaging-flow lvs-bundle $RUN --output /tmp/lvs
+    packaging-flow lvs-bundle $WD --output /tmp/lvs
     packaging-flow lvs-verify /tmp/lvs
 
 Changing the design

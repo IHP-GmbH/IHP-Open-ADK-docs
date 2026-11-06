@@ -313,7 +313,7 @@ against on this stack), or the space from design metal to the ring.
 ``--require_sealring`` turns on the presence rules, which need the
 ``sealring`` deck in the same run:
 
-.. RUN-ON-IMAGE: (in a writable scratch dir holding the sealring.gds from the sealring.py example below) python3 "$INTERPOSER_PDK_ROOT/libs.tech/klayout/tech/drc/run_drc.py" --path sealring.gds --deck sealring --require_sealring ; expect no violations
+.. RUN-ON-IMAGE: (in a writable scratch dir holding the sealring.gds from the sealring.py example below) /opt/adk-tools/venv/bin/python3 "$INTERPOSER_PDK_ROOT/libs.tech/klayout/tech/drc/run_drc.py" --path sealring.gds --deck sealring --require_sealring ; expect no violations
 
 .. code-block:: bash
 
