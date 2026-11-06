@@ -416,7 +416,7 @@ like the other GUIs.
 The interposer KLayout technology is pre-registered, so exported interposer and
 assembly GDS files open with named, coloured layers:
 
-.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" klayout -n intm4tm2 example/outputs/layout/two_die_interposer_interposer.gds
+.. RUN-ON-IMAGE (after the self test below has copied example/): "$ADK_TOOLS_ROOT/run.sh" klayout -n intm4tm2 example/outputs/layout/two_die_interposer_interposer.gds
 
 .. code-block:: bash
 

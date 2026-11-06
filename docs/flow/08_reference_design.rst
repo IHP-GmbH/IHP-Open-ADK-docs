@@ -197,7 +197,13 @@ Step 1: the gds2kicad prior steps
 
 These run once per die, before any board work, and produce the KiCad library the
 board is built on. They are reproducible from the shipped inputs, and the image
-build gates them against the committed library.
+build gates them against the committed library. Run them from the die's input
+folder; they write next to their inputs, so compare what they produce with the
+library under ``example/kicad/`` rather than writing over it:
+
+.. code-block:: bash
+
+    cd example/chiplets
 
 The die footprint, read straight out of the curated GDS:
 

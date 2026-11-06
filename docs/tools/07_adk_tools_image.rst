@@ -344,13 +344,18 @@ To run a newer release, check out its tag and build it. The sibling checkouts
 and the die views have to be at the new pins too; the two ``--check`` calls of
 :doc:`/install/01_container` confirm that before the build.
 
-.. RUN-ON-IMAGE: cd ADK-Tools; git pull; git submodule update --init --recursive; ./build.sh
+.. RUN-ON-IMAGE: cd "$ADK_TOOLS_ROOT"; git fetch --tags; git checkout v2026.11; git submodule update --init --recursive; ./stage-sources.sh --check && ./stage-die-views.sh --check; ./build.sh
+
+A release clone sits on its tag, not on a branch, so fetch the tags and check
+out the new one rather than pulling:
 
 .. code-block:: bash
 
-    cd ADK-Tools
-    git pull
+    cd "$ADK_TOOLS_ROOT"
+    git fetch --tags
+    git checkout vYYYY.MM
     git submodule update --init --recursive
+    ./stage-sources.sh --check && ./stage-die-views.sh --check
     ./build.sh          # cached stages rebuild only what changed
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
@@ -376,11 +381,20 @@ variable and hold the other six fixed.
 
     # follow the branch tracked in .gitmodules (usually main)
     git submodule update --remote tools/adk
-    ./build.sh && git commit -am "Bump adk to <ref>"
+    python3 -B ci/pin_set.py
+    git commit -am "Bump adk to <ref>"
+    ./build.sh
 
     # or try an arbitrary branch of one tool against the rest of the pinned stack
     cd tools/chiplet-studio && git fetch && git checkout feature/x && cd ../..
     ./build.sh
+
+Commit the bump before building. The build labels the image with the pin set
+of the commit it is on, from ``ci/pin-set.json``, which ``ci/pin_set.py``
+regenerates; a bump built before its commit carries a label that names the old
+pins. The uncommitted branch in the second case has the same gap: its image
+carries the branch, but its label names the committed pins. Use such an image
+to test the candidate only, and never run it under a release lock.
 
 Either way the verify stage decides. If the candidate revision breaks any
 suite, the reference design regeneration or the assembly DRC, no image is
@@ -439,7 +453,10 @@ Licensing
 ---------
 
 The ADK-Tools repository's own content, the ``Dockerfile``, the scripts and its
-documentation, is GPL-3.0-or-later.
+documentation, is GPL-3.0-or-later, with one rule on top: a file's own
+``SPDX-License-Identifier`` line decides its license. The record format schemas
+in ``formats/`` and the files whose SPDX line says Apache-2.0, most of ``ci/``
+and ``nix/`` among them, are Apache-2.0.
 
 The image it builds is a **mere aggregation** of independently developed and
 independently licensed tools and data. Each bundled component retains its own
