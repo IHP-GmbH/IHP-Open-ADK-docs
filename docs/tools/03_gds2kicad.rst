@@ -36,11 +36,19 @@ KLayout's Python module to read GDS, and PyQt6 for the GUIs:
 .. code-block:: bash
 
     python3 -m venv venv && source venv/bin/activate
-    pip install -r requirements.txt    # PyQt6
+    pip install -r requirements.txt    # PyQt6, PyYAML
     pip install klayout
 
 A system KLayout with its bindings on ``PYTHONPATH`` works too. In the container
 none of this applies: run ``gds-to-kicad`` and the GUI opens.
+
+The schematic tools and ``kicad_pcb_to_iopads.py`` import two readers that
+ship vendored in the clone, so they need nothing else:
+``_vendor/chiplet_format_io``, the ``.chiplet`` reader at release 1.21.0
+(Apache-2.0, its text in ``LICENSES/Apache-2.0.txt``, inside this
+GPL-3.0-or-later tool), and ``_vendor/round_trip_names.py``, interposer-pnr's
+reader of its export report. An install from the clone's ``pyproject.toml``
+carries both.
 
 .. tip::
    Both converters can write themselves a small test GDS, which is the quickest
@@ -351,6 +359,38 @@ converting millimetres to micrometres and negating Y for the GDS Y-up
 convention. The export plugin performs the same extraction automatically; this
 script is the standalone and override path.
 
+Each entry's ``ref`` is the pad's io_pad id. On a board ``interposer-pnr
+export`` drew, recognised by a carrier from the ``chiplet_carrier`` library or
+one carrying ``IO_PAD_ID``, that is each carrier's hidden ``IO_PAD_ID``, and a
+carrier without one, or two with the same one, is refused. On a board drawn by
+hand it is the reference. A carrier's ``net`` is the one net all its pads
+carry; a carrier on two nets, an unnetted pad counting as one, is refused.
+
+The nets are written in the planner's names. A board export drew against a
+sheet carries the sheet's names instead, so it needs the report export wrote
+beside it:
+
+.. code-block:: bash
+
+    python3 io_pads/kicad_pcb_to_iopads.py draft.kicad_pcb \
+        --export-report export.json -o io_pads.json
+
+A routed net goes back to its planner name, a pad no routed net binds is
+written with an empty net, and a net the report does not name is refused.
+Without the report, a board whose carriers link sheet symbols is refused, exit
+1, and nothing is written:
+
+.. code-block:: text
+
+    Error: draft.kicad_pcb: carrier pad J1 is linked to a sheet symbol, so this board's nets may be the sheet's; give the export report interposer-pnr export --report wrote for it (--export-report)
+
+A report written for another board (other carrier references, or another
+``IO_PAD_ID`` on one) is refused too, and so is a ``round_trip`` newer than
+version 6. A board drawn against no sheet needs no report. The reading rules
+are interposer-pnr's own, and the export plugin carries the same file, so both
+write the same ids and nets for every board they accept; see
+:ref:`chiplet_export_report`.
+
 Board back to chiplet netlist
 -----------------------------
 
@@ -365,6 +405,178 @@ classified as power, ground or signal by name. Footprints from the ``io_pads``
 library, or any reference prefix passed with ``--external-ref-prefix``, are
 flagged ``external: true``. At least one of ``--yaml``, ``--csv``, ``--inject``
 or ``--summary`` is required.
+
+System schematics
+-----------------
+
+Two tools carry a whole system, not a single die, between the ``.chiplet`` and
+a KiCad schematic. ``chiplet_to_kicad_sch.py`` draws the system sheet, or a
+handout for drawing one by hand. ``kicad_sch_to_connectivity.py`` reads an
+edited sheet back as a connectivity form, which the ``.chiplet`` schematic
+import turns into a revision of the system. This section covers drawing,
+handouts and reading back. The generator can also draw co-simulation setup
+sheets (``--setup``); those are not covered here.
+
+Drawing the sheet from a ``.chiplet``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    python3 chiplet_to_kicad_sch.py --chiplet design.chiplet \
+        --pins U1=u1_pins.json --pins U2=u2_pins.json \
+        --out sys.kicad_sch --report schematic.json --check
+
+The result is one KiCad 9 sheet. Each die is a symbol whose Reference is its
+component id, with a pin per name in its pin list, and every connected pin
+carries a global label with the exact net name. Terminals on no net get a
+no-connect flag, except open pins that link dies, which are left bare so that
+KiCad's list of unconnected pins is the list still to wire. Nets come only from
+the ``.chiplet``: the sheet is a view of the description, not a second source
+of it.
+
+A die symbol names its footprint ``chiplet_dies:<top cell>``. A carrier, a
+component that is not a die but lists ``io_pads`` (a wire-bond interposer, for
+example), is drawn as its pads: one ``chiplet_system:EXT_PAD`` symbol per pad,
+with Reference the pad id and Footprint ``chiplet_carrier:EXT_PAD_<n>um`` from
+the pad's size in the ``.chiplet``. Those are the footprints
+``interposer-pnr export`` draws, so a board it drew pairs with the sheet symbol
+for symbol. The carrier's pin list is written next to the sheet as
+``<id>.carrier_pins.json``. Reading the sheet back, with ``--check`` or with the
+connectivity reader, folds a carrier's pads into one carrier whose pins are the
+pad ids.
+
+Each symbol carries a hidden ``CHIPLET_COMPONENT`` property with its component
+id, title-block comment 1 holds the sha256 of the ``.chiplet``, and reruns on
+the same inputs are byte-identical. Anything that cannot be drawn verbatim is
+refused by name and no sheet is written. The report lists every refusal; among
+them are a pin the component does not have, a pad whose netlist net and
+``io_pads`` net disagree, a pad whose size is missing, not square or not a
+whole number of micrometres, a pad id that is also a component id or another
+pad's, and a die that states no top cell. ``--check`` exports the sheet's
+netlist with ``kicad-cli`` and compares it with the ``.chiplet``. The exit
+status is 0 when written, 3 when refused, and 4 when written but the check
+found a difference or could not run.
+
+**Names KiCad carries verbatim.** Die and carrier ids are plain
+``[A-Za-z0-9_.+-]`` names. Pin and net names may also carry numeric subscripts
+after a plain first character, as a die's bus pads are often named:
+``IO[0].pad`` and ``a[1].b[2]`` are drawn as they are. A range such as
+``B[0..3]``, which KiCad reads as a bus, a name that starts with a subscript,
+which KiCad reads as stacked pins, and any other character are refused as
+``unmappable_name``, with a message ending "KiCad would not carry it
+verbatim".
+
+Handouts for drawing a sheet by hand
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``--handout DIR`` writes, instead of a sheet, what is needed to draw the
+system from scratch:
+
+.. code-block:: bash
+
+    python3 chiplet_to_kicad_sch.py --chiplet given.chiplet \
+        --pins U1=u1_pins.json --pins U2=u2_pins.json --handout sheet_first/
+
+``DIR`` gets ``chiplet_dies.kicad_sym``, one symbol per top cell, named by it,
+with Reference prefix ``U``, every pin passive and the link pins on the right;
+a ``sym-lib-table`` naming that library ``chiplet_dies`` through
+``${KIPRJMOD}``; and a project with an empty sheet, named after the
+``.chiplet`` or ``--name``. Carriers are not drawn. No file carries a digest, a
+time or a host path, so a rerun writes the same bytes.
+
+A handout file already in ``DIR`` that differs from what would be written, a
+sheet you have started drawing on for instance, is never overwritten: the run
+is refused (``handout_exists``) and nothing is written. Move the file away for
+a fresh handout. The exit status is 0 when written and 3 when refused, with the
+refusals on stderr.
+
+The same handout can be drawn from die folders, with no ``.chiplet``:
+
+.. code-block:: bash
+
+    python3 chiplet_to_kicad_sch.py --handout sheet_first/ \
+        --dies sheet_first/dies/DRIVER --dies sheet_first/dies/ECHO \
+        --ext-pad-um 80
+
+Each die folder holds ``die-contract.json`` and the pad inventory it binds, and
+lies inside the handout directory. A folder is read the way the schematic
+import reads it, so a die that import would refuse is refused here rather than
+drawn: a contract and an inventory that name different pads
+(``contract_pads_differ``), a pad on no port (``unported_pads``), or a folder
+that cannot be read as a die (``die_folder``). There is no system netlist, so
+signal pins sit on the right and power and ground pins on the left. The
+handout adds ``chiplet_system.kicad_sym`` with ``GND`` and ``SUPPLY``, drawn as
+KiCad power symbols, and ``EXT_PAD`` for the external pads; the table names
+``chiplet_system`` first. ``--ext-pad-um`` is the external pad's edge in whole
+micrometres. The project is named by ``--name``, or by the directory's own
+name.
+
+A die whose repeated pad numbers all belong to one power or ground port gets
+``duplicate_pin_numbers_are_jumpers`` on its symbol, because the die ties those
+pads inside. Any other repeated number is refused as ``undeclared_tie``. KiCad
+9.0 cannot read that flag, so such a handout opens only in the tools image's
+KiCad (:doc:`/tools/01_kicad_adk_mod`). A handout drawn from a ``.chiplet``
+never sets it, and a die with repeated rail pad numbers drawn that way is
+refused later, at ``interposer-pnr export --form``. Draw such a die from its
+folder.
+
+Reading an edited sheet back
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Export the netlist and the ERC report with ``kicad-cli``, then read them:
+
+.. code-block:: bash
+
+    kicad-cli sch export netlist --format kicadsexpr --output sys.net sys.kicad_sch
+    kicad-cli sch erc --format json --severity-all --output erc.json sys.kicad_sch
+    python3 kicad_sch_to_connectivity.py sys.net sys.kicad_sch schematic.json \
+        connectivity.json --erc erc.json
+
+This is the form for a generated sheet, ``chiplet_system.connectivity`` 1.0:
+each symbol with its ``CHIPLET_COMPONENT`` identity and pin numbers, each net
+with its endpoints and whether KiCad made its name up, the base digest from the
+title block, and every input by path and sha256. The reader reports what KiCad
+resolved and judges nothing; that is the import's job. What the form cannot
+carry is listed in it as a refusal: a hierarchical sheet, a net named by a
+local label, two names on one net (from the ERC report), or a node on a pin its
+symbol does not have. ``--no-erc`` skips the ERC report and with it the
+two-name check. The exit status is 0 when the form is written, refusals
+included, and 2 when an input is missing or is not what it claims to be.
+Options may sit anywhere on the line, between the paths too.
+
+A sheet drawn on a handout has no generator report. Say which handout it came
+from instead:
+
+.. code-block:: bash
+
+    # handout from a .chiplet
+    python3 kicad_sch_to_connectivity.py sys.net sys.kicad_sch connectivity.json \
+        --blank --library sheet_first/chiplet_dies.kicad_sym --erc erc.json
+
+    # handout from die folders
+    python3 kicad_sch_to_connectivity.py sys.net sys.kicad_sch connectivity.json \
+        --classic --library sheet_first/chiplet_dies.kicad_sym \
+        --system-library sheet_first/chiplet_system.kicad_sym --erc erc.json
+
+``--blank`` writes form 1.1 with ``sheet`` set to ``blank``: no base digest and
+no generator report, the library by path and sha256, and each symbol's
+``part`` (library nickname and symbol name) with a null identity, since the
+designator is the only identity a blank sheet has. Two symbols under one
+reference, two left unannotated for instance, are refused as
+``duplicate_reference``.
+
+``--classic`` writes form 1.3 with ``sheet`` set to ``classic``. It adds each
+component's UUID key, its value, footprint and fields verbatim, explicitly
+flagged no-connect pins as ``open``, each symbol's ``units`` and ``jumpers``
+(its ``duplicate_pin_numbers_are_jumpers``), and ``rails`` from the
+``chiplet_system:GND`` and ``chiplet_system:SUPPLY`` symbols on the root sheet.
+The netlist's names and endpoints stay the connectivity authority. Refusals on
+a classic sheet include a symbol with more than one unit (``multi_unit``), a
+net-naming power symbol from another library (``foreign_rail``; a
+``PWR_FLAG`` names no net and is ignored), a drawn rail that is no netlist net
+(``rail_unused``), and two pins of one unit at one position with different
+numbers (``unit_pin_order``). Only root-sheet symbols are written. A symbol
+with no cached library symbol is an input error, exit 2.
 
 The GUIs
 --------

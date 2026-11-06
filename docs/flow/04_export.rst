@@ -58,6 +58,14 @@ The fields that matter:
    on Run. Interconnect method and die thickness, as described in
    :doc:`/flow/03_interposer_design`.
 
+**Interposer export report.**
+   Only for a board ``interposer-pnr export`` drew against a sheet, or a draft
+   board you updated from its draft sheet. Pick the report export wrote beside
+   the board; the export then names the I/O pad nets as the planner does. A
+   board you drew by hand needs none. The headless equivalent is
+   ``chiplet-export --export-report PATH``, and
+   :ref:`chiplet_export_report` has the rules.
+
 **Worker Python.**
    The interpreter that runs ``hyp_to_gds.py`` and the ADK DRC. The placeholder
    shows what the discovery chain resolved, so an empty field reads as
@@ -68,6 +76,7 @@ What happens when you press Run
 
 .. code-block:: text
 
+    0. check the I/O pad carriers and export report      (refuses, nothing written)
     1. resolve the worker Python and hyp_to_gds.py       (fails early if absent)
     2. write <board>.hyp                                 (HyperLynx writer)
     3. write the intermediate <board>.chiplet            (chiplet writer)
@@ -81,37 +90,47 @@ What happens when you press Run
     6. run the ADK assembly DRC over the complete GDS    (when enabled)
          -> reports/<board>_assembly_drc.lyrdb
 
-Steps 2 and 3 are Python ports of the KiCad C++ exporters, and they are held
-byte-exact against them by the plugin's regression tests. Step 5 is where the
-geometry is actually built. Step 6 is a check, not a gate: a DRC failure does
-not invalidate the exported artefacts, the export exit code stays 0, and the
-verdict is reported separately as ``assembly DRC: PASSED / FAILED / NOT RUN``
-with the report path.
+Step 0 refuses a board whose carriers cannot be named: a carrier on two nets, a
+missing or repeated ``IO_PAD_ID`` on a board export drew, or a missing or wrong
+export report. Steps 2 and 3 are Python ports of the KiCad C++ exporters, and
+they are held byte-exact against them by the plugin's regression tests. Step 5
+is where the geometry is actually built. Step 6 is a check, not a gate: a DRC
+failure does not invalidate the exported artefacts, the dialog's run still
+succeeds, and the verdict is reported separately as
+``assembly DRC: PASSED / FAILED / NOT RUN`` with the report path. The headless
+command, below, exits 3 in that case unless you pass ``--allow-drc-fail``.
 
 Headless
 --------
 
 The same pipeline runs without the GUI. In the tools image, the end-to-end
-self test exercises it:
+self test exercises it on the two-die test design, copied to ``/work/example``
+as :doc:`/install/01_container` describes:
+
+.. RUN-ON-IMAGE: adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 .. code-block:: bash
 
-    adk-smoke
+    adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
-To export a specific board headless, the plugin's regeneration script is the
-worked example, and it is what the tools image uses to rebuild the reference
-design on every build:
+To export a specific board headless, run the command the dialog's **Run** stands
+for:
+
+.. RUN-ON-IMAGE: chiplet-export --board my_design/kicad/my_design.kicad_pcb --output-dir my_design/outputs
 
 .. code-block:: bash
 
-    python3 /opt/adk-tools/chiplet_kicad_plugin/tests/regenerate_wirebond_demo.py \
-        --require-drc \
+    chiplet-export \
         --board       my_design/kicad/my_design.kicad_pcb \
         --output-dir  my_design/outputs
 
-``--require-drc`` makes the run exit nonzero unless the assembly DRC ran and
-passed. It is off by default so that an environment without the KLayout command
-line can still regenerate the geometry.
+It always writes the complete assembly GDS and always runs the assembly DRC.
+Exit 0 means the files were written and the DRC passed, exit 1 that nothing
+trustworthy was written, and exit 3 that the files were written but the DRC
+did not pass. ``--allow-drc-fail`` turns that 3 into 0 when you want the
+geometry regardless; the last line still says how the DRC ended. Add
+``--export-report PATH`` for a board drawn against a sheet.
+:doc:`/tools/02_chiplet_export_plugin` lists the exit codes and the flags.
 
 .. note::
    Anything headless must run under a Python that can ``import pcbnew``, which
@@ -207,6 +226,12 @@ the Cu pillars or bumps generated from each flip-chip die's footprint pads.
 
 This is the file the ``.chiplet`` references, and it is a deliverable: it is
 the fabrication-oriented view of what you designed.
+
+It is not a copy of what KiCad shows. A free trace end that KiCad draws as a
+round cap is square in the GDS, reaching half a track width past its endpoint,
+so the GDS can hold slightly more copper at a trace end than the board.
+:doc:`/flow/05_hyp_to_gds` explains which ends are drawn square and what that
+does to clearance.
 
 ``layout/<board>_complete.gds``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -407,6 +432,22 @@ No Cu pillars in the rendered assembly
 A die exported with ``thickness: 0.0``
     ``DIE_THICKNESS_UM`` was never set on that die. The export names every die
     that ships a zero in its warnings.
+
+``IO pad carriers refused: carrier pad J1 is linked to a sheet symbol, ...``
+    The board was drawn by ``interposer-pnr export`` against a sheet, or is a
+    draft updated from its sheet, so its nets may be the sheet's. Give the
+    report export wrote beside it in *Interposer export report*. A report
+    "written for another board" is the wrong one: take the report written
+    with this board.
+
+``IO pad carriers refused: carrier ...: its pads carry different nets``
+    One I/O pad footprint has pads on two nets, an unconnected pad included.
+    A carrier carries one net; fix the board.
+
+``ERROR: track ends refused: ... place(s) where two nets' traces touch``
+    Once their ends are drawn square, traces of two nets meet on one layer. The
+    worker writes no GDS and the run fails. Widen the clearance at each place
+    the message names; :doc:`/flow/05_hyp_to_gds` has the geometry.
 
 Next
 ----

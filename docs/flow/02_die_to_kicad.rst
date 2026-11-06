@@ -241,6 +241,14 @@ Rebuilding from the pin list reproduces the full symbol layout, not just the
 pin names, which is what makes the symbol a regenerable artefact rather than a
 hand-drawn one.
 
+.. tip::
+    The symbol above is for a schematic of the die on its own board. To draw a
+    whole system sheet by hand, with every die as a symbol, ask for a handout
+    instead: ``chiplet_to_kicad_sch.py --handout DIR`` writes a die symbol
+    library, its ``sym-lib-table`` and an empty sheet, from a ``.chiplet`` and
+    the dies' pin lists or from the die folders alone. See
+    :doc:`/tools/03_gds2kicad`, *System schematics*.
+
 A die with no GDS
 -----------------
 
@@ -278,6 +286,14 @@ The resulting footprint carries an ``IO_CLASS`` property (and its size), which
 is what the export scans for when it extracts the assembly's I/O pads into the
 ``.chiplet``. The reference design uses 35 such pads, all
 ``wire_bond``, 100 by 100 um.
+
+A board that ``interposer-pnr export`` drew does not use these. It draws its
+carrier pads itself, from the ``chiplet_carrier`` footprint library, each with
+its io_pad id in a hidden ``IO_PAD_ID`` property, and the export reads every
+carrier on such a board by that id. To read the pads of any board back into an
+``io_pads.json`` sidecar, run ``io_pads/kicad_pcb_to_iopads.py``; a board drawn
+against a sheet also needs ``--export-report``, the report export wrote beside
+it. :doc:`/tools/03_gds2kicad` has the details.
 
 Traceability properties
 -----------------------

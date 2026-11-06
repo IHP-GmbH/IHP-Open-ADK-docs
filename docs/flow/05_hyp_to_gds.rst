@@ -53,7 +53,11 @@ A KLayout layer properties file (``--lyp``)
     GDS layer 134/0 because the interposer technology says so. By default the
     converter resolves the interposer PDK's canonical ``intm4tm2.lyp`` through
     the discovery chain (``INTERPOSER_PDK_ROOT``, then a sibling checkout); the
-    layer table belongs to the PDK, and there is no plugin-local copy.
+    layer table belongs to the PDK, and there is no plugin-local copy. A set
+    ``INTERPOSER_PDK_ROOT`` must be an IntM4TM2 tree, one with
+    ``libs.tech/intm4tm2_stack.json``. Anything else, the SG13G2 die PDK
+    included, ends the run with ``CARRIER_UNSUPPORTED_ROOT`` rather than
+    falling back to the sibling checkout.
 
 Die layouts
     One GDS per distinct ``GDS_FILE`` referenced by the ``.hyp``, read only when
@@ -62,7 +66,10 @@ Die layouts
 Optional sidecars
     ``--tech-json`` for the interposer via parameters, ``--pad-locations`` for
     per-die pin lists that drive Cu-pillar generation, ``--io-pads`` for
-    external I/O pad geometry, ``--cupillar-gds`` to merge pillars generated
+    external I/O pad geometry (its nets already in the planner's names, which
+    the converter never renames; the plugin and
+    ``kicad_pcb_to_iopads.py --export-report`` write it that way),
+    ``--cupillar-gds`` to merge pillars generated
     elsewhere, and ``--update-chiplet-file`` to finalise the intermediate
     ``.chiplet``.
 
@@ -70,7 +77,10 @@ Every path argument may use ``${VAR}`` references to the ecosystem discovery
 variables, for example
 ``${INTERPOSER_PDK_ROOT}/libs.tech/klayout/tech/intm4tm2.lyp``. Writers copy
 those strings verbatim; the converter expands them on read, falling back to a
-sibling-checkout walk and then failing loudly with the variable name. See
+sibling-checkout walk and then failing loudly with the variable name. A set
+``INTERPOSER_PDK_ROOT`` never falls back: without
+``libs.tech/intm4tm2_stack.json`` it is refused with
+``CARRIER_UNSUPPORTED_ROOT``, as above. See
 :doc:`/install/03_environment`.
 
 What it produces
@@ -181,6 +191,40 @@ out. That is an early, cheap version of the containment check: KiCad's own DRC
 flags an off-board footprint at design time, and this catches the same mistake
 at the GDS.
 
+Track ends
+~~~~~~~~~~
+
+Each free end of a chained trace is drawn square: the copper runs half the
+track width past the endpoint, along the track. A bend keeps its mitred
+corner. An end is not free when another trace of the same net on the same
+layer runs through it, either a wider one or one as wide that passes the
+endpoint rather than ending on it. KiCad's round cap there already lies inside
+that trace, so the end is drawn flush. Two ends of the same width that meet
+each other stay free, and so do the two ends of a closed loop, because nothing
+else covers those points.
+
+KiCad draws a free end as a round cap, so where nothing lies under a free end
+the GDS holds a little more copper than the board shows: at most
+(sqrt(2) - 1) times half the width, at the corners of the square, which is
+0.34 um on a 1.64 um track. A clearance KiCad's own check passes can therefore
+fail the KLayout deck on the GDS by that margin, never the other way round. The
+deck on the GDS is the judge.
+
+.. note::
+   Earlier releases drew every end flush. Re-exporting any board with traces
+   therefore changes the interposer GDS, and with it the SHA-256 its boundary
+   manifest records, even when the board did not change.
+
+Where two nets' traces touch on one layer, the merged copper is a short that no
+spacing rule reports. After drawing the traces, and before writing anything,
+the converter compares the trace copper of every pair of nets on each layer.
+If any touch or overlap it stops with ``ERROR: track ends refused:``, followed
+by one line per place naming the layer, the two nets and the box where they
+meet, and the advice to widen the clearance there. On a board that passes its
+own clearance check, such a touch comes from a square end. Only traces are
+compared: an end that reaches another net's pad, via or die copper is not
+checked here, since the export runs no LVS. That is left to an LVS on the GDS.
+
 Vias come from the base PDK's own PCells
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -197,6 +241,13 @@ KLayout session, and then instantiates the PDK's ``via_stack`` PCell from the
 library is technology bound, the converter also registers the ``sg13g2``
 technology and binds its layout to it; without that binding the cell lookup
 returns nothing even with the library loaded.
+
+The array size is the smallest n for which an n by n array, with its
+enclosure, covers the padstack pad: ``n = ceil((pad - 2 * enc + sep) /
+(size + sep))``. Every length is rounded to the database unit once and the
+division is done in integers, so a pad exactly the size of the landing an n by
+n array draws gets n by n. Earlier releases divided in floating point, and a
+pad on that boundary could come out one cut larger in each direction.
 
 This matters more than it looks. The via ladder, the cut sizes, the separations
 and the metal enclosures are process rules that live in the base PDK and change
