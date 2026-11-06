@@ -3,13 +3,18 @@ Reference design
 
 .. include:: /common.inc
 
-``two_die_interposer`` is the worked example of the whole flow: two dies mounted
-face down on an IntM4TM2 interposer, attached by two *different* interconnect
-methods, with wire-bond I/O pads at the interposer edge. It ships in the
-|tools-repo| repository under ``examples/two_die_interposer/``, where it is
-also the test design the image build checks itself against. The runtime image
-does not carry it. Copy it once from your ADK-Tools checkout into the folder
-``run.sh`` mounts at ``/work``, as :doc:`/quickstart` does:
+``two_die_interposer`` is the reference design of the |tools-repo| image: the
+design the image build regenerates and checks itself against. Its assembly DRC
+has to pass and its regeneration has to reproduce before an image is accepted.
+It is two dies mounted face down on an IntM4TM2 interposer, attached by two
+*different* interconnect methods, with wire-bond I/O pads at the interposer
+edge. This page walks through it to show what each step of the flow produces on
+a known design. It is not a project to learn the flow on; the example designs
+of :doc:`/examples` are.
+
+It ships in the |tools-repo| repository under ``examples/two_die_interposer/``.
+The runtime image does not carry it. Copy it once from your ADK-Tools checkout
+into the folder ``run.sh`` mounts at ``/work``, as :doc:`/quickstart` does:
 
 .. code-block:: bash
 
@@ -198,23 +203,25 @@ The die footprint, read straight out of the curated GDS:
 
 .. code-block:: bash
 
-    gds_to_kicad.py Metal_Test_stripped.gds \
+    python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad.py" Metal_Test_stripped.gds \
         --layer TopMetal2.drawing --text-layer-number 134/25 \
-        --lyp-file $GDS_TO_KICAD_ROOT/pdks/sg13g2.lyp --flip-chip \
+        --lyp-file "$GDS_TO_KICAD_ROOT/pdks/sg13g2.lyp" --flip-chip \
         -o metal_test_chiplet.kicad_mod
 
 The die symbol, from the reviewed pin list, with no GDS involved:
 
 .. code-block:: bash
 
-    gds_to_kicad_symbol.py --from-pin-list metal_test_chiplet.pins.json \
+    python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad_symbol.py" \
+        --from-pin-list metal_test_chiplet.pins.json \
         -o Metal_Test.kicad_sym
 
 The wire-bond I/O pad, generated parametrically rather than converted:
 
 .. code-block:: bash
 
-    $GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py --io-class wire_bond --size 100x100
+    python3 "$GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py" \
+        --io-class wire_bond --size 100x100
 
 The same three steps are available from the ``gds-to-kicad`` GUI, and
 ``metal_test_chiplet.g2kproj`` reopens the session at exactly the state that
@@ -295,8 +302,7 @@ The other three of the four :doc:`verification stages
 against the shipped artefacts, and they are given below. The third, the KiCad
 design-time check, cannot be run here at all: the demo ``kicad/`` tree ships no
 generated ``.kicad_dru``, so there is nothing for pcbnew to enforce. Generate
-one as :doc:`/adk/06_kicad_dru` describes before using this example as the
-template for a design of your own.
+one as :doc:`/adk/06_kicad_dru` describes for a board of your own.
 
 Pad-to-pillar alignment, which needs the ``.chiplet``, the pillar manifest and a
 pad source per die:
