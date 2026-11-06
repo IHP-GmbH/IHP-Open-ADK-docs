@@ -109,12 +109,20 @@ LibreLane ``Classic`` flow fails there at its Magic stream-out. The
 
 A LibreLane run you already have becomes a ready die in two steps:
 
-.. RUN-ON-IMAGE: chiplet-die-flow die-view --config <config.yaml> --run-dir <run> -o <view.json> && chiplet-die-flow emit-ready-die --view <view.json> --run-dir <run> --instance <die> --opening-purpose aperture --output <ready_die>
+.. RUN-ON-IMAGE: PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow die-view --config <config.yaml> --run-dir <run> -o <view.json> && PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow emit-ready-die --view <view.json> --run-dir <run> --instance <die> --opening-purpose aperture --output <ready_die>
 .. code-block:: bash
 
-    chiplet-die-flow die-view --config <config.yaml> --run-dir <run> -o <view.json>
-    chiplet-die-flow emit-ready-die --view <view.json> --run-dir <run> \
+    PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow die-view \
+        --config <config.yaml> --run-dir <run> -o <view.json>
+    PDK_ROOT=$ADK_NIX_SG13G2_PDK chiplet-die-flow emit-ready-die \
+        --view <view.json> --run-dir <run> \
         --instance <die> --opening-purpose aperture --output <ready_die>
+
+In the tools image, LibreLane builds against the SG13G2 PDK that
+``$ADK_NIX_SG13G2_PDK`` names, not the one ``$PDK_ROOT`` names, and
+``die-view`` refuses a run whose PDK differs from ``$PDK_ROOT``. Set it on each
+command as shown, never with ``export``: KLayout and the assembly DRC read
+``$PDK_ROOT`` too.
 
 ``die-view`` reads the run and binds the die's pads to its GDS. A run the
 configuration did not build is refused. ``emit-ready-die`` writes the four
