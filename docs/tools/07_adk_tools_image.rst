@@ -353,10 +353,10 @@ out the new one rather than pulling:
 
     cd "$ADK_TOOLS_ROOT"
     git fetch --tags
-    git checkout vYYYY.MM
+    git checkout vYYYY.MM    # a release clone sits on a tag, so there is nothing to pull
     git submodule update --init --recursive
     ./stage-sources.sh --check && ./stage-die-views.sh --check
-    ./build.sh          # cached stages rebuild only what changed
+    ./build.sh    # cached stages rebuild only what changed
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
 
@@ -381,7 +381,8 @@ variable and hold the other six fixed.
 
     # follow the branch tracked in .gitmodules (usually main)
     git submodule update --remote tools/adk
-    python3 -B ci/pin_set.py
+    git add tools/adk
+    python3 -B ci/pin_set.py    # the pin set records every staged gitlink
     git commit -am "Bump adk to <ref>"
     ./build.sh
 
@@ -389,12 +390,12 @@ variable and hold the other six fixed.
     cd tools/chiplet-studio && git fetch && git checkout feature/x && cd ../..
     ./build.sh
 
-Commit the bump before building. The build labels the image with the pin set
-of the commit it is on, from ``ci/pin-set.json``, which ``ci/pin_set.py``
-regenerates; a bump built before its commit carries a label that names the old
-pins. The uncommitted branch in the second case has the same gap: its image
-carries the branch, but its label names the committed pins. Use such an image
-to test the candidate only, and never run it under a release lock.
+The pin set takes each tool's commit from the gitlink git has staged, not from
+the submodule's checkout, so stage a bump and regenerate the pin set before
+you build it; ``build.sh`` refuses a pin set that is not what the staged pins
+give. In the second case nothing is staged: the image carries ``feature/x``
+while its ``org.ihp.adk-tools.pin-set`` label still names the pinned commit, so
+do not run such an image under a release lock.
 
 Either way the verify stage decides. If the candidate revision breaks any
 suite, the reference design regeneration or the assembly DRC, no image is
