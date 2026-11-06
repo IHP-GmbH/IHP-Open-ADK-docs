@@ -36,8 +36,16 @@ First hit wins:
 A candidate is not accepted merely because the directory exists. Each root has
 a **marker subpath** that must exist under it, and a set-but-invalid
 environment value falls through to the walk rather than winning and then
-failing later. This is what makes a stale ``INTERPOSER_PDK_ROOT`` pointing at a
-deleted checkout harmless instead of confusing.
+failing later.
+
+The KiCad plugin makes one exception, for ``INTERPOSER_PDK_ROOT``. A set value
+that is not an IntM4TM2 tree no longer falls through to the sibling checkout,
+which would draw the interposer with a PDK you did not name: the export stops
+with exit 1 and a message that starts with ``CARRIER_UNSUPPORTED_ROOT`` and
+names the marker it looked for and the path it was given. The export dialog
+shows a set root as it is given, so the GUI path refuses it too. A stale
+``INTERPOSER_PDK_ROOT`` pointing at a deleted checkout therefore stops the
+export; point it at an IntM4TM2 checkout, or unset it to use the walk.
 
 The variables
 -------------
@@ -84,8 +92,9 @@ technology.
 Marker subpaths and accepted directory names
 --------------------------------------------
 
-The walk and the environment check share one table, reproduced identically in
-``hyp_to_gds.py``, the ADK's ``pads_vs_pillars.py`` and Chiplet Studio's
+The walk and the environment check share one table, reproduced in the KiCad
+plugin's ``layer_map.py`` (which ``hyp_to_gds.py`` and the export dialog
+use), the ADK's ``pads_vs_pillars.py`` and Chiplet Studio's
 ``ChipletFormat.cpp``:
 
 .. list-table::
@@ -100,7 +109,8 @@ The walk and the environment check share one table, reproduced identically in
       - ``klayout/drc``
     * - ``INTERPOSER_PDK_ROOT``
       - ``interposer``, ``OpenIntM4TM2``
-      - ``libs.tech/klayout``
+      - ``libs.tech/intm4tm2_stack.json`` in the KiCad plugin,
+        ``libs.tech/klayout`` in the ADK and Chiplet Studio
     * - ``INTERCONNECT_PDK_ROOT``
       - ``interconnect_pdk``, ``IHP-Interconnect-IntM4TM2``
       - ``manifest``
@@ -110,6 +120,11 @@ The walk and the environment check share one table, reproduced identically in
     * - ``PDK_ROOT``
       - ``IHP-Open-PDK``
       - ``ihp-sg13g2/libs.tech/klayout``
+
+The plugin's ``INTERPOSER_PDK_ROOT`` marker is the interposer PDK's stack
+descriptor because every KLayout PDK tree has a ``libs.tech/klayout``
+directory, the SG13G2 die PDK included, so that directory cannot tell an
+IntM4TM2 tree from another.
 
 Two consequences are worth stating plainly. First, a development layout where
 all checkouts are siblings in one directory needs almost no environment: the

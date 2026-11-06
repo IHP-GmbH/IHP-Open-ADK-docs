@@ -3,11 +3,14 @@ The alpha release
 
 .. include:: /common.inc
 
-The alpha release is three things that move together: an ADK-Tools commit, the
-image built from it, and an adk-examples checkout whose ``release-lock.json``
-names that image by its ID. ``run.sh --examples`` starts only the image the lock
-names and checks the image's labels against it, so every example runs in the
-image it was written for.
+The alpha release is three things that move together: an ADK-Tools release
+tag, the image you build from it, and an adk-examples checkout at the same tag.
+No image is published: you build the one you run, and it gets an ID of its
+own. The checkout's ``release-lock.json`` names the reference image the
+examples were checked on and the pin set that image was built from.
+``run.sh --examples`` holds your image to that pin set: an image built from
+the same pins runs, with one note naming both IDs, and any other image is
+refused before a container starts.
 
 This page gets you that image and the host pieces the examples need. Each
 example's README then starts from its first block, which calls ``run.sh``.
@@ -21,73 +24,125 @@ What you need
 
 - **Docker**, with the daemon running and your user able to talk to it.
   The image carries every tool a run uses (OpenROAD, LibreLane and its Python,
-  the SG13G2 PDK, the co-simulation engines and the waveform viewers), so the
-  host needs only the pieces in this list.
-- **git**, for the ADK-Tools clone, and **python3**, which reads the lock.
-- **zstd**, which unpacks the image archive.
-- **The release itself**: the adk-examples checkout, the image archive
-  (``adk-tools-runtime-<12 hex>.tar.zst``) and the editor extension, with a
-  ``SHA256SUMS`` beside them that covers the archive and the extension. None of
-  them is in a public registry; they are handed out with the release, to
-  workshop participants for instance.
+  the SG13G2 PDK, the co-simulation engines and the waveform viewers), so
+  running it needs only the pieces in this list.
+- **Nix**, for the build. ``build.sh`` copies OpenROAD, LibreLane, the SG13G2
+  PDK and the simulation engines and viewers from the host's Nix store into the
+  image's own, so they have to be in that store before the build. Running the
+  image you built needs no Nix.
+- **git**, for the checkouts, and **python3**, which the build scripts use.
+- **The sources the build stages.** Besides the ADK-Tools clone and its
+  submodules, the build needs a checkout of each sibling repository that
+  ADK-Tools' ``staging.pin`` lists, at the commit it pins, beside the clone.
+- **The adk-examples checkout** at the release tag. Its ``die-views/`` folder
+  holds the die records the build stages into the image, and its
+  ``release-lock.json`` is the lock the examples run under.
 - **A display** for the reviews the examples ask for. ``run.sh`` takes
   ``DISPLAY`` or a ThinLinc session; ``ADK_DISPLAY=:N`` names another.
 - **Memory and cores.** Each example states what it needs before it starts a
   container and checks it in its first block.
+- **Disk and time.** The first build takes about an hour, and later builds
+  reuse its cache. :doc:`/install/01_container` says what the build does.
 
-1. The two checkouts
---------------------
+1. The checkouts
+----------------
 
-Keep both outside your work directory (``ADK_WORK``, ``~/adk-work`` by default),
-which the container can write. The adk-examples checkout is the release you
-run; the ADK-Tools clone goes to the commit its lock names.
+Keep both checkouts outside your work directory (``ADK_WORK``,
+``~/adk-work`` by default), which the container can write: ``run.sh`` refuses
+to start when ``ADK_WORK`` holds its clone or lies inside it. The adk-examples
+checkout is the release you run, at the release tag ``v2026.11``; the
+ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
+clone, or in the directory ``STAGE_SIBLINGS`` names.
+
+.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git "$ADK_TOOLS_ROOT"; cd "$ADK_TOOLS_ROOT"; ./stage-sources.sh --check && ./stage-die-views.sh --check
 
 .. code-block:: bash
 
+    # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
+    # adk-examples checkout at ADK_EXAMPLES_ROOT is at the same v2026.11 tag
     export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    # the adk-examples checkout of the release is at $ADK_EXAMPLES_ROOT
-    git clone https://github.com/IHP-GmbH/ADK-Tools.git "$ADK_TOOLS_ROOT"
-    lock() { python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' \
-               "$ADK_EXAMPLES_ROOT/release-lock.json" "$1"; }
-    git -C "$ADK_TOOLS_ROOT" checkout "$(lock adk_tools)"
+    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
+    git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git \
+        "$ADK_TOOLS_ROOT"
+    cd "$ADK_TOOLS_ROOT"
+    ./stage-sources.sh --check && ./stage-die-views.sh --check
+
+The two ``--check`` calls write nothing. ``stage-sources.sh --check`` finds
+each sibling checkout and the commit ``staging.pin`` pins in it;
+``stage-die-views.sh --check`` holds the records under ``STAGE_DIE_VIEWS_DIR``
+to the listing ADK-Tools pins. Either one names what is missing in seconds,
+before an hour of build.
 
 2. The image
 ------------
 
-There are two routes to the image. The first runs the reference image, and is
-the one to take unless you need to build.
+Build it as :doc:`/install/01_container` describes, from ``nix build`` to
+``./build.sh``, in the clone and with the same ``STAGE_DIE_VIEWS_DIR``. Then
+read the ID of the image you built:
 
-**Load the release image.** Check the files that come with the release, then
-load the archive. On Docker's classic image store ``docker load`` keeps the
-image ID, so the loaded image is the one the lock names:
+.. RUN-ON-IMAGE: export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
 
 .. code-block:: bash
 
-    # in the directory that holds the archive, the extension and SHA256SUMS
-    sha256sum -c SHA256SUMS && zstd -dc adk-tools-runtime-<12 hex>.tar.zst | docker load
-    export ADK_TOOLS_IMAGE="$(lock image)"
-    docker image inspect --format '{{.Id}}' "$ADK_TOOLS_IMAGE"   # prints the same ID
+    export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
 
-On a Docker daemon that uses the containerd image store, a loaded archive is
-not found by that ID; ``run.sh`` refuses and names the setting, and the
-README of the two-ready-dies example (``two_die_echo_shifted_gf180``), section
-Before you start, gives the steps.
-
-**Or build it.** Building needs sources that are not public yet: the sibling
-repositories at the commits the image pins, and the die records it names.
-ADK-Tools' README, section Build, says what a build needs and how to hold the
-image to a lock of your own; :doc:`/install/01_container` describes
-``build.sh``.
+``run.sh`` takes the image only by that ID, ``sha256:<64 hex>``, and has no
+default. A tag is refused, because a tag on a shared daemon can be moved to
+another image between two runs.
 
 3. Run an example
 -----------------
 
 Copy nothing by hand. Open the example's README in your adk-examples checkout
 and paste its blocks in order, from the host block that starts the container.
-``run.sh`` prints one line for each choice it made (the caps, the OpenROAD, the
-display, the network and the release lock it held the image to), and stops
-before a container starts when the lock names another image.
+That block calls ``run.sh --examples`` with your checkout, which ``run.sh``
+mounts read-only at ``/examples``. ``run.sh`` prints one line for each choice
+it made (the work directory, the image, the display, the caps and the release
+lock it held the image to). Your build is not the reference image, so one of
+those lines names both IDs:
+
+.. RUN-ON-IMAGE: "$ADK_TOOLS_ROOT/run.sh" --examples "$ADK_EXAMPLES_ROOT" true
+
+.. code-block:: text
+
+    run.sh: the image sha256:<your ID> is not the reference image sha256:<reference ID> the release lock <checkout>/release-lock.json names; it runs held to the lock's pin set
+
+An image whose ``org.ihp.adk-tools.pin-set`` label, which ``build.sh`` writes,
+is not the lock's pin set is refused with a line that names both values, and
+no container starts.
 
 A die run recorded under another release's SG13G2 PDK does not resolve under
 this one: its die checks and views refuse with a missing path. Rebuild the die
 under this release.
+
+The release lock
+----------------
+
+``release-lock.json`` is one canonical JSON object, sorted keys, a two-space
+indent and a final newline, with exactly these keys:
+
+``adk_tools``
+    The ADK-Tools commit the examples go with, the one to build.
+``image``
+    The reference image's ID, as ``docker image inspect --format '{{.Id}}'``
+    prints it.
+``image_manifest``
+    Schema ``/2`` only: the ID Docker's containerd image store gives the
+    reference image. An image you build is found by its own ID on either
+    image store, so this key changes nothing for it.
+``pin_set``
+    The sha256 of ``ci/pin-set.json`` at that commit, the value ``build.sh``
+    writes into the image's ``org.ihp.adk-tools.pin-set`` label.
+``schema``
+    ``adk-examples.release-lock/1``, or ``adk-examples.release-lock/2`` when
+    ``image_manifest`` is there.
+
+``run.sh`` refuses any other form, a schema that does not match the keys, and
+a lock that names one ID as both ``image`` and ``image_manifest``. It does not
+read ``adk_tools``: an image of the same pin set may come from another
+ADK-Tools commit.
+
+To hold the examples to a lock of your own, write it in this form and set
+``ADK_EXAMPLES_LOCK`` to its path; each example's first block passes it to
+``run.sh`` as ``--lock``. The adk-examples checkout's ``docs/RELEASE_LOCK.md``
+says the same from the examples' side.
