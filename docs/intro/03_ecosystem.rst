@@ -3,8 +3,8 @@ The ecosystem
 
 .. include:: /common.inc
 
-The IHP Open ADK is one repository in a set that together forms an open flow for
-2.5D heterogeneous integration. This page names each repository, says what it
+The IHP Open ADK is one repository in a set that together forms a flow for 2.5D
+heterogeneous integration. This page names each repository, says what it
 owns, and shows how they fit together. The rule of thumb is that each repository
 owns exactly one contract, and nothing owns two.
 
@@ -48,11 +48,31 @@ The repositories
     * - |studio-repo|
       - GPL-3.0-or-later
       - The 3D assembly viewer and ``.chiplet`` editor.
+    * - packaging-flow
+      - GPL-3.0-or-later
+      - The flow run: from one ``system.chiplet`` through die admission,
+        placement, routing, GDS, DRC and assembly LVS to a verdict, with a
+        signature at each checkpoint. See :doc:`/tools/10_packaging_flow`.
+    * - interposer-pnr
+      - GPL-3.0-or-later; descriptors taken from Apache-2.0 PDKs keep that
+        license
+      - Placement, bumps and interposer routing as a draft KiCad board, a
+        proof of concept, and the routing-technology descriptor contract. See
+        :doc:`/tools/11_interposer_pnr`.
+    * - chiplet-flow
+      - GPL-3.0-or-later
+      - One die build with LibreLane, handed over as a ready die with its die
+        contract, through the ``chiplet-die-flow`` command. See
+        :doc:`/tools/12_chiplet_flow`.
+    * - assembly-lvs
+      - GPL-3.0-or-later
+      - Connectivity of a placed assembly against its declared nets. See
+        :doc:`/tools/09_assembly_lvs`.
     * - |tools-repo|
       - GPL-3.0-or-later
-      - The container that pins and builds the seven tools above, plus the
-        reference design. The ``.chiplet`` specification is a document
-        repository and is not pinned in the image.
+      - The container that pins and builds the tools above, plus the
+        reference design. It also stages the reference reader of the
+        ``.chiplet`` specification that the flow tools read with.
 
 The base process PDK, |pdk-repo|, sits underneath all of this and is documented
 separately at https://ihp-open-pdk-docs.readthedocs.io.
@@ -71,8 +91,8 @@ How they connect
     :alt: The tools of the ecosystem arranged around the assembly flow.
     :width: 80%
 
-    The tools of the ecosystem. Each addresses one step that had no open
-    answer.
+    The design tools of the ecosystem around the KiCad path. The flow tools
+    in the table above are not drawn.
 
 The same set in data-flow terms, following the files rather than the tools:
 
@@ -121,16 +141,16 @@ Finding your dependencies
 -------------------------
 
 Every tool locates the others through one shared discovery chain rather than
-fixed relative paths. They all use the same discovery chain rather than fixed relative paths,
-and the container sets the roots for you. :doc:`/install/03_environment` has the
-full table.
+fixed relative paths, and the container sets the roots for you.
+:doc:`/install/03_environment` has the full table.
 
 Licensing in practice
 ---------------------
 
 The ADK, the format specification and both PDKs are Apache-2.0, so a rule deck,
 an adapter or a reader can be reused with minimal obligation. The tools built on
-KiCad and KLayout are GPL, as their upstreams require.
+KiCad and KLayout are GPL, as their upstreams require, and so are the flow
+tools (packaging-flow, interposer-pnr, chiplet-flow and assembly-lvs).
 
 The container image is a mere aggregation of independently licensed components.
 Each keeps its own license, and ``NOTICE.md`` in the ADK-Tools repository

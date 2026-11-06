@@ -4,9 +4,10 @@ Analysis and automation
 .. include:: /common.inc
 
 .. warning::
-   Nothing on this page is shipped. Each section is a reserved slot describing
-   an intended axis of work. No interface is committed, and nothing here should
-   be planned against.
+   Apart from the place and route proof of concept that the first section
+   names, nothing on this page is shipped. Each section describes an intended
+   axis of work. No interface is committed for it, and nothing here should be
+   planned against.
 
 The reserved domains on :doc:`/roadmap/01_adk_domains` are rule slots inside the
 kit. The three directions below sit next to it instead: they are analysis and
@@ -16,27 +17,38 @@ than add rules to the deck.
 2.5D place and route
 --------------------
 
-Today the flow is interactive at the placement and routing step: a designer
-positions chiplet footprints and routes the interposer in the layout tool, and
-the ADK checks the result. See :doc:`/flow/03_interposer_design`.
+In this release the placement and routing step can be run by tools, as a proof
+of concept. ``interposer-pnr`` (:doc:`/tools/11_interposer_pnr`) places the
+dies a source leaves open and legalizes them against the assembly rules, puts
+a bump on every die pad, routes the interposer with OpenROAD, and writes the
+copper as a draft on a KiCad board. ``packaging-flow``
+(:doc:`/tools/10_packaging_flow`) runs those steps in order and halts for a
+person to review and sign the board. What they write is a geometric draft, not
+a sign-off. The interactive path stays: you can still position the footprints
+and route the interposer in KiCad yourself, as
+:doc:`/flow/03_interposer_design` describes, and the ADK checks either result
+the same way.
 
-The direction of work is to make that step assistable rather than purely manual.
-Two pieces are relevant.
+The design question that dominated both pieces was where the coupling to a
+specific process lives. The ADK solved the equivalent problem for rules with the
+adapter contract: rules speak in abstract inputs, and one small file per PDK
+maps them onto concrete layers. interposer-pnr follows the same pattern. It
+reads no PDK kit files; one routing-technology descriptor per interposer maps
+the engine onto concrete layers, and a synthetic descriptor with no fab behind
+it ships beside the IHP ones to show the schema is not shaped around one PDK.
 
-**Placement assistance.** The assembly placement rules already express what a
-legal placement is. The same rules can drive a legaliser that detects
-violations and proposes a corrected placement, rather than only reporting them
-after the fact.
+The direction of work from here:
 
-**Interposer routing.** Routing between dies on an interposer is a
-redistribution-layer problem, which established open engines can address given
-a description of the routing technology.
-
-The design question that dominates both is where the coupling to a specific
-process lives. The ADK solved the equivalent problem for rules with the adapter
-contract: rules speak in abstract inputs, and one small file per PDK maps them
-onto concrete layers. A place and route capability needs the same property, or
-it becomes locked to one interposer and stops being reusable.
+- **Routing that closes.** On one routing layer a dense design can stay partly
+  open. On one assembly a second layer closed every net the first left open,
+  and the engine reports what stays open rather than hiding it.
+- **Impedance-aware routing.** Routing today is geometric. Routing to a target
+  impedance needs the constraint contract described in the next section.
+- **Congestion by layer.** The route report states routed length; it does not
+  yet report overflow per routing layer.
+- **Placement.** Legalization runs only inside the placer, with no command of
+  its own, and the placer seeds every die on one grid, so dies of very different
+  sizes sit further apart than they need to.
 
 Extraction and signal integrity
 -------------------------------

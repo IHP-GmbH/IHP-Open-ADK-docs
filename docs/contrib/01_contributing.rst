@@ -31,14 +31,20 @@ Where a change belongs
       - The relevant tool repository. |tools-repo| only pins revisions.
     * - Pin a new revision of a tool
       - |tools-repo|.
+    * - Change how a flow run is chained, halted, signed or verified
+      - packaging-flow (:doc:`/tools/10_packaging_flow`).
+    * - Place and route on a new interposer
+      - One routing-technology descriptor for interposer-pnr
+        (:doc:`/tools/11_interposer_pnr`). Do not modify the engine.
+    * - Change how a built die becomes a ready die
+      - chiplet-flow (:doc:`/tools/12_chiplet_flow`).
 
 Good first contributions
 ------------------------
 
 Each of these is small, sits in one repository and needs no change to a file
-format. Each one is done when that repository's suite has a test for it. Not
-every repository named here is public yet; its items open for outside work
-once it is.
+format. Each one is done when that repository's suite has a test for it. An
+item in a repository that is not public opens for outside work once it is.
 
 #. **Die spacing before a run** (chiplet-system-spec). The system planner of
    its system description already refuses overlapping dies and dies outside
@@ -48,20 +54,21 @@ once it is.
    a finding of the plan, before any run starts.
 
 #. **A placement edit** (packaging-flow). ``packaging-flow edit`` writes
-   connections from a board or a sheet into ``system.chiplet``. The system
-   description already has a patch that moves dies and nothing else. Offer it
-   as a third kind, ``edit --placement <file>``, under the same digest and lock
-   checks as the other two.
-#. **A wirelength estimate in the check report** (chiplet-system-spec). Add
-   each net's half-perimeter wirelength (HPWL) to the system description's
-   check report, so two placements can be compared before a full run.
-#. **Congestion and length in the route report** (interposer-pnr). Add the
-   global router's overflow per layer and each net's routed length to the
-   route report.
-#. **The legalizer as a command** (interposer-pnr). The placer has a
-   legalization step that the flow does not call. Offer it as a command that
-   reads a placement and writes a legal one as JSON. It never writes
-   ``system.chiplet`` itself; the placement edit does that.
+   connections from a board or a sheet into ``system.chiplet``, and
+   ``packaging-flow place`` writes the positions the placer decides. A placement
+   you decide yourself still has no command, and the system description already
+   has a patch that moves dies and nothing else. Offer it as a third kind of
+   edit, ``edit --placement <file>``, under the same digest and lock checks as
+   the other two.
+#. **A wirelength estimate in the check report** (chiplet-system-spec). Add each
+   net's half-perimeter wirelength (HPWL) to the system description's check
+   report, so two placements can be compared before a full run.
+#. **Congestion in the route report** (interposer-pnr). The route report already
+   states routed length. Add the global router's overflow per routing layer.
+#. **The legalizer as a command** (interposer-pnr). The placer legalizes only
+   inside ``place``, within its ``--max-move`` budget. Offer legalization as a
+   command of its own that reads a placement and writes a legal one as JSON. It
+   never writes ``system.chiplet`` itself; the placement edit does that.
 #. **Placement tolerance in assembly LVS** (packaging-flow). assembly-lvs can
    accept a die moved within a bound, but the flow passes a bound of zero. Give
    each bump method a placement accuracy, one ``placement_accuracy_um`` value
