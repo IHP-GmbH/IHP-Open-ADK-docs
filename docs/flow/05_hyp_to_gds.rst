@@ -128,20 +128,27 @@ A minimal interposer-only conversion:
     hyp-to-gds two_die_interposer.hyp -o layout/two_die_interposer_interposer.gds
 
 The full form the export pipeline uses, producing both GDS files and finalising
-the ``.chiplet``:
+the ``.chiplet``. Run it from the folder the export ran in (``/work`` for the
+reference design), because the die GDS paths the export recorded are relative
+to that folder. ``--die-outline-layers`` names the layer each die's GDS draws its
+outline on, the ``DIE_OUTLINE_LAYER`` field of its footprint; without it every
+die is refused. ``io_pads.json`` comes from ``kicad_pcb_to_iopads.py`` (see
+:doc:`/tools/03_gds2kicad`).
 
 .. code-block:: bash
 
-    hyp-to-gds two_die_interposer.hyp \
-        -o layout/two_die_interposer_interposer.gds \
+    O=example/outputs
+    hyp-to-gds $O/two_die_interposer.hyp \
+        -o $O/layout/two_die_interposer_interposer.gds \
         -c INTERPOSER \
         --with-chiplets \
-        --complete-output layout/two_die_interposer_complete.gds \
-        --update-chiplet-file two_die_interposer.chiplet \
+        --complete-output $O/layout/two_die_interposer_complete.gds \
+        --update-chiplet-file $O/two_die_interposer.chiplet \
         --die-connections U1=cupillar_opt1,U2=vendorx_microbump \
         --die-thicknesses U1=750,U2=750 \
-        --pad-locations U1=../chiplets/metal_test_chiplet.pins.json,U2=../chiplets/metal_test_chiplet.pins.json \
-        --io-pads io_pads.json
+        --die-outline-layers U1=39/4,U2=39/4 \
+        --pad-locations U1=example/chiplets/metal_test_chiplet.pins.json,U2=example/chiplets/metal_test_chiplet.pins.json \
+        --io-pads $O/io_pads.json
 
 From KiCad routing to fabrication geometry
 ------------------------------------------

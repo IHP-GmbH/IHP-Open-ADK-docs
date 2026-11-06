@@ -280,7 +280,7 @@ world, are not derived from any die. Generate them parametrically:
 
 .. code-block:: bash
 
-    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100
+    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100 --out-dir .
 
 The resulting footprint carries an ``IO_CLASS`` property (and its size), which
 is what the export scans for when it extracts the assembly's I/O pads into the

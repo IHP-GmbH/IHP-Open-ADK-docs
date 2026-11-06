@@ -343,7 +343,7 @@ assembly to the outside world.
 
 .. code-block:: bash
 
-    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100
+    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100 --out-dir .
     python3 io_pads/kicad_pcb_to_iopads.py design.kicad_pcb -o io_pads.json
 
 ``generate_io_pad.py`` emits a parametric KiCad symbol and footprint tagged with

@@ -419,6 +419,10 @@ top cell, compared against golden expectations.
     python3 tech/drc/testing/run_regression.py                  # all tables
     python3 tech/drc/testing/run_regression.py --table copperpillar
 
+The regression writes its results into ``testing/regression_run`` beside
+itself, so run it in a writable checkout of the PDK. In the tools image the
+PDK is read-only and the run stops at that directory.
+
 .. tip::
    Each testcase GDS has a ``gen_<table>_testcase.py`` beside it. Regenerate
    rather than hand-editing the GDS, otherwise the next regeneration silently
@@ -761,7 +765,10 @@ and can solve an arbitrary target on demand:
 
     python3 scripts/cmim_footprint_gen.py --cap 250f --out my_cmim.kicad_mod
     python3 scripts/cmim_footprint_gen.py --w 12u --l 8u --out my_cmim.kicad_mod
-    python3 scripts/cmim_footprint_gen.py --family
+    python3 scripts/cmim_footprint_gen.py --family --outdir my_cmim.pretty
+
+Without ``--outdir``, ``--family`` rewrites the family the PDK ships in
+``intm4tm2.pretty``, which only a writable checkout of the PDK allows.
 
 The generator re-implements the PCell plate maths from the same
 ``intm4tm2_tech.json`` the PCell reads, so it has no KLayout dependency. The
