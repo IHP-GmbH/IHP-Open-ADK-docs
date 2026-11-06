@@ -15,6 +15,7 @@ import json
 import os
 import re
 import subprocess
+import tomllib
 
 from _common import (
     ADK,
@@ -52,6 +53,11 @@ NOT_SUBMODULED = {"KiCad-ADK-MOD"}
 # src/, so the path does not have to move with the name.
 SUBMODULE_DIRS = {"chiplet-system-spec": os.path.basename(SPEC)}
 
+# Repositories that release by the ``[project].version`` of their
+# pyproject.toml and keep no VERSION file. Elsewhere that field is a scaffold
+# value nobody moves, so it is read only where the repository bumps it.
+PYPROJECT_VERSIONED = {"OpenIntM4TM2"}
+
 # The specification repository versions by reader release; its tags are not a
 # reliable source (a clone may lack them), so the reader's own number is used.
 SPEC_READER = os.path.join(SPEC, "reference", "python", "chiplet_format_io", "__init__.py")
@@ -84,12 +90,19 @@ def constant(path, name):
     return ", ".join(values)
 
 
-def declared_version(repo_path):
+def declared_version(repo_path, from_pyproject=False):
+    """The VERSION file, or for a PYPROJECT_VERSIONED repository that has none,
+    ``[project].version`` of pyproject.toml, named in the cell as its source."""
     version_file = os.path.join(repo_path, "VERSION")
     if os.path.isfile(version_file):
-        value = read_text(version_file).strip()
-        if value:
-            return value
+        return read_text(version_file).strip()
+    if from_pyproject:
+        pyproject = os.path.join(repo_path, "pyproject.toml")
+        with open(pyproject, "rb") as f:
+            value = tomllib.load(f).get("project", {}).get("version")
+        if not isinstance(value, str) or not value:
+            fail("{} has no [project].version".format(pyproject))
+        return "{} (pyproject.toml)".format(value)
     return ""
 
 
@@ -104,7 +117,7 @@ def main():
             rows.append([name, role, license_id, "not pinned here", ""])
             continue
         require_submodule(path, "src/" + directory)
-        version = declared_version(path)
+        version = declared_version(path, name in PYPROJECT_VERSIONED)
         if name == "chiplet-system-spec":
             version = "reader " + constant(SPEC_READER, "__version__")
         described = git(path, "describe", "--tags", "--always")
