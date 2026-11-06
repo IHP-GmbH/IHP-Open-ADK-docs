@@ -340,23 +340,28 @@ self-reports ``vYYYY.MM`` and one built a few commits later reports
 Updating a clone
 ----------------
 
-To run a newer release, check out its tag and build it. The sibling checkouts
-and the die views have to be at the new pins too; the two ``--check`` calls of
-:doc:`/install/01_container` confirm that before the build.
+To run a newer release, check out its tag and build it.
 
-.. RUN-ON-IMAGE: cd "$ADK_TOOLS_ROOT"; git fetch --tags; git checkout v2026.11; git submodule update --init --recursive; ./stage-sources.sh --check && ./stage-die-views.sh --check; ./build.sh
+.. RUN-ON-IMAGE: export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples; export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"; cd "$ADK_TOOLS_ROOT"; git fetch --tags; git checkout v2026.11; git submodule update --init --recursive; ./stage-sources.sh --check && ./stage-die-views.sh --check; ./build.sh
 
 A release clone sits on its tag, not on a branch, so fetch the tags and check
 out the new one rather than pulling:
 
 .. code-block:: bash
 
+    # the quickstart's exports, again in a fresh shell
+    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
+    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
     cd "$ADK_TOOLS_ROOT"
     git fetch --tags
     git checkout vYYYY.MM    # a release clone sits on a tag, so there is nothing to pull
     git submodule update --init --recursive
     ./stage-sources.sh --check && ./stage-die-views.sh --check
     ./build.sh    # cached stages rebuild only what changed
+
+The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
+the adk-examples checkout has to be at the new tag; the two ``--check`` calls
+say which one does not.
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
 
@@ -391,11 +396,13 @@ variable and hold the other six fixed.
     ./build.sh
 
 The pin set takes each tool's commit from the gitlink git has staged, not from
-the submodule's checkout, so stage a bump and regenerate the pin set before
-you build it; ``build.sh`` refuses a pin set that is not what the staged pins
-give. In the second case nothing is staged: the image carries ``feature/x``
-while its ``org.ihp.adk-tools.pin-set`` label still names the pinned commit, so
-do not run such an image under a release lock.
+the submodule's checkout, so stage the bump before you regenerate it. The
+image is labelled with the committed pin set: ``build.sh`` refuses a
+``ci/pin-set.json`` that differs from the commit or from what the staged pins
+give, so commit the regenerated file before you build. In the second case
+nothing is staged: the image carries ``feature/x`` while its
+``org.ihp.adk-tools.pin-set`` label still names the pinned commit, so do not run
+such an image under an examples checkout's ``release-lock.json``.
 
 Either way the verify stage decides. If the candidate revision breaks any
 suite, the reference design regeneration or the assembly DRC, no image is
