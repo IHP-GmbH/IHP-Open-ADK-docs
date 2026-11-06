@@ -5,11 +5,12 @@ Verification stages
 .. include:: /adk/tables/_rule_counts.inc
 
 Assembly-level verification has two axes, set out in
-:doc:`/intro/01_what_is_the_adk`. This page is about the geometric axis, which
-this preview release ships. The connectivity axis is in scope for the ADK and is
-not part of this preview release.
+:doc:`/intro/01_what_is_the_adk`, and this preview release ships a check for
+each. Most of this page is about the geometric axis. The connectivity axis has
+one stage, assembly LVS, described in `Stage 5: assembly LVS`_.
 
-Within that axis an assembly passes through four complementary checking stages.
+Within the geometric axis an assembly passes through four complementary checking
+stages.
 They are not successive approximations of one check: each one runs on a
 different artefact, in a different representation, and proves something the
 others structurally cannot see.
@@ -23,8 +24,8 @@ to ship a mistake through this flow.
     :alt: The four checking stages hung off the artefact spine that runs from the KiCad board to the 3Dblox model, each card stating what its stage proves and what it is blind to.
     :width: 90%
 
-    The four checking stages and the artefacts they read. A clean
-    result at one stage does not imply a clean result at another.
+    The four geometric checking stages and the artefacts they read. A
+    clean result at one stage does not imply a clean result at another.
 
 .. list-table::
     :header-rows: 1
@@ -50,6 +51,13 @@ to ship a mistake through this flow.
       - The ``.chiplet`` plus the pillar manifest
       - Every die pad has a pillar under it
       - Whether those pillars are legally spaced
+    * - ``assembly-lvs``
+      - The placed component layouts and the declared nets
+      - The drawn metal connects the declared nets, with no open and no short
+      - Die internals, devices, electrical behaviour, geometric legality
+
+The first four rows are the geometric axis and the last is the connectivity
+axis.
 
 Stage 1: KiCad design-time rules
 --------------------------------
@@ -179,8 +187,8 @@ vendor method is not checked against a coarse Cu-pillar pitch.
 - **Connectivity.** The deck compares polygons against rules, never nets against
   a netlist. An assembly whose dies are placed and attached legally but wired to
   the wrong nets is clean here. Reconciling the placed assembly against the
-  system netlist is the connectivity axis of assembly-level verification, and it
-  is not part of this preview release.
+  system netlist is the connectivity axis of assembly-level verification, which
+  is Stage 5.
 - **z.** The deck sees a flat 2D region. ``ASM.a`` therefore flags any XY
   overlap between chiplet boundaries, including dies that a multi-tier assembly
   would legally stack at different heights. Nothing in the current toolchain
@@ -255,6 +263,40 @@ assembly does not connect. Only this check compares pads against pillars.
 
 See :doc:`/adk/08_pads_vs_pillars`.
 
+Stage 5: assembly LVS
+---------------------
+
+**Runs on** the placed component layouts, the interposer layout and each die's
+layout, together with the declared nets. All of them are named in one resolved
+input, which packaging-flow derives from its run's own records.
+
+In a flow run, packaging-flow runs this stage as its ``assembly-lvs`` row in
+every run that composes an assembly. Outside a run, ``assembly-lvs verify``
+takes a resolved input directly. :doc:`/tools/09_assembly_lvs` shows a first
+run and documents the options, the nine final states and their exit codes.
+
+**What it proves.** That the metal drawn in the placed assembly connects the
+declared nets: each declared net is one connected piece of extracted metal, and
+no two nets touch. It follows geometry on the same layer, the declared vias and
+the declared die-to-interposer contacts, and it reports every open and every
+short.
+
+**What it cannot prove.** Anything inside a die: it extracts no devices and
+checks no die-internal connectivity. Anything electrical. Anything geometric: a
+correctly connected assembly can still break a spacing rule, and only assembly
+DRC sees that. In a flow run, placement error: the flow passes a placement bound
+of zero, so the check is at the nominal placement. The tool page lists every
+limit.
+
+**What it catches that the others miss.** An interposer route drawn to the wrong
+landing. Every die pad still has its pillar, the pillar field is legally spaced,
+and the 3Dblox model takes its connectivity from the declared netlist rather
+than from the drawn copper, so all four geometric stages pass. Only assembly LVS
+follows the drawn metal from pad to pad, and it reports the open on the net the
+route should have joined and the short on the net it lands on.
+
+See :doc:`/tools/09_assembly_lvs`.
+
 Producer-side checks
 --------------------
 
@@ -291,9 +333,9 @@ they are described above:
     * - KiCad DRU
       - Continuously, from the moment the chiplet footprints are placed.
     * - KLayout assembly DRC
-      - After every ``hyp_to_gds`` run. The export pipeline runs it for you, and
-        ``chiplet_export_cli.py --require-drc`` makes a failing deck fail the
-        export.
+      - After every ``hyp_to_gds`` run. The export pipeline runs it for you,
+        and a failing deck fails the headless ``chiplet-export`` (exit 3)
+        unless you pass ``--allow-drc-fail``.
     * - ``pads_vs_pillars``
       - After the same run, once the pillar manifest exists. Cheap, no KLayout
         session needed unless you use ``--gds-pads``.
@@ -301,6 +343,10 @@ they are described above:
       - Whenever die z, thickness, orientation or connection stacks change.
         The export half fails fast and needs no OpenROAD installation; the
         linter half needs an OpenROAD image with the 3Dblox commands.
+    * - Assembly LVS
+      - Once the interposer is routed and the assembly layout is written.
+        packaging-flow runs it in every run that composes an assembly; the
+        export pipeline of :doc:`/flow/04_export` does not call it.
 
 .. note::
     The KLayout assembly DRC and ``pads_vs_pillars`` read artefacts the
@@ -312,13 +358,13 @@ What none of these stages cover
 --------------------------------
 
 .. warning::
-    The ADK is a preview release. These four stages are the geometric axis of
-    assembly-level verification: they check assembly placement, attachment
-    geometry, pad correspondence and 3D consistency. They do not reconcile the
-    assembled layout against the system netlist, which is the connectivity axis
-    of assembly-level verification and is in the kit's scope but not part of
-    this preview release. They also do not check the interposer's own
-    fabrication rules, anything internal to a die, or any thermal,
-    power-integrity or timing property of the assembly. The ``thermal/``,
+    The ADK is a preview release. The first four stages are the geometric axis
+    of assembly-level verification: they check assembly placement, attachment
+    geometry, pad correspondence and 3D consistency. Assembly LVS is the
+    connectivity axis: it checks that the drawn metal connects the declared
+    nets, within the limits listed on :doc:`/tools/09_assembly_lvs`. None of
+    the five checks the interposer's own fabrication rules, anything internal
+    to a die, any electrical property, or any thermal, power-integrity or
+    timing property of the assembly. The ``thermal/``,
     ``power/`` and ``timing/`` directories of the ADK are reserved names with
     README stubs and no implementation. See :doc:`/roadmap`.

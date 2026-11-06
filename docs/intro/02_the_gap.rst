@@ -67,9 +67,10 @@ wired the way the system netlist says it is. Those constraints are not owned by
 any single PDK, because they are about the relationship between a die and the
 substrate it sits on. Assembly-level verification is a layer of its own, above
 the per-die signoff each PDK already provides, and it has two axes: a geometric
-axis and a connectivity axis. This preview release closes the geometric axis.
-Reconciling the connectivity of the assembled result against the system netlist
-is in scope for the ADK and is not part of this preview release.
+axis and a connectivity axis. This preview release ships a check for each. The
+ADK rule decks cover the geometric axis, and ``assembly-lvs`` reconciles the
+connectivity of the placed assembly against its declared nets, within the
+limits :doc:`/tools/09_assembly_lvs` states.
 
 **No interchange format for a placed assembly.** Each tool in a chain like this
 needs to agree on where every die sits, how it is mounted in z, how it is
@@ -103,7 +104,8 @@ How the ADK closes it
 ---------------------
 
 The ADK proper closes the geometric axis of assembly-level verification, and the
-surrounding ecosystem closes the rest of the chain.
+surrounding ecosystem, including the ``assembly-lvs`` engine for the
+connectivity axis, closes the rest of the chain.
 
 .. list-table::
     :header-rows: 1
@@ -131,6 +133,9 @@ surrounding ecosystem closes the rest of the chain.
         :doc:`/flow/05_hyp_to_gds`
     * - Assembly-level verification, geometric axis
       - The ADK rule decks and adapter model. :doc:`/adk/01_architecture`
+    * - Assembly-level verification, connectivity axis
+      - A connectivity reconciliation engine over the placed component
+        layouts. :doc:`/tools/09_assembly_lvs`
     * - Inspecting the result in 3D
       - A viewer rendering GDS-derived geometry. :doc:`/tools/04_chiplet_studio`
 

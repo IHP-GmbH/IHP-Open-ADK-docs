@@ -129,11 +129,10 @@ back even if the prose is good.
   bumping vendor" or "the vendor's Cu-pillar table". A vendor name that appears
   inside a file quoted verbatim from a source repository stays as it is, because
   changing it would make the documentation misdescribe the file.
-- The connectivity axis of assembly-level verification may be described as a
-  concept and as scope. No implementation of it is part of this release, so the
-  site must not name a repository, a file, a module or a result for it, and must
-  not state or imply that it can be run today. Every mention pairs with an
-  explicit statement that it is not part of this preview release.
+- Assembly LVS ships as ``assembly-lvs``. Describe what it checks together with
+  what it does not, as :doc:`/tools/09_assembly_lvs` does. Never present a
+  match as sign-off, as per-die LVS or as an electrical check, and make no
+  benchmark or primacy claim for it.
 - No em-dashes and no emojis anywhere.
 - British spelling throughout, except in verbatim quotations of file names,
   command output and tool user-interface strings.

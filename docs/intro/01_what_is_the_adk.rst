@@ -63,12 +63,12 @@ any other level, it asks two independent questions, and the ADK owns both.
 
 **Assembly DRC** asks whether the assembly is *physically legal*: may this die
 sit here, at this clearance, attached at this density, by this method. It runs on
-the assembly GDS and its sidecar manifests, and it is what this preview release
-ships.
+the assembly GDS and its sidecar manifests, and the ADK rule decks check it.
 
-**Assembly LVS** asks whether the assembly is *electrically what was intended*:
-are the dies connected to each other the way the system netlist says. It is in
-the kit's scope, and no implementation of it is part of this preview release.
+**Assembly LVS** asks whether the assembly is *connected as intended*: are the
+dies connected to each other the way the system netlist says. This release
+checks it with ``assembly-lvs``, an engine in the ADK-Tools image that
+packaging-flow runs as one stage of a flow run.
 
 Neither question subsumes the other. Legal geometry can implement the wrong
 netlist, and correct connectivity can be drawn illegally. An assembly is signed
@@ -77,7 +77,8 @@ off only when both answers are yes.
 The geometric axis: assembly DRC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is the shipped axis, and it is the subject of most of this site. It holds
+This is the axis the ADK rule decks check, and it is the subject of most of
+this site. It holds
 two families of rule, each driven by its own adapter and both reading the
 assembly through abstract inputs rather than through a fabrication layer number.
 ``ASM.*`` answers *where* a die may sit, clearance and collision between chiplet
@@ -121,8 +122,7 @@ The connectivity axis: assembly LVS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Layout versus schematic verification is mature inside a single die. A 2.5D
-assembly splits the same question into three levels, and only the first two have
-open tooling today.
+assembly splits the same question into three levels.
 
 **Per-die LVS** compares each die against its own schematic netlist, with devices
 extracted from the die layout by the die's own PDK. Every PDK already ships this,
@@ -143,13 +143,13 @@ that a bump misses its pad.
 
 .. figure:: /_figures/tikz_verification_levels.*
     :align: center
-    :alt: The three levels of LVS in a 2.5D assembly, per-die, interposer and assembly, laid out like the DRC figure above, with the assembly level marked as not part of this preview release.
+    :alt: The three levels of LVS in a 2.5D assembly, per-die, interposer and assembly, laid out like the DRC figure above, with the assembly level marked as checked by assembly-lvs in this release.
     :width: 90%
 
     The three levels at which an assembly's connectivity is compared
     against a reference, laid out to be read against the geometric axis above.
-    Levels 1 and 2 are ordinary PDK LVS. Level 3, assembly LVS, is within the
-    ADK's scope and no implementation of it is part of this preview release.
+    Levels 1 and 2 are ordinary PDK LVS. Level 3, assembly LVS, is the level
+    the assembly adds, and this release checks it with ``assembly-lvs``.
 
 Device-graph comparators do not reach the third level. A classical netlist
 comparator establishes correspondence by matching devices and their terminals,
@@ -162,7 +162,12 @@ rather than misconfigured. The question is instead a reconciliation between
 connectivity graphs, in which a net is a set of component, pin and layer
 endpoints.
 
-:doc:`/roadmap` states what would have to exist before this axis ships.
+That reconciliation is what ``assembly-lvs`` does. It places every component
+layout, extracts the connectivity that the declared layers, vias and contacts
+allow, and compares it with the declared nets, reporting every open and short.
+It checks no die internals, no devices and no electrical behaviour, and a match
+is not sign-off. :doc:`/tools/09_assembly_lvs` documents the command, its
+verdicts and the full list of what it does not check.
 
 What the ADK is not
 -------------------
@@ -172,13 +177,13 @@ It is not a PDK. It ships no device models, no PCells and no fabrication rules.
 It is not a place-and-route tool. It checks placements that a designer or
 another tool produced.
 
-It does not verify inter-die connectivity today. The rule set that ships in this
-preview is geometric. Assembly-level connectivity verification is the other axis,
-it is in the kit's scope, and no implementation of it is part of this preview
-release.
+Its rule decks do not verify inter-die connectivity. The rule set is
+geometric. Assembly-level connectivity is the other axis, and this release
+checks it with ``assembly-lvs``, a separate engine with limits of its own,
+listed on :doc:`/tools/09_assembly_lvs`.
 
 It is not a substitute for per-die PDK signoff. It is the layer above it, and
-this preview release ships its geometric axis.
+this preview release ships both of its axes.
 
 Where the boundary comes from
 -----------------------------
