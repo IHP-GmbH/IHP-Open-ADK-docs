@@ -107,14 +107,12 @@ The same pipeline runs without the GUI. In the tools image, the end-to-end
 self test exercises it on the two-die test design, copied to ``/work/example``
 as :doc:`/install/01_container` describes:
 
-
 .. code-block:: bash
 
     adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 To export a specific board headless, run the command the dialog's **Run** stands
 for. From ``/work``, on the board you drew in a project ``adk-new-project`` made:
-
 
 .. code-block:: bash
 

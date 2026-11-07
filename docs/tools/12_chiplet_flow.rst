@@ -170,7 +170,6 @@ print one line naming packaging-flow and exit 1. Output from version 0.1.0:
 .. code-block:: text
 
     chiplet-die-flow run: runs are packaging-flow's; use packaging-flow run
-    exit=1
 
 Roots
 -----

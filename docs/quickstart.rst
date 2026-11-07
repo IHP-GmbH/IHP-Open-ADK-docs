@@ -16,7 +16,6 @@ prerequisites in full.
 1. Build the image
 ------------------
 
-
 .. code-block:: bash
 
     # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
@@ -51,7 +50,6 @@ assembly DRC passes.
 two-die test design from the clone into your work directory once, then run the
 test:
 
-
 .. code-block:: bash
 
     mkdir -p ~/adk-work
@@ -67,7 +65,6 @@ That single line is the evidence that the toolchain works on your machine.
 3. Look at the assembly
 -----------------------
 
-
 .. code-block:: bash
 
     "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
@@ -81,7 +78,6 @@ The same design opens in the board tool with
 
 4. Start your own design
 ------------------------
-
 
 .. code-block:: bash
 

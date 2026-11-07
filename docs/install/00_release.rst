@@ -54,7 +54,6 @@ checkout is the release you run, at the release tag ``v2026.11``; the
 ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
 clone, or in the directory ``STAGE_SIBLINGS`` names.
 
-
 .. code-block:: bash
 
     # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
@@ -79,7 +78,6 @@ Build it as :doc:`/install/01_container` describes, from ``nix build`` to
 ``./build.sh``, in the clone and with the same ``STAGE_DIE_VIEWS_DIR``. Then
 read the ID of the image you built:
 
-
 .. code-block:: bash
 
     export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
@@ -99,7 +97,6 @@ it made (the work directory, the image, the display, the caps and the release
 lock it held the image to). Your build is not the reference image, so one of
 those lines names both IDs:
 
-
 .. code-block:: text
 
     run.sh: the image sha256:<your ID> is not the reference image sha256:<reference ID> the release lock <checkout>/release-lock.json names; it runs held to the lock's pin set
@@ -109,8 +106,8 @@ is not the lock's pin set is refused with a line that names both values, and
 no container starts.
 
 A die run recorded under another release's SG13G2 PDK does not resolve under
-this one: its die checks and views refuse with a missing path. Rebuild the die
-under this release.
+this one: its die checks and views refuse it. Rebuild the die under this
+release.
 
 The release lock
 ----------------

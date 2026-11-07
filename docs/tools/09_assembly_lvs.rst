@@ -105,7 +105,6 @@ The engine carries a minimal input, one die on a carrier with one net. Inside
 the image, copy the input to a folder of your own, generate its two layouts
 there, and verify it:
 
-
 .. code-block:: bash
 
     mkdir -p /tmp/alvs-minimal
@@ -124,7 +123,6 @@ there, and verify it:
 
 The folder now holds ``resolved.lvs.json`` and ``resolved.lvs.lvsdb`` beside
 the input. Move the die off its landing and run it again:
-
 
 .. code-block:: bash
 
@@ -297,7 +295,8 @@ reads the nine states as four words:
     * - ERROR
       - ``invalid``, a report the flow refuses, or a tool failure
 
-Only a FAIL can be waived. The flow passes a placement bound of zero for every
+Only a FAIL can be waived; a run whose every FAIL is covered exits 16
+(:doc:`/tools/10_packaging_flow`). The flow passes a placement bound of zero for every
 component, so its verdict is at the nominal placement, and it does not claim die
 LVS. ``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it

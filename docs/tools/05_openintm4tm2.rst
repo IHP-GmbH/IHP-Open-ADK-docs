@@ -318,14 +318,13 @@ against on this stack), or the space from design metal to the ring.
 ``--require_sealring`` turns on the presence rules, which need the
 ``sealring`` deck in the same run:
 
-
 .. code-block:: bash
 
     python3 tech/drc/run_drc.py --path <layout.gds> \
         --deck sealring --require_sealring
 
-In the tools image the tree is ``$INTERPOSER_PDK_ROOT/libs.tech/klayout`` and
-the runner needs ``/opt/adk-tools/venv/bin/python3`` (:doc:`/install/01_container`).
+``tech/drc/run_drc.py`` here and above is relative to ``libs.tech/klayout``; in the
+tools image that is ``$INTERPOSER_PDK_ROOT/libs.tech/klayout``.
 
 ``SEAL.REQ.1`` and ``SEAL.REQ.2`` report a missing ``EdgeSeal`` or seal ring
 boundary (39/4). ``SEAL.REQ.3_<layer>`` reports a ring layer that is not a
@@ -442,8 +441,8 @@ Metal5, top plate on TopMetal1 through the ``Vmim`` via array, with parameters
 ``w``, ``l``, ``A``, ``P`` and parallel multiplicity ``m``.
 
 .. note::
-   In this release the deck does not run on an exported interposer: it stops at
-   ``intm4tm2.lvs:92`` with "Netlist contains more than a single top circuit",
+   In this release the deck does not run on an exported interposer: it stops with
+   "Netlist contains more than a single top circuit",
    because the pinless pad and pillar cells extract as extra top circuits. The
    LVS this release supports on an assembly is ``assembly-lvs``, below.
 
@@ -548,7 +547,6 @@ Adding the seal ring headlessly
 ``tech/scripts/sealring.py`` adds the ring in KLayout batch mode. With
 ``input`` it adds the ring to the only top cell of that layout; without it, it
 writes a layout whose single ``sealring_top`` cell holds only the ring.
-
 
 .. code-block:: bash
 

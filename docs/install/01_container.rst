@@ -56,7 +56,6 @@ Build the image
 
 The ADK-Tools README, section Build, gives the whole sequence:
 
-
 .. code-block:: bash
 
     # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
@@ -145,7 +144,6 @@ Run the image
 -------------
 
 With ``ADK_TOOLS_IMAGE`` set to the ID of your build:
-
 
 .. code-block:: bash
 
@@ -245,7 +243,6 @@ Chiplet Studio, gds2kicad and KLayout a stable context.
 If you do have a GPU and want hardware acceleration, pass the device through
 and opt back in:
 
-
 .. code-block:: bash
 
     docker run --rm -it \
@@ -292,7 +289,6 @@ overwritten.
 Scaffold a project
 ------------------
 
-
 .. code-block:: bash
 
     adk-new-project my_design
@@ -338,7 +334,6 @@ List the tools
 
 Inside the container, ``adk-tools`` prints the available commands with the
 pinned revision of each, the data roots, and the layout of ``/work``:
-
 
 .. code-block:: bash
 
@@ -417,7 +412,6 @@ like the other GUIs.
 The interposer KLayout technology is pre-registered, so exported interposer and
 assembly GDS files open with named, coloured layers:
 
-
 .. code-block:: bash
 
     klayout -n intm4tm2 outputs/layout/<board>_interposer.gds
@@ -431,7 +425,6 @@ Run the self test
 carries no demo. The board it is written for is the two-die test design in the
 clone's ``examples/two_die_interposer``. Copy it into the work directory once,
 on the host, then run the test:
-
 
 .. code-block:: bash
 

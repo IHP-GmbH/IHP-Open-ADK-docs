@@ -131,7 +131,9 @@ and it runs unchanged when the die becomes part of an assembly.
 **Interposer LVS** compares the interposer against its own netlist. From the
 ADK's point of view the interposer is just another PDK part, so this is ordinary
 PDK LVS with nothing assembly-specific about it, and the interposer PDK ships
-the deck. :doc:`/tools/05_openintm4tm2` documents the deck for IntM4TM2.
+the deck. :doc:`/tools/05_openintm4tm2` documents the deck for IntM4TM2; in
+this release that deck does not yet run on an exported interposer, as its page
+says.
 
 **Assembly LVS** asks whether the dies are connected to each other as the system
 intends. The reference is a system netlist that names die pins and the nets that

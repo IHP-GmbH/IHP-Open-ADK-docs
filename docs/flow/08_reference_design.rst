@@ -178,7 +178,6 @@ Step 0: open what is already there
 
 From the host, using the launcher in the ADK-Tools checkout:
 
-
 .. code-block:: bash
 
     "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
@@ -254,7 +253,6 @@ Step 3: export and generate the GDS
 Normally this is the Chiplet Export plugin inside pcbnew, with its output
 directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
 the same export the image build runs, is:
-
 
 .. code-block:: bash
 
@@ -336,7 +334,6 @@ carrying the 3Dblox commands. See :doc:`/flow/06_verification_stages`.
 
 Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 .. code-block:: bash
 

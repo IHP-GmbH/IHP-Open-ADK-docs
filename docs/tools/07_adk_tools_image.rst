@@ -323,7 +323,6 @@ Schema version of each sidecar
     ``format_version`` or schema version of the file involved when the problem
     is about a file rather than a tool.
 
-
     .. code-block:: bash
 
         adk-tools
@@ -416,7 +415,6 @@ Mounting a development checkout
 For iterating on a Python tool, do not rebuild at all. Bind-mount your working
 checkout over the baked-in copy, which keeps every other tool, the venv and the
 PDK data exactly as the image pinned them:
-
 
 .. code-block:: bash
 

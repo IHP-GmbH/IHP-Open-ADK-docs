@@ -78,7 +78,7 @@ because it is the cross-tool contract of the whole PDK, not the data of one
 tool.
 
 Everything else in the repository derives from it: the 3D body generator, the
-LEF macro generator, the stackup fragments, the standalone DRC deck, and the
+LEF macro generator, the stackup fragments, the interconnect DRC deck, and the
 adapter each method maps to. Tools resolve a method id instead of hardcoding a
 bump table.
 
@@ -415,8 +415,8 @@ each die render with its own option's heights.
    per-method value. Chiplet Studio implements exactly that policy in one place.
    See :doc:`/tools/04_chiplet_studio`.
 
-The standalone DRC deck
------------------------
+The interconnect DRC deck
+-------------------------
 
 ``libs.tech/klayout/tech/drc/rule_decks/`` carries a small deck so the
 interconnect PDK owns its rules:
