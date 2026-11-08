@@ -29,6 +29,6 @@ The axis itself is not a direction of work any more: it ships in this release
 as ``assembly-lvs``, and :doc:`/tools/09_assembly_lvs` documents what it checks
 and, as plainly, what it does not. What stays here is one direction of work on
 it, placement tolerance. The engine accepts a bound on how far each component
-may move in the plane, and packaging-flow passes a bound of zero, so a flow run
-checks the nominal placement only. Giving each bump method a placement accuracy
+may move in the plane, and packaging-flow (:doc:`/tools/10_packaging_flow`)
+passes a bound of zero, so a flow run checks the nominal placement only. Giving each bump method a placement accuracy
 for the flow to pass on is listed in :doc:`/contrib/01_contributing`.

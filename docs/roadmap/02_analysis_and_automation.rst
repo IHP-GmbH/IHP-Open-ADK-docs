@@ -86,8 +86,8 @@ assembly artefacts this flow already produces are a reasonable starting point
 for building one.
 
 The interconnect PDK already carries a three-dimensional stackup fragment per
-attachment method, which Chiplet Studio uses to render each pillar or bump at
-its elevation. The same z data is a starting point for a solver geometry. See
+attachment method, which Chiplet Studio (:doc:`/tools/04_chiplet_studio`) uses
+to render each pillar or bump at its elevation. The same z data is a starting point for a solver geometry. See
 :doc:`/tools/06_interconnect_pdk`.
 
 There is no committed path from the ADK into a solver in this release, and no
