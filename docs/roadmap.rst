@@ -4,10 +4,10 @@ Roadmap
 .. include:: /common.inc
 
 .. warning::
-   Everything in this section describes a direction of work, not a shipped
-   feature. No interface, file format or rule described here is committed, and
-   nothing here is part of the preview release. Availability dates are not
-   given.
+   Everything in this section describes a direction of work. No interface, file
+   format or rule described here is committed, and availability dates are not
+   given. Where a page names a tool that ships in the preview release, it links
+   to that tool's reference page, which carries the tool's own status.
 
 The ADK reserves domain slots that mirror the empty ``thermal/``, ``power/`` and
 ``timing/`` directories in the ADK repository. Those directories exist so the

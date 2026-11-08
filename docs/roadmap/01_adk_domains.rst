@@ -36,6 +36,11 @@ chiplet supply maps. The question is whether the substrate delivers adequate
 current to every die's supply pads within an acceptable voltage drop, which
 again needs a per-chiplet description the assembly file does not model today.
 
+Outside the rule deck, ``interposer-pnr`` carries engine-level power-delivery
+commands: it draws a supply mesh and solves each rail's static IR drop from
+separate source and load files. They are not ADK rules, and this site does not
+document them yet. See :doc:`/tools/11_interposer_pnr`.
+
 Timing
 ------
 
