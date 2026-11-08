@@ -19,7 +19,7 @@ than add rules to the deck.
 
 In this release the placement and routing step can be run by tools, as a proof
 of concept. ``interposer-pnr`` (:doc:`/tools/11_interposer_pnr`) places the
-dies a source leaves open and legalizes them against the assembly rules, puts
+dies a source leaves open and legalises them against the assembly rules, puts
 a bump on every die pad, routes the interposer with OpenROAD, and writes the
 copper as a draft on a KiCad board. ``packaging-flow``
 (:doc:`/tools/10_packaging_flow`) runs those steps in order and halts for a
@@ -46,7 +46,7 @@ The direction of work from here:
   impedance needs the constraint contract described in the next section.
 - **Congestion by layer.** The route report states routed length; it does not
   yet report overflow per routing layer.
-- **Placement.** Legalization runs only inside the placer, with no command of
+- **Placement.** Legalisation runs only inside the placer, with no command of
   its own, and the placer seeds every die on one grid, so dies of very different
   sizes sit further apart than they need to.
 

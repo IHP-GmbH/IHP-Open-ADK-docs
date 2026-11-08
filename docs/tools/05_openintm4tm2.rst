@@ -483,7 +483,7 @@ way the SG13G2 open PDK serves its own pycell library.
         (TopMetal2 enclosure, default ``7.5u``), ``addFillerEx``
       - TopMetal2 134/0, ``dfpad:pillar`` 41/35 and ``Recog:pillar`` 99/35 at
         pad size; ``Passiv:pillar`` 9/35 at the opening; optional nofill
-        circles. 256-point circles, the discretization the assembly flow and
+        circles. 256-point circles, the discretisation the assembly flow and
         the ``copperpillar`` DRC tolerances assume.
     * - ``cmim``
       - ``w``, ``l`` (default ``6.99u``), ``C`` and ``Calculate`` for
