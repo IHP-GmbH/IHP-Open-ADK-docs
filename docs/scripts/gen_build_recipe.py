@@ -12,7 +12,7 @@ The README writes the release tag as ``vYYYY.MM``. When ADK-Tools is pinned
 exactly at a release tag, that tag replaces the placeholder; when it is pinned
 at an untagged commit, as on a development branch, the placeholder stays, which
 is what the README itself tells a reader to fill in. A release tag (``v``
-and a digit) of any other shape is an error; local tags such as save points
+and a digit) of any other shape is an error; local tags (not release tags)
 are ignored. The README's "(see below)" pointers are dropped, since they point
 nowhere here; any other "(see ...)" is an error rather than a dangling pointer.
 

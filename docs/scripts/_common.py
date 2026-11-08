@@ -69,9 +69,9 @@ def git_or_fail(repo, *args):
     return out
 
 
-# Published release tags start with "v" and a digit. Clones in this ecosystem
-# also carry local tags (save points, review marks, archives) that are never
-# published, and none of them may reach a page.
+# Published release tags start with "v" and a digit. Clones may also carry
+# local tags (not release tags) that are never published, and none of them may
+# reach a page.
 RELEASE_TAG_GLOB = "v[0-9]*"
 
 
