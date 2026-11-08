@@ -54,31 +54,33 @@ fails ``.chiplet`` validation fails here first.
       - The ``ChipletDef`` view. One black-box def per distinct die
         (``design_area``, ``thickness``, front and back bond regions covering
         the full outline, no cell LEF, DEF or Verilog), plus the interposer as
-        a ``substrate`` def. A die exported with ``--views`` gets a def that
-        names its recorded LEF, Liberty and DEF files instead.
+        a ``substrate`` def.
     * - ``<name>.3dbx``
       - The placed assembly: the ``Design`` name, one ``ChipletInst`` per
         component, the ``Stack`` block with each instance's corner location, z
         and orientation, and the ``Connection`` block. It ``include``\ s the
         ``.3dbv`` from its header.
     * - ``<technology>.lef``
-      - One minimal technology LEF per distinct ``.chiplet`` technology of the
-        interposer and of the dies exported without ``--views``, referenced as
-        each such def's ``APR_tech_file``. Units only, plus a single
+      - One minimal technology LEF per distinct ``.chiplet`` technology,
+        referenced as each def's ``APR_tech_file``. Units only, plus a single
         minimal routing layer ``BUMP_ATTACH`` when the export is bump-aware,
         so the bump macros' pad ``PORT``\ s resolve in every technology.
     * - ``<def>.bmap``
-      - With ``--pins`` or ``--views`` only. Bump centres of one bump-aware
-        def, in the def-local frame (the DEF frame for a die exported with
-        ``--views``), with port and net columns.
+      - With ``--pins``. Bump centres of one bump-aware def, in the def-local
+        frame, with port and net columns.
     * - ``<method>__<technology>.lef``
       - With ``--pins`` only. The bump macro LEF for one connection method in
         one technology, rendered by the interconnect PDK's generator.
 
 ``--name`` overrides the output basename, which otherwise comes from
 ``assembly.name``. ``--out-dir`` defaults to the directory of the input file.
-Every written path is printed on stdout. With ``--views``, one line per die
-follows the paths; see `Exporting a die with its recorded views`_.
+Every written path is printed on stdout.
+
+These outputs, and the sections below up to the recorded-views section,
+describe the default black-box export. A die exported with ``--views`` differs
+in its def, its technology LEF, its ``.bmap``, its anchor and its flip token;
+`Exporting a die with its recorded views`_ lists every difference in one
+table.
 
 .. tip::
 
@@ -254,12 +256,6 @@ The ``.chiplet`` orientation and the rotation quarter compose into a **single**
     * - ``flip_chip``
       - 90 / 180 / 270
       - ``MZ_R90`` / ``MZ_R180`` / ``MZ_R270``
-    * - ``flip_chip``, exported with ``--views``
-      - 0
-      - ``MZ_MY``
-    * - ``flip_chip``, exported with ``--views``
-      - 90 / 180 / 270
-      - rejected
     * - ``face_down``
       - any
       - rejected
@@ -273,18 +269,15 @@ other than ``face_up`` or ``flip_chip`` is also rejected. An absent
 ``orientation`` is read as ``face_up``, which is the format's own default.
 
 The emitted token also decides which bond region attaches to the substrate:
-``front`` for a flipped die, ``back`` otherwise. Why a die exported with its
-views is placed ``MZ_MY`` is explained in
-`Exporting a die with its recorded views`_.
+``front`` for a flipped die, ``back`` otherwise.
 
 The anchor requirement
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Without ``--views``, every die must declare ``anchor: gds_origin``
-explicitly. The exporter emits die-local bump coordinates offset by the die
-``position``, which is the ``gds_origin`` anchor semantics: the die GDS origin
-is the placement reference. A die exported with ``--views`` is the reverse; see
-`Exporting a die with its recorded views`_.
+Every die must declare ``anchor: gds_origin`` explicitly. The exporter emits
+die-local bump coordinates offset by the die ``position``, which is the
+``gds_origin`` anchor semantics: the die GDS origin is the placement
+reference.
 
 - ``anchor: bbox_center`` is a hard error. Those bumps would need to be
   re-centred on the die GDS bounding box first, which this exporter does not
@@ -389,15 +382,47 @@ ready die described in :doc:`/tools/12_chiplet_flow`.
 
 Both flags are repeatable, and every ``--views`` needs a ``--contract`` for
 the same ``REF`` and the other way round. ``REF`` must name a die in the
-assembly. A die cannot be given both a pin list and a record.
+assembly. A die cannot be given both a pin list and a record. Dies without a
+record in the same run are exported as black boxes, as described above.
 
-The die's def then names the record's files in place, by paths relative to the
-``.3dbv``: its technology LEF as ``APR_tech_file``, its cell LEFs as
-``LEF_file``, its Liberty files at one corner as ``liberty_file`` and its DEF
-as ``DEF_file``. No technology LEF is generated for it. Its ``.bmap`` lists
-every pad of the record's pins view: the DEF component and its master, the pad
-centre in the DEF frame, and the die's own port and net (``-`` in both columns
-for a power or ground pad).
+.. list-table:: Black box and recorded views compared
+    :header-rows: 1
+    :widths: 22 39 39
+    :class: adk-wide-table
+
+    * - Aspect
+      - Black box (default)
+      - Recorded views (``--views``)
+    * - Def contents
+      - ``design_area``, ``thickness`` and full-outline bond regions; no
+        cell LEF, DEF or Liberty
+      - The same, plus the record's cell LEFs as ``LEF_file``, its Liberty
+        files at one corner as ``liberty_file`` and its DEF as ``DEF_file``
+    * - ``APR_tech_file``
+      - A generated ``<technology>.lef``
+      - The record's technology LEF; none is generated for the die
+    * - ``.bmap``
+      - Only with ``--pins``: the pin list, in the def-local frame
+      - Always: every pad of the record's pins view, in the DEF frame
+    * - Bump macro LEF
+      - Generated per connection method, with ``--pins``
+      - None; the pad masters come from the record's cell LEFs
+    * - Required ``anchor``
+      - ``gds_origin``
+      - ``bbox_center``
+    * - ``flip_chip`` token
+      - ``MZ``, or ``MZ_R90`` / ``MZ_R180`` / ``MZ_R270``
+      - ``MZ_MY``; a quarter turn is refused
+    * - Per-die stdout line
+      - ``<ref>: eda views: absent``, only when another die in the run has a
+        record
+      - The kinds read and the unqualified files, described below
+
+The def names the record's files in place, by paths relative to the
+``.3dbv``. The
+``.bmap`` row of a pad gives the DEF component and its master, the pad centre
+in the DEF frame, and the die's own port and net (``-`` in both columns for a
+power or ground pad).
 
 ``--corner`` names the corner the records are read at. Without it, the records'
 shared default corner is used, and records whose default corners differ are an
@@ -433,12 +458,11 @@ of this holds:
   one library per stem; and two different Liberty files may not share a
   basename.
 
-Such a die must declare ``anchor: bbox_center``, because the DEF frame's
-origin is the corner of the die outline; ``gds_origin`` is the hard error
-here. A flipped die is placed ``MZ_MY`` rather than ``MZ``: the target's
-``MZ`` mirrors z only, so the x mirror of the flip goes into the orientation
-and the bump map stays in the DEF frame. A flipped die with a record and a
-quarter turn is refused.
+The anchor is ``bbox_center`` because the DEF frame's origin is the corner of
+the die outline, so ``gds_origin`` is the hard error here. A flipped die is
+placed ``MZ_MY`` rather than ``MZ`` because the target's ``MZ`` mirrors z only:
+the x mirror of the flip goes into the orientation, and the bump map stays in
+the DEF frame.
 
 After the written paths, the exporter prints one line per die, either
 ``<ref>: eda views: def, tech_lef, pins, lef, liberty; unqualified: <files>``
