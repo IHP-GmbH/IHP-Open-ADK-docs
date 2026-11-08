@@ -152,7 +152,7 @@ Parameters per method
 Each method carries a connection stack (the physical bodies, bottom to top), the
 fabrication parameters it needs from the interposer, and its pitch rules.
 
-.. figure:: /_figures/tikz_cupillar_stack.*
+.. figure:: /_figures/cupillar_stack.*
     :align: center
     :alt: Cross-sections of the cupillar_opt1 and sbump_sac305 connection
           stacks, drawn side by side as alternatives.

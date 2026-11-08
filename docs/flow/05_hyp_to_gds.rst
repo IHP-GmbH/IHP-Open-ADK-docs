@@ -11,7 +11,7 @@ indices, and dies as position-only anchors pointing at external GDS files.
 description into GDS layouts on real process layers, generates the attachment
 structures, and writes the sidecar manifests the assembly checks consume.
 
-.. figure:: /_figures/tikz_hyp_to_gds.*
+.. figure:: /_figures/hyp_to_gds.*
     :align: center
     :alt: The converter as a single block between the files it reads on the left, the .hyp, the .lyp, the die GDS files and the intermediate .chiplet, and the files it writes on the right, the interposer GDS, the complete GDS, the sidecar manifests and the finalised .chiplet, with the six stages it runs listed inside the block.
     :width: 95%

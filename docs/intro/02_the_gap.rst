@@ -22,7 +22,7 @@ That splits the design problem in two. Each chiplet is a conventional die design
 against a conventional PDK. The assembly is a new problem, and it is the one
 that had no open tooling.
 
-.. figure:: /_figures/tikz_25d.*
+.. figure:: /_figures/25d.*
     :align: center
     :alt: Two dies from different process nodes mounted on a silicon interposer.
     :width: 95%
@@ -83,7 +83,7 @@ Underneath all of these sits one structural problem. Interposer design lands
 exactly between two mature tool cultures that disagree about almost everything
 operational.
 
-.. figure:: /_figures/tikz_gap.*
+.. figure:: /_figures/gap.*
     :align: center
     :alt: The mismatch between board-level and IC-level tooling.
     :width: 95%

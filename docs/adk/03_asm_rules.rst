@@ -70,7 +70,7 @@ Each rule is given below with the deck source that implements it. The five
 panels of the figure show, in plan view, the case each rule is meant to catch
 and the neighbouring case it is meant to leave alone.
 
-.. figure:: /_figures/tikz_asm_rules.*
+.. figure:: /_figures/asm_rules.*
     :align: center
     :alt: Five plan-view panels showing what ASM.a, ASM.b, ASM.e, ASM.f and ASM.g each flag and which nearby cases stay legal.
     :width: 90%

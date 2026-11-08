@@ -35,7 +35,7 @@ shows up as a concrete failure:
 - The zone filler prunes with a fixed 1 um epsilon, which is larger than the
   geometry it is pruning.
 
-.. figure:: /_figures/tikz_nm_scale_ladder.*
+.. figure:: /_figures/nm_scale_ladder.*
     :align: center
     :alt: A logarithmic length axis from 1 nanometre to 1 millimetre. The hardcoded constants of upstream KiCad cluster between 1 micrometre and 0.15 millimetre, the smallest interposer features sit between about 0.2 and 2 micrometres on a 5 nanometre grid, and the fork moves the four floors to 10 nanometres and adds grid presets down to 1 nanometre.
     :width: 95%

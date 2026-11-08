@@ -25,7 +25,7 @@ The role model
 
 The ADK sits one abstraction layer above all PDKs.
 
-.. figure:: /_figures/tikz_rolemodel.*
+.. figure:: /_figures/rolemodel.*
     :align: center
     :alt: The ADK as a single layer above chiplet PDK A, the interposer PDK and chiplet PDK B, reaching each one through an adapter.
     :width: 90%
@@ -98,7 +98,7 @@ technology, and no PDK deck sees two dies at once. The space between the dies,
 and the attachment geometry that lands them on the interposer, belongs to a
 third level that no PDK owns. That level is what the ADK ships.
 
-.. figure:: /_figures/tikz_drc_levels.*
+.. figure:: /_figures/drc_levels.*
     :align: center
     :alt: The three levels of DRC in a 2.5D assembly, per-die, interposer and assembly, with the assembly level marked as the one the ADK ships in this release.
     :width: 90%
@@ -143,7 +143,7 @@ routing between those landings. This is the level at which chiplet assemblies
 fail in practice: a mirrored die, a swapped pad, a placement shifted far enough
 that a bump misses its pad.
 
-.. figure:: /_figures/tikz_verification_levels.*
+.. figure:: /_figures/verification_levels.*
     :align: center
     :alt: The three levels of LVS in a 2.5D assembly, per-die, interposer and assembly, laid out like the DRC figure above, with the assembly level marked as checked by assembly-lvs in this release.
     :width: 90%

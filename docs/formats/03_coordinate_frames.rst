@@ -73,7 +73,7 @@ The canonical frame
     * - Float precision
       - At least six decimal places, that is 1 pm in theory
 
-.. figure:: /_figures/tikz_canonical_frame.*
+.. figure:: /_figures/canonical_frame.*
     :align: center
     :alt: Plan view of the interposer GDS bounding box with the origin at its lower-left corner, x rightward, y upward, and a die whose position is measured to its geometric centre.
     :width: 90%
@@ -229,7 +229,7 @@ Orientation and flip-chip mirroring
 A flip-chip die is mounted face down: its active layers and BEOL point at the
 interposer, and the connection stack carries every pad across the gap.
 
-.. figure:: /_figures/tikz_flipchip.*
+.. figure:: /_figures/flipchip.*
     :align: center
     :alt: Cross-section of a flip-chip die mounted face down on an array of five Cu pillars with SnAg caps, seated over the interposer's TopMetal2 and its lower metal layers. The die's active layers and BEOL face downward and its substrate sits on top.
     :width: 80%
@@ -307,7 +307,7 @@ The order matters: **mirror first, then rotate**, then translate by the die's
 ``position``. Applying the rotation before the mirror gives a different answer
 for every angle that is not a multiple of 180 degrees.
 
-.. figure:: /_figures/tikz_pad_transform.*
+.. figure:: /_figures/pad_transform.*
     :align: center
     :alt: Four panels taking a pad from the die-local frame through the flip-chip mirror, then the rotation, then the translation by the die position into the canonical frame.
     :width: 90%
@@ -410,7 +410,7 @@ interconnect-PDK fragment for this die's ``connection`` has been merged in, and
 ``connection.total_height()`` is the sum of ``height`` over every layer in the
 stack.
 
-.. figure:: /_figures/tikz_zstack.*
+.. figure:: /_figures/zstack.*
     :align: center
     :alt: Cross-section of two dies on one interposer, one on a Cu-pillar stack and one on a microbump stack, seated at different heights above the same attachment surface.
     :width: 90%
@@ -667,7 +667,7 @@ These are all the frames present in the toolchain. From the schema's
 perspective only frame 6 (canonical) and frame 9 (3D world) are visible; the
 rest are internal to specific tools and never appear in a ``.chiplet`` file.
 
-.. figure:: /_figures/tikz_frame_chain.*
+.. figure:: /_figures/frame_chain.*
     :align: center
     :alt: Graph of the nine coordinate frames from KiCad internal units through the HyperLynx and GDS frames into the canonical frame and the 3D world frame, with the converting tool marked on each edge.
     :width: 90%

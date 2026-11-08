@@ -16,7 +16,7 @@ The role model
 
 The ADK sits one abstraction layer above all PDKs.
 
-.. figure:: /_figures/tikz_rolemodel.*
+.. figure:: /_figures/rolemodel.*
     :align: center
     :alt: The ADK as a single layer above the chiplet and interposer PDKs, reaching each one only through an adapter.
     :width: 90%
@@ -174,7 +174,7 @@ adapter to change the substrate. Swap the interconnect adapter to change the
 bumping vendor. Neither touches the other, and the ADK rules are unchanged
 either way.
 
-.. figure:: /_figures/tikz_two_axes.*
+.. figure:: /_figures/two_axes.*
     :align: center
     :alt: The interposer adapter axis and the interconnect adapter axis crossed over an unchanged rule deck, each varying independently of the other.
     :width: 90%
@@ -245,7 +245,7 @@ joined with newlines:
     8_2_interconnect.drc        only if an interconnect adapter and/or a
                                 per-method file was loaded; the IXN rules
 
-.. figure:: /_figures/tikz_eval_chain.*
+.. figure:: /_figures/eval_chain.*
     :align: center
     :alt: The assembly wrapper concatenating layer definitions, the interposer adapter, generated validation, the optional interconnect segments and the rule decks into one Ruby string.
     :width: 90%

@@ -19,7 +19,7 @@ others structurally cannot see.
 one of them and concluding the assembly is checked is the single most likely way
 to ship a mistake through this flow.
 
-.. figure:: /_figures/tikz_verification_stages.*
+.. figure:: /_figures/verification_stages.*
     :align: center
     :alt: The four checking stages hung off the artefact spine that runs from the KiCad board to the 3Dblox model, each card stating what its stage proves and what it is blind to.
     :width: 90%

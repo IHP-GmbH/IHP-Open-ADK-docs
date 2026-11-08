@@ -140,7 +140,7 @@ definition names die instances, and only the manifest knows where those dies
 are. It cannot be combined with ``--legacy-exchange0``, which carries no per-die
 instance names, and the runner rejects that combination before spawning KLayout.
 
-.. figure:: /_figures/tikz_ixn_regions.*
+.. figure:: /_figures/ixn_regions.*
     :align: center
     :alt: The attachment region cut into two method regions by the die boundary polygons, with per-method spacing and pitch checks inside each region, a cross-method spacing check across the gap between them, and an unclaimed remainder outside both.
     :width: 90%

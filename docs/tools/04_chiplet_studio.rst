@@ -448,7 +448,7 @@ Three ways to get a runnable binary, in increasing order of independence from
 the host. What each of them has to provide is the bottom row of the
 application's own structure:
 
-.. figure:: /_figures/tikz_studio_architecture.*
+.. figure:: /_figures/studio_architecture.*
     :align: center
     :width: 80%
     :alt: Three stacked tiers. A UI tier of ui/Qt6 Widgets and

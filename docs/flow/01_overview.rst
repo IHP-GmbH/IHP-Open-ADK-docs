@@ -58,7 +58,7 @@ It produces:
 The flow at a glance
 --------------------
 
-.. figure:: /_figures/tikz_designflow.*
+.. figure:: /_figures/designflow.*
     :align: center
     :alt: Three phase panels side by side. Design in KiCad takes die GDS
           files, an interposer technology and an interconnect technology
@@ -76,7 +76,7 @@ The flow at a glance
 
 The same pipeline, seen as the files each stage consumes and writes:
 
-.. figure:: /_figures/tikz_artifact_pipeline.*
+.. figure:: /_figures/artifact_pipeline.*
     :align: center
     :alt: A vertical pipeline in which die GDS files and an interposer
           technology feed gds2kicad, the KiCad ADK build and the export
