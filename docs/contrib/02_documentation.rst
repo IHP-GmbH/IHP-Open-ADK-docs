@@ -70,6 +70,28 @@ Review the diff in the generated tables. It tells you exactly what changed in
 the code that this site makes claims about, and therefore which prose needs
 rereading.
 
+Pages a repository keeps for this site
+--------------------------------------
+
+A repository can keep pages for this site in its own ``docs/`` folder, in
+Markdown or reStructuredText. They are built as they stand, with no copy and no
+include page in between. Three things wire one in, all in the same change:
+
+- the repository is a submodule under ``src/``, and is listed under
+  ``submodules: include`` in ``.readthedocs.yaml``, so the hosted build checks
+  it out;
+- ``docs/_repos/<name>`` is a relative symlink to ``../../src/<name>``, the
+  submodule itself and never a checkout beside this repository, so it resolves
+  in any clone with its submodules;
+- a toctree on one of this site's pages names the repository's index, as
+  ``/_repos/<name>/docs/index``.
+
+``REPO_PAGES`` in ``conf.py`` builds every ``docs/`` folder under ``_repos/``
+and nothing else from the repository. A repository whose pages live elsewhere
+adds its own patterns there. Building the pages from the repository's tree is
+what keeps their relative includes and links working: a page included from
+this site would resolve them against the including page instead.
+
 Writing conventions
 -------------------
 
@@ -107,11 +129,10 @@ back even if the prose is good.
   bumping vendor" or "the vendor's Cu-pillar table". A vendor name that appears
   inside a file quoted verbatim from a source repository stays as it is, because
   changing it would make the documentation misdescribe the file.
-- The connectivity axis of assembly-level verification may be described as a
-  concept and as scope. No implementation of it is part of this release, so the
-  site must not name a repository, a file, a module or a result for it, and must
-  not state or imply that it can be run today. Every mention pairs with an
-  explicit statement that it is not part of this preview release.
+- Assembly LVS ships as ``assembly-lvs``. Describe what it checks together with
+  what it does not, as :doc:`/tools/09_assembly_lvs` does. Never present a
+  match as sign-off, as per-die LVS or as an electrical check, and make no
+  benchmark or primacy claim for it.
 - No em-dashes and no emojis anywhere.
 - British spelling throughout, except in verbatim quotations of file names,
   command output and tool user-interface strings.

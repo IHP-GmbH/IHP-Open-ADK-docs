@@ -31,8 +31,12 @@ Start from the template board
 
 The interposer technology ships a template board at
 ``libs.tech/kicad/interposer_template.kicad_pcb``. Copy it into your project's
-``kicad/`` directory under your board name and open it with the ADK KiCad
-build.
+``kicad/`` directory under your board name, copy
+``interposer_template.kicad_dru`` and ``interposer_template.kicad_pro`` beside
+it under the same name (``<board>.kicad_dru`` and ``<board>.kicad_pro``), and
+open the board with the ADK KiCad build. The two files carry the metal rules,
+the board setup and the net classes; KiCad picks them up only when they are
+named after the board.
 
 Starting from the template matters for one specific reason. The HYP-to-GDS
 converter maps board copper layers onto interposer metals **by name**. A board
@@ -201,12 +205,25 @@ renders them into the interposer GDS and injects them under the interposer
 component in the ``.chiplet``. Nothing else is needed to make them appear
 downstream. The reference design places 35 wire-bond pads, 100 by 100 um.
 
+On a board you draw by hand, each pad's reference is its I/O pad id. A board
+that ``interposer-pnr`` drew from a system sheet is different: its pads are
+``chiplet_carrier`` footprints whose id travels in a hidden ``IO_PAD_ID``
+field, and the export reads them by that field. It refuses such a pad without
+the field, and two pads with the same id. On any board, the export refuses an
+I/O pad footprint whose pads carry different nets, an unconnected pad
+included.
+
 Route
 -----
 
-Routing is ordinary KiCad routing on layers with unusual numbers. The reference
-design uses per-metal net classes, because KiCad carries a track width and a
-clearance per net class rather than per layer:
+Routing is ordinary KiCad routing on layers with unusual numbers. KiCad
+carries a track width and a clearance per net class rather than per layer, so
+the template's project file ships one net class per metal, named after it
+(``TopMetal2``, ``TopMetal1``, ``Metal5``, ``Metal4``), with that metal's
+minimum width and space and a via of the level that lands on it. ``Default``
+takes the TopMetal2 values, which are legal on every layer.
+
+The reference design uses its own per-metal classes:
 
 .. list-table::
     :header-rows: 1
@@ -267,7 +284,13 @@ Check while you design
 Two checks run inside KiCad, before any export.
 
 **KiCad's own DRC** checks the board rules: clearances, track widths, unrouted
-nets, courtyard collisions.
+nets, courtyard collisions. With the template's ``.kicad_dru`` beside the
+board, it also checks each metal's minimum width and clearance, and it warns on
+two interposer rules that rest on one track or pad: ``TM2.bR``, the larger
+TopMetal2 clearance next to a wide track or a wide, long pad, and ``Slt.c``, a
+track too wide to stay unslit. A track that needs slits gets them in KLayout,
+with the slit macro on the exported GDS; no flow step cuts them. The rules file
+and its gaps are described in :doc:`/tools/05_openintm4tm2`.
 
 **The generated ADK assembly rules** check the placement rules the ADK owns.
 Generate the section and append it to your project's ``.kicad_dru``:
@@ -276,9 +299,14 @@ Generate the section and append it to your project's ``.kicad_dru``:
 
     python3 ${ADK_ROOT}/kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
-        --out assembly_rules.kicad_dru
+        --out adk_section.txt
 
-The generated block is small on purpose, and its header says why:
+In the tools image, run it with ``/opt/adk-tools/venv/bin/python3``
+(:doc:`/install/01_container`).
+
+Append it below the ``(version 1)`` line of your ``.kicad_dru``, the one you
+copied from the template; KiCad ignores a rules file without that line and says
+nothing. The generated block is small on purpose, and its header says why:
 
 .. code-block:: text
 
@@ -286,26 +314,30 @@ The generated block is small on purpose, and its header says why:
     #   * ASM.a (chiplet boundary overlap) -- enforced by KiCad's native
     #     courtyard collision check; no rule emitted here.
     #   * ASM.b (chiplet-to-chiplet spacing) -- emitted below.
-    #   * ASM.e (chiplet minimum area) and ASM.f (attachment geometry inside
-    #     chiplet) have no clean KiCad DRU equivalent and are enforced
-    #     post-layout only by the ADK KLayout deck (adk/klayout/drc).
+    #     Only die footprints (those with a GDS_FILE field) are held to it: a
+    #     pad footprint drawn with a courtyard (a library or hand-drawn one; the
+    #     flow's own pad footprints carry none) is not a chiplet.
+    #   * ASM.e (chiplet minimum area), ASM.f (attachment geometry inside
+    #     chiplet) and ASM.g (die edge to wire-bond pad) have no clean KiCad DRU
+    #     equivalent and are enforced post-layout only by the ADK KLayout deck
+    #     (adk/klayout/drc). ASM.g would need a courtyard on the pad, which the
+    #     flow's wire-bond pad footprints do not carry.
 
 So one rule is emitted, chiplet-to-chiplet spacing, expressed as a courtyard
-clearance:
+clearance between die footprints:
 
 .. code-block:: text
 
     (rule "ASM.b - Chiplet min spacing"
-      (constraint courtyard_clearance (min 50um))
-      (condition "A.Type == 'Footprint' && B.Type == 'Footprint'"))
+      (constraint courtyard_clearance (min 0.2mm))
+      (condition "A.Type == 'Footprint' && B.Type == 'Footprint' && A.getField('GDS_FILE') != '' && B.getField('GDS_FILE') != ''"))
 
 .. note::
-   The 50 um default is an ADK engineering default. It is not a foundry rule
-   and carries no recorded provenance from one. Override it through the rule
-   parameters or an adapter if your assembly process says otherwise. The
-   interconnect pitch and spacing defaults are different in this respect: those
-   do trace to the bumping vendor's Cu-pillar table. See
-   :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
+   The 200 um of ``ASM_b`` is the ADK's assembly rule, not a foundry rule. A
+   technology with its own number states it in its interposer adapter, as that
+   technology's own rule. The interconnect pitch and spacing defaults are
+   different in this respect: those do trace to the bumping vendor's Cu-pillar
+   table. See :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
 The generator and the KLayout deck read the same rule-parameter registry and
 apply adapter overrides identically, so the number you see while routing is the
@@ -324,7 +356,9 @@ mirror is deliberately incomplete:
 * the interconnect pitch and spacing rules operate on the as-drawn bumps, which
   do not exist until the export generates them;
 * the interposer technology's own fabrication rules run on the GDS, not on the
-  board.
+  board. KiCad mirrors only the metal widths and clearances and the two
+  warnings above, and it misses violations of those too (a clearance is flagged
+  only once it is more than KiCad's DRC epsilon under the rule).
 
 A board that passes KiCad DRC is ready to export, not verified.
 :doc:`/flow/06_verification_stages` lays out which check runs when.

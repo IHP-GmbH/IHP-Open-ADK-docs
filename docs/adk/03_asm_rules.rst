@@ -5,8 +5,9 @@ Assembly placement rules (ASM)
 .. include:: tables/_rule_counts.inc
 
 The ASM rules are the assembly-level geometric checks: where a die may sit, how
-far it must stay from its neighbours, and where the interposer's attachment
-geometry is allowed to land relative to a die.
+far it must stay from its neighbours, where the interposer's attachment
+geometry is allowed to land relative to a die, and how close a die may come to
+the interposer's wire-bond pads.
 
 There are |asm-rule-count| of them. They live in a single deck,
 ``klayout/drc/rule_decks/8_1_assembly.drc``, and they are written entirely
@@ -32,7 +33,7 @@ number to configure, and no adapter can change what they mean.
 What the rules see
 ------------------
 
-The deck evaluates two inputs and nothing else.
+The deck evaluates two inputs, and a third when the adapter declares it.
 
 ``chiplet_boundary``
     The mechanical outline of every placed chiplet. It is **not** a fabrication
@@ -45,9 +46,16 @@ The deck evaluates two inputs and nothing else.
 ``chiplet_attachment_input``
     The region the interposer offers for chiplet attachment, declared by the
     active interposer adapter. On the IHP IntM4TM2 interposer the adapter
-    derives it from the Cu-pillar geometry, ``polygons(9, 35).and(polygons(41,
-    35))``. On a different interposer it could be a solder-bump region or a
+    derives it from the Cu-pillar and solder-bump geometry, the openings and
+    pads on datatypes 35 and 36. On a different interposer it could be a
     hybrid-bonding pad array. The rules never ask which.
+
+``wire_bond_pad_input`` (optional)
+    The interposer's wire-bond pads, declared by the active interposer adapter
+    as a lambda that takes a layout source. On IntM4TM2 it is the PDK's own pad
+    derivation, the passivation opening, ``dfpad`` and ``TopMetal2`` drawn
+    together. Only ASM.g reads it. See `ASM.g: die edge to wire-bond pad`_ for
+    why it is a lambda and not a layer.
 
 .. note::
 
@@ -58,13 +66,13 @@ The deck evaluates two inputs and nothing else.
 The rules
 ---------
 
-Each rule is given below with the deck source that implements it. The four
+Each rule is given below with the deck source that implements it. The five
 panels of the figure show, in plan view, the case each rule is meant to catch
 and the neighbouring case it is meant to leave alone.
 
 .. figure:: /_figures/tikz_asm_rules.*
     :align: center
-    :alt: Four plan-view panels showing what ASM.a, ASM.b, ASM.e and ASM.f each flag and which nearby cases stay legal.
+    :alt: Five plan-view panels showing what ASM.a, ASM.b, ASM.e, ASM.f and ASM.g each flag and which nearby cases stay legal.
     :width: 90%
 
     What each ASM rule fires on. The marker geometry is shown in red;
@@ -128,7 +136,8 @@ one, so the stricter metric is the correct one.
 .. tip::
 
     ASM.b is the only ASM rule with a clean KiCad equivalent. The DRU generator
-    emits it as a ``courtyard_clearance`` constraint so that the interactive
+    emits it as a ``courtyard_clearance`` constraint between die footprints so
+    that the interactive
     KiCad session and the batch KLayout run enforce the same number. See
     :doc:`/adk/06_kicad_dru`.
 
@@ -194,10 +203,63 @@ definition says. The ADK regression suite pins this behaviour with a fixture
 whose pad shares the chiplet's right edge and lies entirely outside it, and
 asserts that ASM.f does not fire.
 
+ASM.g: die edge to wire-bond pad
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: ruby
+
+    asm_g_value = drc_rules['ASM_g'].to_f
+    if wire_bond_pads
+      logger.info("ADK: ASM.g #{wire_bond_pads.count} pads checked")
+      asm_g_message = "ASM.g : Min. die edge to wire-bond pad distance is #{asm_g_value} um"
+      asm_g = wire_bond_pads.separation(chiplet_boundary, asm_g_value.um, euclidian)
+      asm_g.output('ASM.g', asm_g_message)
+      asm_g.forget
+      asm_g_touch = wire_bond_pads.interacting(chiplet_boundary)
+      asm_g_touch.output('ASM.g', asm_g_message)
+      asm_g_touch.forget
+    else
+      logger.info("ADK: ASM.g not applicable: #{asm_g_not_applicable}")
+      polygon_layer.output('ASM.g', "ASM.g : not applicable: #{asm_g_not_applicable}")
+    end
+
+A die must keep ``ASM_g`` clear of every wire-bond pad on the interposer, so
+that a bond wire can be landed next to it. The distance is measured edge to
+edge from each chiplet boundary to each pad, ``euclidian`` as in ASM.b, so a
+pad diagonal to a die corner counts by its true distance. ``separation`` sees
+only facing outside edges, so a second selector, ``interacting``, flags a pad
+that touches or overlaps a boundary. Both write under ``ASM.g``.
+
+The pads are read from the carrier only. A die layout in the assembly GDS can
+draw its own bond pads on the same layers as the interposer's, and those are
+not interposer pads. So the adapter declares ``wire_bond_pad_input`` as a
+lambda over a layout source, and ``klayout/drc/rule_decks/wire_bond_pads.drc``
+calls it once, on a source with every die cell the boundary manifest names
+pruned from the hierarchy. Each die cell is matched by its exact name, never by
+a pattern. The name is the manifest record's ``cell`` when it carries one,
+otherwise ``<instance>_<source_die>``, with ``_flipped`` appended when the
+record's transform sets ``mirror_x``: the names the exporter gives die cells. A
+hand-built GDS must name its die cells the same way. The deck refuses the run
+when a named die cell is not in the layout, since reading past an unknown die
+would read its pads. Excluding by
+position instead would drop a carrier pad drawn under a die, which is the worst
+case this rule exists for, so a pad under a die is read and flagged.
+
+.. important::
+
+    An interposer adapter that declares no ``wire_bond_pad_input`` runs ASM.g as
+    **not applicable**, not as passed, and so does a run in legacy
+    ``exchange0`` mode, which has no boundary manifest to name the die cells. The report carries an ``ASM.g`` category
+    with no item and the description ``ASM.g : not applicable: the interposer
+    adapter declares no wire-bond pads``, and ``run_drc.py`` lists it as not
+    checked, apart from the rules that passed. A reader of the report must not
+    take that empty category for a pass. An adapter that declares the input on
+    a layout with no pads is a pass: the log says ``0 pads checked``.
+
 There is no ASM.c and no ASM.d
 ------------------------------
 
-The shipped deck contains exactly ASM.a, ASM.b, ASM.e and ASM.f. The gap in the
+The shipped deck contains exactly ASM.a, ASM.b, ASM.e, ASM.f and ASM.g. The gap in the
 lettering is not an omission in this documentation and not a set of rules
 waiting to be implemented.
 
@@ -211,7 +273,10 @@ itself is only inherited: a rule name is an identifier that leaves the ADK. It
 appears as the category of every entry in the ``.lyrdb`` report, in regression
 fixtures, and in anything downstream that parses a report or maintains a waiver
 list. Renaming ``ASM.e`` to ``ASM.c`` would change the meaning of every stored
-reference to both names without changing any geometry.
+reference to both names without changing any geometry. For the same reason
+the newest rule took a fresh letter, ``g``, instead of reusing ``c`` or ``d``:
+an older report or waiver that names ASM.c means the removed rule, never this
+one.
 
 .. note::
 
@@ -253,28 +318,42 @@ Where the numbers come from
     :class: adk-rule-table
     :align: left
 
-``ASM_b`` and ``ASM_e`` are **engineering defaults, not foundry-sanctioned
-rules**. There is no recorded provenance for either value: no layout-rule
-document section, no assembly-house specification, no qualification data. They
-are round numbers chosen to be safely loose for the assemblies the flow
-currently produces, and they exist so that the checker has something to check
-rather than because a process demands them.
+``ASM_b`` and ``ASM_g`` are the ADK's assembly rules: 200 um between two dies,
+and 200 um from a die edge to a wire-bond pad. They are this project's rules
+for the assemblies it builds, **not foundry rules**: no layout-rule document of
+the interposer process states them.
 
-Treat them accordingly. If you have a real number for your assembly process, it
-belongs in an interposer adapter, which may override any entry of ``drc_rules``:
+``ASM_e`` is an **engineering default, not a foundry-sanctioned rule**. There is
+no recorded provenance for its value: no layout-rule document section, no
+assembly-house specification, no qualification data. It is a round number
+chosen to be safely loose, and it exists so that the checker has something to
+check rather than because a process demands it.
+
+A technology with its own number states it in its interposer adapter, which
+may override an entry of ``drc_rules``. An override is that technology's own
+rule, not a relaxation of the default:
 
 .. code-block:: ruby
 
     # in pdk_adapters/interposer/<your_interposer>.drc
-    drc_rules['ASM_b'] = 30.0   # tighter chiplet spacing for this interposer
+    drc_rules['ASM_b'] = 250.0   # this interposer's own chiplet spacing rule
 
-Both consumers pick the override up, so the two toolchains agree on what they
-are checking. Keep overrides to plain numeric literals: the KiCad side parses
-them out of the adapter file textually and silently ignores a computed
-expression. See :doc:`/adk/06_kicad_dru`.
+The deck and the KiCad DRU generator both apply the override. Write it as one
+literal number per line, above any other code in the adapter: the ADK reads
+overrides for the generator with its own parser, which refuses a computed value
+or any form it cannot read rather than guess. The adapter README in the ADK
+lists the exact form. See :doc:`/adk/06_kicad_dru`.
 
-The shipped ``intm4tm2`` adapter overrides neither value; an IntM4TM2 run
-therefore checks the registry defaults.
+Placement does not read adapters. interposer-pnr legalizes to ``ASM_b`` and the
+packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
+from ``config/rule_params.json``. So that placement and the deck never work to
+two different numbers, a packaging-flow run that dispatches the deck refuses an
+interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
+the registry's, and says the deck would check a different value than placement
+used.
+
+The shipped ``intm4tm2`` adapter overrides no value; an IntM4TM2 run therefore
+checks the registry defaults.
 
 .. note::
 

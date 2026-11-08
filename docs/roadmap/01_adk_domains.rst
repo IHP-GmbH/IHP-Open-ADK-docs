@@ -12,8 +12,8 @@ The shipped assembly rules are geometric: they check placement and attachment
 density. The three reserved domains below are further axes along which an
 assembly can fail for reasons geometry alone cannot express. They are not the
 only ones: the inter-die connectivity axis is in the kit's scope rather than in a
-reserved domain, and it is not part of this preview release. See
-:doc:`/roadmap`.
+reserved domain, and this release checks it with the ``assembly-lvs`` engine.
+See :doc:`/tools/09_assembly_lvs`.
 
 Thermal
 -------

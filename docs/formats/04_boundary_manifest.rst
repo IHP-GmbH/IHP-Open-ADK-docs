@@ -33,13 +33,18 @@ the runner's module tree). An explicit path always wins:
 .. code-block:: bash
 
     # auto-discovery
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2
 
     # explicit sidecar
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2 \
         --manifest /elsewhere/board_complete.boundaries.json
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 A missing manifest is a hard error, not a warning. The runner refuses to check
 an assembly with no boundary source, because such a run would pass vacuously:

@@ -3,21 +3,32 @@ Reference design
 
 .. include:: /common.inc
 
-``two_die_interposer`` is the worked example of the whole flow: two dies mounted
-face down on an IntM4TM2 interposer, attached by two *different* interconnect
-methods, with wire-bond I/O pads at the interposer edge. It ships in the
-|tools-repo| repository under ``examples/two_die_interposer/`` and is baked into
-the ADK-Tools image at ``/opt/adk-tools/examples/two_die_interposer``. On first
-container start a disposable copy is seeded at ``/work/example``.
+``two_die_interposer`` is the reference design of the |tools-repo| image: the
+design the image build regenerates and checks itself against. Its assembly DRC
+has to pass and its regeneration has to reproduce before an image is accepted.
+It is two dies mounted face down on an IntM4TM2 interposer, attached by two
+*different* interconnect methods, with wire-bond I/O pads at the interposer
+edge. This page walks through it to show what each step of the flow produces on
+a known design. It is not a project to learn the flow on; the example designs
+of :doc:`/examples` are.
+
+It ships in the |tools-repo| repository under ``examples/two_die_interposer/``.
+The runtime image does not carry it. Copy it once from your ADK-Tools checkout
+into the folder ``run.sh`` mounts at ``/work``, as :doc:`/quickstart` does:
+
+.. code-block:: bash
+
+    mkdir -p ~/adk-work
+    cp -r "$ADK_TOOLS_ROOT/examples/two_die_interposer" ~/adk-work/example
 
 It is also the template ``adk-new-project`` scaffolds, so its directory layout
 is the recommended one for your own designs.
 
 .. tip::
-    Work on the seeded copy under ``/work/example``, not on
-    ``/opt/adk-tools/examples``. The seeded copy is disposable: delete
-    ``~/adk-work/example`` on the host and the next container start reseeds it
-    from the image.
+    The copy, ``/work/example`` inside the container, is yours and disposable:
+    delete ``~/adk-work/example`` on the host and copy it again from the
+    checkout when you want it back. The container starts in ``/work``, so the
+    ``example/`` paths on this page name that copy.
 
 What the demo assembles
 -----------------------
@@ -62,6 +73,7 @@ Directory tree
 
     two_die_interposer/
       README.md
+      carrier_drc_baseline.json              the build's interposer-deck baseline
       chiplets/                              gds2kicad prior-step inputs
         README.md
         Metal_Test.gds                       the full die layout, shared by U1 and U2
@@ -80,6 +92,8 @@ Directory tree
         fp-lib-table
       outputs/                               everything the export writes
         two_die_interposer.chiplet           open this in Chiplet Studio
+        two_die_interposer.chiplet.exportcontent.sha256
+                                             digest for the previous-export guard
         MANIFEST.md                          index of the products
         layout/
           two_die_interposer_interposer.gds
@@ -95,14 +109,14 @@ Directory tree
 Four more paths appear once you regenerate, and are deliberately not tracked:
 ``outputs/two_die_interposer.hyp``, ``outputs/layout/two_die_interposer_complete.gds``,
 ``outputs/reports/assembly_drc/`` (the DRC scratch directory) and
-``outputs/logs/``. Everything else is committed on purpose, so a fresh clone
+``outputs/logs/``. Everything else is committed on purpose, so a fresh copy
 opens in Chiplet Studio and carries its DRC results without a rebuild.
 
 .. note::
     To open ``two_die_interposer_complete.gds`` in KLayout, or run the assembly
     DRC yourself, regenerate the outputs first. The ``*_complete.*.json``
     sidecars *are* shipped, so the boundary and pillar manifests can be read
-    straight from a clone.
+    straight from a fresh copy.
 
 What each file is
 -----------------
@@ -125,8 +139,9 @@ reviewed symbol-layout fields ``side`` and ``type``, which cannot be re-extracte
 from a footprint. That is why the file exists rather than being derived.
 
 ``metal_test_chiplet.g2kproj`` is a saved gds-to-kicad session bundling the
-inputs, the layer selections and the embedded pin list. It stores
-image-absolute paths, so it is meant for use inside the container.
+inputs, the layer selections and the embedded pin list. Its two GDS paths are
+relative to the session file, so a copy opens wherever it sits, but its layer
+properties path is the image's, so it is meant for use inside the container.
 
 ``kicad/``
 ~~~~~~~~~~
@@ -165,8 +180,8 @@ From the host, using the launcher in the ADK-Tools checkout:
 
 .. code-block:: bash
 
-    ./run.sh chiplet-studio example/outputs/two_die_interposer.chiplet
-    ./run.sh kicad          example/kicad/two_die_interposer.kicad_pro
+    "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
+    "$ADK_TOOLS_ROOT/run.sh" kicad          example/kicad/two_die_interposer.kicad_pro
 
 Or from a shell inside the container, where both tools are on the path. Expect
 Chiplet Studio to show the interposer slab with two dies standing off it on
@@ -180,29 +195,38 @@ Step 1: the gds2kicad prior steps
 
 These run once per die, before any board work, and produce the KiCad library the
 board is built on. They are reproducible from the shipped inputs, and the image
-build gates them against the committed library.
+build gates them against the committed library. Run them from the die's input
+folder; they write into it, so compare what they produce with the library under
+``example/kicad/`` rather than writing over it. They run under the image's venv
+Python, which carries the ``klayout`` module the system ``python3`` lacks:
+
+.. code-block:: bash
+
+    cd example/chiplets
 
 The die footprint, read straight out of the curated GDS:
 
 .. code-block:: bash
 
-    gds_to_kicad.py Metal_Test_stripped.gds \
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad.py" Metal_Test_stripped.gds \
         --layer TopMetal2.drawing --text-layer-number 134/25 \
-        --lyp-file $GDS_TO_KICAD_ROOT/pdks/sg13g2.lyp --flip-chip \
+        --lyp-file "$GDS_TO_KICAD_ROOT/pdks/sg13g2.lyp" --flip-chip \
         -o metal_test_chiplet.kicad_mod
 
 The die symbol, from the reviewed pin list, with no GDS involved:
 
 .. code-block:: bash
 
-    gds_to_kicad_symbol.py --from-pin-list metal_test_chiplet.pins.json \
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/gds_to_kicad_symbol.py" \
+        --from-pin-list metal_test_chiplet.pins.json \
         -o Metal_Test.kicad_sym
 
 The wire-bond I/O pad, generated parametrically rather than converted:
 
 .. code-block:: bash
 
-    $GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py --io-class wire_bond --size 100x100
+    /opt/adk-tools/venv/bin/python3 "$GDS_TO_KICAD_ROOT/io_pads/generate_io_pad.py" \
+        --io-class wire_bond --size 100x100 --out-dir .
 
 The same three steps are available from the ``gds-to-kicad`` GUI, and
 ``metal_test_chiplet.g2kproj`` reopens the session at exactly the state that
@@ -228,20 +252,23 @@ Step 3: export and generate the GDS
 
 Normally this is the Chiplet Export plugin inside pcbnew, with its output
 directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
-which is exactly what the image build runs, is:
+the same export the image build runs, is:
 
 .. code-block:: bash
 
-    python3 /opt/adk-tools/chiplet_kicad_plugin/tests/regenerate_wirebond_demo.py \
-        --require-drc \
-        --board   example/kicad/two_die_interposer.kicad_pcb \
+    /opt/adk-tools/venv/bin/python3 \
+        /opt/adk-tools/chiplet_kicad_plugin/plugins/chiplet_export/tests/regenerate_wirebond_demo.py \
+        --board      example/kicad/two_die_interposer.kicad_pcb \
         --output-dir example/outputs
 
 One command drives the whole chain: the HyperLynx writer produces the ``.hyp``,
 the chiplet writer produces the intermediate ``.chiplet``, ``hyp_to_gds``
 produces both GDS files with their sidecars and finalises the ``.chiplet``, and
-the ADK assembly DRC runs on the complete GDS. ``--require-drc`` makes a DRC
-failure a non-zero exit, which is what turns this into a build gate.
+the ADK assembly DRC runs on the complete GDS. The DRC is required by default:
+when the files are written but the DRC does not pass, the script exits 3, which
+is what turns it into a build gate. ``--allow-drc-fail`` turns that 3 into 0.
+``--require-drc``, which older callers still pass, is accepted and changes
+nothing.
 
 The script prints the resolved artefact paths as it goes, and echoes the worker
 command lines it runs, so it doubles as a way to see the exact ``hyp_to_gds``
@@ -278,15 +305,14 @@ The other three of the four :doc:`verification stages
 against the shipped artefacts, and they are given below. The third, the KiCad
 design-time check, cannot be run here at all: the demo ``kicad/`` tree ships no
 generated ``.kicad_dru``, so there is nothing for pcbnew to enforce. Generate
-one as :doc:`/adk/06_kicad_dru` describes before using this example as the
-template for a design of your own.
+one as :doc:`/adk/06_kicad_dru` describes for a board of your own.
 
 Pad-to-pillar alignment, which needs the ``.chiplet``, the pillar manifest and a
 pad source per die:
 
 .. code-block:: bash
 
-    python3 $ADK_ROOT/checks/pads_vs_pillars.py \
+    /opt/adk-tools/venv/bin/python3 $ADK_ROOT/checks/pads_vs_pillars.py \
         --chiplet example/outputs/two_die_interposer.chiplet \
         --pillars example/outputs/layout/two_die_interposer_complete.pillars.json \
         --pins U1=example/chiplets/metal_test_chiplet.pins.json \
@@ -297,7 +323,7 @@ The 3Dblox export, whose own consistency checks run without OpenROAD installed:
 
 .. code-block:: bash
 
-    python3 $ADK_ROOT/openroad/chiplet2dbx.py \
+    /opt/adk-tools/venv/bin/python3 $ADK_ROOT/openroad/chiplet2dbx.py \
         --chiplet example/outputs/two_die_interposer.chiplet \
         --out-dir build/3dblox \
         --pins U1=example/chiplets/metal_test_chiplet.pins.json \
@@ -311,15 +337,16 @@ Step 6: the one-command self test
 
 .. code-block:: bash
 
-    adk-smoke
+    adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
-``adk-smoke`` verifies that the ``intm4tm2`` KLayout technology is registered
-and its layer properties resolve, then exports the demo end to end into a
-throwaway directory with ``--require-drc`` and asserts the DRC passed. It is the
-fastest way to tell whether a container, or a hand-assembled toolchain, is
-wired correctly. On success it ends with the line
-``adk-smoke: PASS (export + assembly DRC green)``; any failure exits non-zero
-before that.
+``adk-smoke`` takes one board and has no default, because the runtime image
+carries no demo; without a board it exits 2 and says where to copy this design
+from. It verifies that the ``intm4tm2`` KLayout technology is registered and
+its layer properties resolve, then exports the board end to end into a
+throwaway directory and fails unless the assembly DRC passed. It is the
+fastest way to tell whether a container is wired correctly. On success it ends
+with the line ``adk-smoke: PASS (export + assembly DRC green)``; any failure
+exits non-zero before that.
 
 What the committed reports say
 ------------------------------
@@ -335,21 +362,26 @@ ten informational results across ten checks over two devices, with ``passed``
 true.
 
 ``reports/two_die_interposer_assembly_drc.lyrdb`` records the assembly DRC. It
-carries eleven rule categories and no violation items:
+carries fourteen rule categories and no violation items:
 
 .. code-block:: text
 
-    ASM.a  ASM.b  ASM.e  ASM.f
+    ASM.a  ASM.b  ASM.e  ASM.f  ASM.g
     IXN.b.cupillar_opt1        IXN.e.cupillar_opt1
     IXN.b.vendorx_microbump    IXN.e.vendorx_microbump
     IXN.x.cupillar_opt1.vendorx_microbump
     IXN.b.unclaimed            IXN.e.unclaimed
+    IXN.x.cupillar_opt1.unclaimed
+    IXN.x.vendorx_microbump.unclaimed
 
 That list is the interesting part. The per-method categories show the two dies
 being checked at their own numbers; ``IXN.x`` is the conservative cross-method
 spacing between the two bump fields, at the larger of the two spacings; and the
 ``unclaimed`` categories cover any attachment pad that falls under no die's
-boundary, checked with the assembly-level adapter's numbers.
+boundary, checked with the assembly-level adapter's numbers, among themselves and
+against each method's pads. ``ASM.g`` reads ``Min. die edge to wire-bond pad
+distance is 200.0 um``, not ``not applicable``: the interposer adapter declares
+wire-bond pads, so the rule ran on them and found none closer than 200 um to a die.
 
 Reproducibility
 ---------------
@@ -368,8 +400,8 @@ manifests are compared with ``assembly_gds_sha256`` dropped, for the same
 reason. Per-run artefacts, the logs, the DRC scratch directory, the ``.lyrdb``,
 the complete GDS and the ``.hyp``, are ignored.
 
-The gate exists because the runtime image bakes the tracked deliverables rather
-than the regeneration, so a tracked set that had drifted from what the current
+The gate exists because the checkout ships the tracked deliverables, not the
+build's regeneration, so a tracked set that had drifted from what the current
 board and toolchain produce could ship on a green build. A stale ``.chiplet`` and
 a missing pillar manifest reached a release candidate that way.
 

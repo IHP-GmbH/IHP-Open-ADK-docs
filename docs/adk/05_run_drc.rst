@@ -45,23 +45,24 @@ The minimal invocation
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --run_dir /tmp/adk_drc
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 That runs the |asm-rule-count| ASM rules and nothing else. The boundary manifest
 is discovered next to ``design.gds``, the top cell is auto-detected, and the
 report lands in ``/tmp/adk_drc``.
 
-``--interposer-adapter`` takes either form:
-
-* a **shortname**, resolved against ``pdk_adapters/interposer/<name>.drc``, so
-  ``intm4tm2`` finds the shipped IHP IntM4TM2 adapter; or
-* an **explicit path** to a ``.drc`` file, used as given.
-
-The resolver tries the literal path first and the shortname second, and if
-neither exists it reports both candidates it looked for.
+``--interposer-adapter`` takes a registry id: ``intm4tm2`` is the shipped IHP
+IntM4TM2 adapter. A path is refused. ``--list-adapters`` prints the registered
+ids, and :doc:`/adk/02_adapter_contract` says how to register a deck of your
+own.
 
 Adding the interconnect axis
 ----------------------------
@@ -70,7 +71,7 @@ Supply an interconnect adapter to add the bump-to-bump pitch and spacing checks:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
@@ -81,15 +82,15 @@ sidecar:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
         --interconnect-methods design.ixn_methods.json \
         --run_dir /tmp/adk_drc
 
-``--interconnect-adapter`` resolves the same way as the interposer flag, against
-``pdk_adapters/interconnect/``. Unlike the manifest, the methods file is never
+``--interconnect-adapter`` takes a registry id too, such as ``ihp_cupillar``, and
+resolves through the same registry. Unlike the manifest, the methods file is never
 auto-discovered: you pass it explicitly or the axis stays assembly-global.
 
 .. tip::
@@ -97,8 +98,8 @@ auto-discovered: you pass it explicitly or the axis stays assembly-global.
     Passing both, as above, is the combination that leaves nothing unchecked.
     The methods file gives each die the numbers its own method demands; the
     adapter supplies the fallback for attachment geometry no method claims. With
-    a methods file and no adapter, unclaimed pads are simply not checked on this
-    axis, and the deck logs a line saying so.
+    a methods file and no adapter, unclaimed pads are not checked on this axis,
+    and the deck reports them as ``IXN.unassociated`` findings.
 
 Command-line reference
 ----------------------
@@ -114,7 +115,7 @@ Flags in detail
     an absolute path.
 
 ``--interposer-adapter`` (required)
-    Shortname or path, as described above.
+    A registry id, as described above.
 
 ``--interconnect-adapter``
     Optional. Enables the IXN axis. Omit it and the evaluated deck is identical
@@ -201,7 +202,7 @@ behaviour, reading the boundary from that layer instead of from a sidecar.
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path old_design.gds \
         --interposer-adapter intm4tm2 \
         --legacy-exchange0
@@ -289,8 +290,14 @@ entry zooms the layout view to the offending geometry and highlights it.
 
 The category names are exactly the rule names, and the description string
 alongside each category carries the number that was checked, for example
-``ASM.b : Min. chiplet-to-chiplet spacing is 50.0 um``. That is the fastest way
+``ASM.b : Min. chiplet-to-chiplet spacing is 200.0 um``. That is the fastest way
 to confirm which value an adapter override actually put into effect.
+
+A rule the deck did not apply has a category too, with no item and a
+description that says why, for example ``ASM.g : not applicable: the
+interposer adapter declares no wire-bond pads``. ``run_drc.py`` lists such a
+rule in its log as ``ADK DRC not checked``, apart from the rules that passed.
+An empty category with that description is not a pass.
 
 .. tip::
 
@@ -311,20 +318,24 @@ Exit codes
     * - Code
       - Meaning
     * - ``0``
-      - The run completed and the report contains no violations.
+      - The deck ran to the end and the report contains no violations.
     * - ``1``
-      - The run completed and the report contains violations.
+      - The deck ran to the end and the report contains violations.
     * - ``2``
-      - A tooling failure with no more specific code available.
-    * - other
-      - KLayout's own non-zero exit code, passed through.
+      - The deck aborted, or wrote no report. The log says
+        ``ADK DRC engine failure``.
+    * - ``5``, ``6``
+      - An adapter registry file is unusable, or a registered id names a deck
+        that is not there (``5``); a registry declares a version this ADK cannot
+        read (``6``).
+    * - ``7``
+      - An internal error while resolving the adapter.
 
-The distinction between the last two rows is worth being precise about. When the
-KLayout subprocess exits non-zero, for example because an adapter did not
-declare a required input, or the deck raised on an unresolvable die instance,
-the runner does not dump a Python traceback on top of an error KLayout has
-already printed. It returns KLayout's exit code, falling back to ``2`` if that
-code was somehow zero.
+An aborted deck exits ``2``, not with KLayout's own code. KLayout exits ``1``
+when a deck raises, for example because an adapter did not declare a required
+input or a method names an unknown die instance, and ``1`` is the code for
+violations; the aborted run also leaves an empty report that would read as
+clean. ``2`` keeps both of those apart from a verdict.
 
 .. note::
 
@@ -341,7 +352,7 @@ A shell wrapper therefore looks like this:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path design.gds \
         --interposer-adapter intm4tm2 \
         --run_dir "$RUN_DIR"
@@ -376,11 +387,10 @@ to their identifying phrase.
     The extension check passed but KLayout could not parse the stream.
     Truncated or mislabelled file.
 
-``Interposer adapter not found: '<name>'.``
-    The message lists both candidates that were tried, the literal path and
-    ``pdk_adapters/interposer/<name>.drc``. The same message with
-    ``Interconnect`` names the other axis and directory. Note that the IHP
-    interposer adapter is ``intm4tm2`` and has no aliases.
+``unknown adapter id '<name>'. Registered adapter ids: ...``
+    The id is in no registry layer; the message lists the ids that are. A path,
+    or a name ending in ``.drc``, is refused with its own message. Note that the
+    IHP interposer adapter is ``intm4tm2`` and has no aliases.
 
 ``Boundary manifest not found: <path>``
     The sidecar is missing. Regenerate it with the producer, point at it with
@@ -410,6 +420,30 @@ to their identifying phrase.
 ``Interposer adapter (<path>) must declare 'chiplet_attachment_input'.``
     The adapter was evaluated but did not define the required abstract input.
     See :doc:`/adk/02_adapter_contract`.
+
+``Interposer adapter (<path>) declares 'wire_bond_pad_input' as something other than a lambda taking a layout source.``
+    ``wire_bond_pad_input`` must be a lambda over a layout source, reading its
+    layers from that source (``src.polygons(...)``). See
+    :doc:`/adk/02_adapter_contract`.
+
+``Interposer adapter (<path>) 'wire_bond_pad_input' returned <class>, not a layer.``
+    The lambda ran but did not return a DRC layer. Return the result of
+    ``src.polygons(...)`` or a layer built from it.
+
+``ASM.g: boundary manifest record <N> names no cell and no instance or no source_die ...``
+    The deck cannot name that die's cell, so it cannot read the carrier pads
+    apart from it. Regenerate the manifest with a current producer.
+
+``ASM.g: boundary manifest record <instance> names die cell "<name>", which is not in the layout ...``
+    The die cell name the deck derived from the manifest is not in the GDS.
+    The name is the record's ``cell``, otherwise ``<instance>_<source_die>``,
+    with ``_flipped`` when the record mirrors. A hand-built layout must name its
+    die cells that way; a mismatch usually means the manifest belongs to a
+    different layout. See :doc:`/adk/03_asm_rules`.
+
+``ADK rule parameters have no 'ASM_g'``
+    ``config/rule_params.json`` predates ASM.g. Use the ADK's own file, or add
+    the key.
 
 ``Interconnect adapter (<path>) must set interconnect_rules['IXN_pitch'].``
     An interconnect adapter is a parameter pack and must set all three of

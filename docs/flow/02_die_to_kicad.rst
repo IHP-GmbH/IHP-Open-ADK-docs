@@ -68,6 +68,11 @@ Ask first:
 
     python3 gds_to_kicad.py die.gds --scan-layers
 
+In the tools image these scripts sit under ``$GDS_TO_KICAD_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 That reports the candidate pad and text layers with their shape counts. To see
 how a layer-properties file names those layers:
 
@@ -241,6 +246,14 @@ Rebuilding from the pin list reproduces the full symbol layout, not just the
 pin names, which is what makes the symbol a regenerable artefact rather than a
 hand-drawn one.
 
+.. tip::
+    The symbol above is for a schematic of the die on its own board. To draw a
+    whole system sheet by hand, with every die as a symbol, ask for a handout
+    instead: ``chiplet_to_kicad_sch.py --handout DIR`` writes a die symbol
+    library, its ``sym-lib-table`` and an empty sheet, from a ``.chiplet`` and
+    the dies' pin lists or from the die folders alone. See
+    :doc:`/tools/03_gds2kicad`, *System schematics*.
+
 A die with no GDS
 -----------------
 
@@ -272,12 +285,20 @@ world, are not derived from any die. Generate them parametrically:
 
 .. code-block:: bash
 
-    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100
+    python3 io_pads/generate_io_pad.py --io-class wire_bond --size 100x100 --out-dir .
 
 The resulting footprint carries an ``IO_CLASS`` property (and its size), which
 is what the export scans for when it extracts the assembly's I/O pads into the
 ``.chiplet``. The reference design uses 35 such pads, all
 ``wire_bond``, 100 by 100 um.
+
+A board that ``interposer-pnr export`` drew does not use these. It draws its
+carrier pads itself, from the ``chiplet_carrier`` footprint library, each with
+its io_pad id in a hidden ``IO_PAD_ID`` property, and the export reads every
+carrier on such a board by that id. To read the pads of any board back into an
+``io_pads.json`` sidecar, run ``io_pads/kicad_pcb_to_iopads.py``; a board drawn
+against a sheet also needs ``--export-report``, the report export wrote beside
+it. :doc:`/tools/03_gds2kicad` has the details.
 
 Traceability properties
 -----------------------

@@ -3,6 +3,13 @@ The ADK-Tools image
 
 .. include:: /common.inc
 
+.. warning::
+    packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
+    chiplet-cosim and the worked examples (adk-examples) are not public
+    yet. The image build stages the first five and reads die records from
+    the examples, so a public reader cannot build the full image until
+    they are.
+
 ADK-Tools is the distribution channel of the ecosystem: one Docker image that
 carries every tool of the heterogeneous integration flow, compiled and
 pre-wired, callable by name. It is not a codebase. It is a version lockfile
@@ -18,11 +25,18 @@ instructions rather than the design of the image, read
     the individual repositories; this page describes how they are pinned,
     built and shipped together.
 
-The submodules are the lockfile
--------------------------------
+The pins
+--------
 
-Every tool lives in its own repository and is registered here as a git
-submodule under ``tools/``:
+The image's versions are pinned three ways: the submodules under ``tools/``,
+the staged sources and engines in ``staging.pin``, and the Nix inputs in
+``flake.lock``.
+
+The submodules
+~~~~~~~~~~~~~~
+
+The tools that have a public repository are registered here as git submodules
+under ``tools/``:
 
 .. code-block:: text
 
@@ -39,13 +53,48 @@ The submodule directory names are names the discovery walk described in
 names out as siblings under ``/opt/adk-tools``, so each tool finds the others
 without configuration. The canonical repository names live in the
 ``.gitmodules`` URLs, which point at the upstream IHP repositories. One commit of
-ADK-Tools therefore names one exact revision of each of the seven tools, and a
-fresh ``git clone --recurse-submodules`` at that commit reproduces the exact
-tool set.
+ADK-Tools therefore names one exact revision of each of these seven, and
+``git clone --recurse-submodules`` at that commit fetches them.
 
-Not every pin is a submodule. The remaining reproducibility-relevant pins live
-as build arguments in the ``Dockerfile`` and are bumped deliberately, in their
-own commits:
+Staged sources and Nix packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The flow's engines are not submodules. ``staging.pin`` names each one by
+commit, and ``stage-sources.sh`` clones it from a sibling checkout into
+``staging/`` at exactly that commit, so nothing uncommitted can ride along:
+
+.. code-block:: text
+
+    staging/assembly-lvs      assembly-stage LVS
+    staging/interposer-pnr    interposer placement and routing
+    staging/packaging-flow    the flow's orchestrator
+    staging/chiplet-flow      die builds (chiplet-die-flow)
+    staging/chiplet-cosim     co-simulation
+    staging/chiplet-spec      the .chiplet specification and its reader
+
+The image installs them into its Python environment and carries each one as a
+git checkout at its pinned commit under ``/opt/adk-tools/staging/<tree>``.
+
+``staging.pin`` also names the Nix store paths of OpenROAD, LibreLane and its
+interpreter, the SG13G2 PDK, the co-simulation, mixed-signal and Verilog-AMS
+engines and the waveform viewers. They come from the flake that
+``flake.lock`` pins, are realised in the build host's store, and are copied
+into the image's own ``/nix/store``; the image needs no Nix to run them.
+Last, it pins the die views: ``die-views.sha256`` lists every file of the die
+records the image carries under ``/opt/adk-tools/die-views``, and
+``staging.pin`` holds the sha256 of that listing. The records come from the
+``die-views/`` folder of an adk-examples checkout at the same release.
+
+``ci/pin-set.json`` records every pinned commit in one file. ``build.sh``
+writes its sha256 on the image as the ``org.ihp.adk-tools.pin-set`` label,
+and that label is what a release lock holds an image to
+(:doc:`/install/00_release`).
+
+Build arguments
+~~~~~~~~~~~~~~~
+
+The remaining reproducibility-relevant pins live as build arguments in the
+``Dockerfile`` and are bumped deliberately, in their own commits:
 
 .. list-table:: Non-submodule pins in the Dockerfile
     :header-rows: 1
@@ -53,6 +102,12 @@ own commits:
 
     * - Build argument
       - What it pins
+    * - ``UBUNTU_IMAGE``
+      - The ``ubuntu:24.04`` base image, by digest.
+    * - ``APT_SNAPSHOT``
+      - The time of the Ubuntu archive snapshot every apt step installs from,
+        so a rebuild on another day installs the same package versions. The
+        image records what it installed in ``/opt/adk-tools/tools/apt.lock``.
     * - ``KICAD_LIBS_TAG``
       - Release tag of the official KiCad symbol and footprint libraries
         (currently ``9.0.9.1``). The fork reports itself as 9.99, the v10
@@ -60,31 +115,47 @@ own commits:
         libraries are the compatible set. 3D model packages are deliberately
         not shipped.
     * - ``SG13G2_REF``
-      - IHP-Open-PDK commit the SG13G2 KLayout slice is cut from.
+      - IHP-Open-PDK commit the SG13G2 KLayout slice is cut from. The slice
+        also carries ``sg13cmos5l.lyp``, the ihp-sg13cmos5l layer sheet that
+        packaging-flow's technology table names, and ``sg13cmos5l.lyt`` beside
+        it. They are the only ihp-sg13cmos5l files in the image, which carries
+        no ihp-sg13cmos5l PDK.
     * - ``PYCELL_API_REF``, ``PYPREPROCESSOR_REF``
       - The two IHP-Open-PDK submodules that the PCell library needs, cloned at
         their gitlink pins.
+    * - ``GF180MCU_REF``
+      - Commit of the GF180MCU PDK that the image's gf180mcuD layer sheet,
+        rule decks and ngspice model files come from, each held to a sha256.
+        No GF180MCU cell library is carried.
     * - ``KLAYOUT_PIP``, ``PYYAML_PIP``, ``PYQT6_PIP``, ``JINJA2_PIP``,
-        ``JSONSCHEMA_PIP``, ``PSUTIL_PIP``, ``PYTEST_PIP``
+        ``JSONSCHEMA_PIP``, ``PSUTIL_PIP``, ``PYTEST_PIP``, ``PLUGGY_PIP``,
+        ``PYTEST_XDIST_PIP``, ``Z3_SOLVER_PIP``, ``RICH_PIP``
       - Exact versions of the worker venv's direct dependencies.
+        ``z3-solver`` is assembly-lvs's requirement; ``rich`` lets
+        packaging-flow's console draw progress and tables on stderr.
 
 The direct Python dependencies are exact-pinned on purpose. With only
 ``klayout`` pinned, the behaviour-defining packages were free to drift against
 live PyPI on a cache-cold rebuild, which can silently flip a verify-stage
-suite. Their transitive dependencies are still resolved by pip and are not
-locked.
+suite. Every package they pull in is pinned too, by
+``docker/venv-constraints.txt``.
 
 .. note::
-    The base image (``ubuntu:24.04``) and the apt packages are not pinned, and
-    the build needs live network access to github.com and gitlab.com. The image
-    is reproducible at the level of the tool set, not byte for byte.
+    The build still needs live network access to github.com, gitlab.com and
+    the Ubuntu snapshot archive. The image is reproducible at the level of the
+    tool set, not byte for byte.
 
 Build stages
 ------------
 
-The ``Dockerfile`` is a multi-stage build. ``build.sh`` drives it; a plain
-``docker build .`` also works and lands on the ``verify`` target, which is the
-default stage precisely so that a bare build never produces an untested image.
+The ``Dockerfile`` is a multi-stage build in two parts. Above its thin-layer
+line are the tools: everything ADK-Tools does not write. ``build.sh`` keys
+that part on its text and on every file and build argument it reads, tags the
+result ``adk-tools:tools-<key>``, and builds it only when no image carries the
+key, so a change to ADK-Tools' own code rebuilds only the part below the line.
+``build.sh`` is the way to build: it also packs the Nix closures the
+``Dockerfile`` copies in. ``verify`` is the default target, so that a bare
+build never produces an untested image.
 
 .. list-table:: Stages
     :header-rows: 1
@@ -97,41 +168,54 @@ default stage precisely so that a bare build never produces an untested image.
         dependencies, the Chiplet Studio and KLayout build dependencies, and
         the runtime utilities. Every stage that compiles or runs the flow
         derives from it, so there are no missing-library hunts and the cache is
-        reused everywhere. The two library-fetching stages start from a bare
-        base image instead, because they need no toolchain.
+        reused everywhere. The stages that only fetch libraries and PDK data
+        start from the bare base image instead, because they need no
+        toolchain.
     * - ``kicad-builder``
       - Compiles the KiCad fork with ``KICAD_SCRIPTING_WXPYTHON=ON``, which is
         what makes the headless ``pcbnew`` module available to the export
         pipeline, plus OCC and SPICE support. QA tests are off.
-    * - ``studio-builder``
-      - Builds the in-tree KLayout first, then Chiplet Studio against it, at
-        the final runtime path ``/opt/adk-tools/chiplet-studio``. Building at
-        the final path matters: CMake bakes an absolute ``CONFIGS_DIR`` into
-        the binary, and the ctest metadata under ``build/`` stays usable in the
-        verify stage.
     * - ``kicad-libs``
       - Shallow-clones the official symbol and footprint libraries at
         ``KICAD_LIBS_TAG``.
-    * - ``sg13g2-pdk``
+    * - ``sg13g2-pdk``, ``sg13g2-models``
       - Checks out a few megabytes of IHP-Open-PDK: the SG13_dev PCell library
         and the SG13G2 KLayout technology files, not the multi-gigabyte PDK.
         This is what lets ``hyp-to-gds`` build vias from real ``via_stack``
-        PCells instead of the rectangle fallback.
+        PCells instead of the rectangle fallback. The models stage adds the
+        ngspice model files a transistor-level co-simulation reaches.
+    * - ``gf180mcu-sheet``, ``gf180mcu-models``, ``gf180mcu-decks``,
+        ``gf180mcu-pdk``
+      - The gf180mcuD layer sheet, ngspice models and rule decks at
+        ``GF180MCU_REF``, for GF180MCU dies in a system.
+    * - ``tools``
+      - The end of the upper part: the runtime packages, KiCad, the libraries,
+        the PDK slices and models, the Nix engines and viewers, the worker
+        venv's third-party packages, and the lock files that name every
+        package in it.
+    * - ``studio-builder``
+      - Below the line from here, on the tools image. Builds the in-tree
+        KLayout first, then Chiplet Studio against it, at the final runtime
+        path ``/opt/adk-tools/chiplet-studio``. Building at the final path
+        matters: CMake bakes an absolute ``CONFIGS_DIR`` into the binary, and
+        the ctest metadata under ``build/`` stays usable in the verify stage.
     * - ``runtime``
-      - The lean image. KiCad lands in ``/usr``, the Python tools and the PDK
-        data land as siblings under ``/opt/adk-tools`` mirroring the
-        development layout, the worker venv is created, the command wrappers
-        from ``bin/`` are installed into ``/usr/local/bin``, and the ecosystem
-        discovery variables are exported.
+      - The lean image. Chiplet Studio, the submodules and the staged trees
+        land as siblings under ``/opt/adk-tools`` mirroring the development
+        layout, the staged trees are installed into the worker venv with no
+        network, the command wrappers from ``bin/`` are installed into
+        ``/usr/local/bin``, the manifest and die views are added, and the
+        ecosystem discovery variables are exported.
     * - ``verify``
       - Derives from ``runtime`` and adds the full Chiplet Studio tree over the
         lean copy, then runs every suite. Not shipped; it exists to decide
         whether the runtime image may be tagged.
 
-``build.sh`` sequences ``kicad-builder`` ahead of the rest so the two heavy
-compile stages never run concurrently and the total stays at or below ``JOBS``
-compile jobs; BuildKit would otherwise double the effective job count and
-exhaust RAM on large machines.
+The tools image, which holds the KiCad compile, is complete before
+``studio-builder`` starts, so the two heavy compile stages never run
+concurrently and the total stays at or below ``JOBS`` compile jobs; BuildKit
+would otherwise double the effective job count and exhaust RAM on large
+machines.
 
 The verify stage is the release gate
 ------------------------------------
@@ -141,11 +225,17 @@ invariant that makes a pin trustworthy:
 
     One commit of ADK-Tools equals one combination that passed the verify gate.
 
-The stage does not just run unit tests. It regenerates the reference design
-headless through the whole pipeline and re-checks it:
+The stage does not just run unit tests. It regenerates a two-die reference
+design headless through the whole pipeline and re-checks it. Its steps
+include, in this order:
 
+#. Identity checks: the image's tool identity table, the commit each staged
+   tree reads back, the pin set the image is labelled with, the vendored
+   ``.chiplet`` readers against the staged chiplet-spec, and the plane the
+   dies mount on in every IntM4TM2 ``.chiplet`` the image carries.
 #. ADK suite: boundary manifest validation, DRC regressions through the KLayout
-   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs first.
+   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs first
+   of the suites.
 #. gds2kicad suite: footprint and symbol writers, blackbox chiplets, and the
    GUI pieces under the offscreen Qt platform.
 #. The reference design's gds2kicad prior steps: its footprints and symbols are
@@ -160,19 +250,24 @@ headless through the whole pipeline and re-checks it:
    clear, a regeneration would overwrite in place and any tracked file the
    current pipeline no longer emits would survive unnoticed.
 #. The two-die interposer design is regenerated headless: ``pcbnew`` to the
-   writers to ``hyp_to_gds`` to the assembly DRC, with ``--require-drc`` so a
-   combination that breaks assembly DRC fails the image build.
+   writers to ``hyp_to_gds`` to the assembly DRC. The DRC is required by
+   default, so a combination that breaks assembly DRC fails the image build.
 #. Reproducibility gate: the shipped deliverables must equal the fresh
    regeneration, compared on die geometry, pillar manifests, boundary geometry
    and a timestamp-normalised geometry digest of the interposer GDS. The
-   runtime image bakes the tracked tree rather than the regeneration, so
-   without this check a stale demo could ship on a green build. It also guards
-   determinism between the GUI and headless paths.
+   clone ships the tracked tree, not the regeneration, so without this check
+   a stale demo could ship on a green build. It also guards determinism
+   between the GUI and headless paths.
 #. Chiplet Studio full suite through ``ctest``, with the regenerated
    ``.chiplet`` handed to the gated tests.
 #. Plugin suite, with ``pcbnew`` present so the env-gated byte-exact writer
    tests run instead of self-skipping.
 #. ``adk-smoke``, exactly as a user would run it.
+#. The engines and data the staged trees use: the co-simulation,
+   mixed-signal and Verilog-AMS engines and the viewers are the ones
+   ``staging.pin`` names and each one runs, every layer sheet packaging-flow
+   declares resolves, and a die build finds its tools in the image's own
+   store.
 
 ``--skip-verify`` exists for local iteration only. It must never be used for a
 commit that lands on the release branch.
@@ -250,12 +345,27 @@ self-reports ``vYYYY.MM`` and one built a few commits later reports
 Updating a clone
 ----------------
 
+To run a newer release, check out its tag and build it.
+
+
+A release clone sits on its tag, not on a branch, so fetch the tags and check
+out the new one rather than pulling:
+
 .. code-block:: bash
 
-    cd ADK-Tools
-    git pull
+    # the quickstart's exports, again in a fresh shell
+    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
+    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
+    cd "$ADK_TOOLS_ROOT"
+    git fetch --tags
+    git checkout vYYYY.MM    # a release clone sits on a tag, so there is nothing to pull
     git submodule update --init --recursive
-    ./build.sh          # cached stages rebuild only what changed
+    ./stage-sources.sh --check && ./stage-die-views.sh --check
+    ./build.sh    # cached stages rebuild only what changed
+
+The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
+the adk-examples checkout has to be at the new tag; the two ``--check`` calls
+say which one does not.
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
 
@@ -266,9 +376,9 @@ Depending on how old the clone is, one of these one-time cleanups may apply:
 - If the default job count changed since your last build, the heavy stages
   rebuild once, because ``JOBS`` keys those layers. After that the cache
   behaves normally again.
-- A ``/work/example`` seeded by an older image is refreshed automatically when
-  the image ships a changed demo, and the previous copy is kept once at
-  ``/work/example.prev``.
+- A ``/work/example`` from an older image stays as it is. Older images seeded
+  it with the demo; the runtime image now carries no demo, and the worked
+  examples come from adk-examples.
 
 Testing one tool at a different revision
 ----------------------------------------
@@ -280,11 +390,23 @@ variable and hold the other six fixed.
 
     # follow the branch tracked in .gitmodules (usually main)
     git submodule update --remote tools/adk
-    ./build.sh && git commit -am "Bump adk to <ref>"
+    git add tools/adk
+    python3 -B ci/pin_set.py    # the pin set records every staged gitlink
+    git commit -am "Bump adk to <ref>"
+    ./build.sh
 
     # or try an arbitrary branch of one tool against the rest of the pinned stack
     cd tools/chiplet-studio && git fetch && git checkout feature/x && cd ../..
     ./build.sh
+
+The pin set takes each tool's commit from the gitlink git has staged, not from
+the submodule's checkout, so stage the bump before you regenerate it. The
+image is labelled with the committed pin set: ``build.sh`` refuses a
+``ci/pin-set.json`` that differs from the commit or from what the staged pins
+give, so commit the regenerated file before you build. In the second case
+nothing is staged: the image carries ``feature/x`` while its
+``org.ihp.adk-tools.pin-set`` label still names the pinned commit, so do not run
+such an image under an examples checkout's ``release-lock.json``.
 
 Either way the verify stage decides. If the candidate revision breaks any
 suite, the reference design regeneration or the assembly DRC, no image is
@@ -304,10 +426,10 @@ PDK data exactly as the image pinned them:
 .. code-block:: bash
 
     docker run --rm -it \
-        -v ~/git/Chiplets-KiCad-Plugin:/opt/adk-tools/chiplet_kicad_plugin \
+        -v /path/to/Chiplets-KiCad-Plugin:/opt/adk-tools/chiplet_kicad_plugin \
         -v ~/adk-work:/work -w /work \
         --user "$(id -u):$(id -g)" -e HOME=/tmp \
-        adk-tools:dev
+        "$ADK_TOOLS_IMAGE"
 
 The ``--user`` and ``HOME`` flags are what ``run.sh`` would have set for you.
 Without them the container runs as root and writes root-owned files into both
@@ -328,23 +450,23 @@ Releases
 Releases use calendar versioning, ``vYYYY.MM``. Development happens on a ``dev``
 branch, where submodule bumps and new tools land first and are verified.
 ``main`` is the stable branch: it moves only at a release, by promotion from
-``dev``, and it carries the release tags. ``release.sh`` publishes the image
-under an immutable version tag, moves ``latest`` onto the same digest, and
-refuses to publish at all unless the provenance is clean:
-the working tree must be clean, no submodule may be dirty or off its pin, ``HEAD``
-must be exactly at the tag, and the ``meta`` string baked into the image being
-published must equal the tag. That last check is the definitive one, because it
-compares the artefact against the tag rather than the source tree.
+``dev``, and it carries the release tags.
 
-.. note::
-    There is currently no pre-built image to download. Build locally with
-    ``build.sh``, as described in :doc:`/install/01_container`.
+A release is this repository at its tag. No image is published: whoever runs
+a release builds the image from the tag, as :doc:`/install/01_container`
+describes, and gets an image ID of their own. The adk-examples checkout of the
+same release names, in its ``release-lock.json``, the reference image its
+examples were checked on and the pin set it was built from, and ``run.sh``
+runs any image of that pin set under the lock (:doc:`/install/00_release`).
 
 Licensing
 ---------
 
 The ADK-Tools repository's own content, the ``Dockerfile``, the scripts and its
-documentation, is GPL-3.0-or-later.
+documentation, is GPL-3.0-or-later, with one rule on top: a file's own
+``SPDX-License-Identifier`` line decides its license. The record format schemas
+in ``formats/`` and the files whose SPDX line says Apache-2.0, most of ``ci/``
+and ``nix/`` among them, are Apache-2.0.
 
 The image it builds is a **mere aggregation** of independently developed and
 independently licensed tools and data. Each bundled component retains its own
@@ -354,16 +476,22 @@ The set spans GPL, Apache-2.0, CC-BY-SA-4.0 and permissive (MIT and BSD)
 licenses.
 
 The image does contain GPL-licensed programs: the KiCad fork, Chiplet Studio,
-the KiCad plugin, gds2kicad, KLayout in both its in-tree build and the PyPI
-wheel in the worker venv, the SG13G2 ``pycell4klayout-api``, PyQt6 in the worker
-venv, and the ``featherpad`` and ``vim`` editors installed from Ubuntu. If you
-redistribute the image, or any binary built from it, you must make the
-**corresponding source** of those components available to recipients under the
-terms of their respective GPL licenses. Every component is pinned to a public
-upstream, so pointing recipients at the exact pinned commit or version, or
-shipping the source alongside the image, satisfies the obligation. The
-permissive and CC-licensed components carry their own lighter attribution
-requirements.
+the KiCad plugin, gds2kicad, the staged assembly-lvs, chiplet-cosim,
+chiplet-flow, interposer-pnr and packaging-flow, KLayout in its in-tree build,
+the PyPI wheel in the worker venv and the Nix build, the SG13G2
+``pycell4klayout-api``, PyQt6 in the worker venv, the programs from the Nix
+closures (Icarus Verilog, GTKWave, GAW, Xschem, gnucap and modelgen-verilog, and
+the OpenSTA inside OpenROAD), and the ``featherpad`` and ``vim`` editors
+installed from Ubuntu. If you redistribute the image, or any binary built from
+it, you must make the **corresponding source** of those components available to
+recipients under the terms of their respective GPL licenses. The submodules and
+the external components are pinned to public upstreams, so pointing recipients
+at the exact pinned commit or version satisfies the obligation for them. The Nix
+programs are built from the revisions ``flake.lock`` and ``flake.nix`` pin. The
+image carries each staged tree's source as a git checkout under
+``/opt/adk-tools/staging/<tree>``, and whoever redistributes the image passes
+that source on with it. The permissive and CC-licensed components carry their
+own lighter attribution requirements.
 
 ``LICENSE`` and ``NOTICE.md`` travel inside the image at ``/opt/adk-tools/``,
 and ``NOTICE.md`` carries the per-component table of SPDX identifiers and source

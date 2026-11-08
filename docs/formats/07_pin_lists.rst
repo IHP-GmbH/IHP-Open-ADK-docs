@@ -10,12 +10,21 @@ two ADK tools consume it: the 3Dblox exporter uses it to emit bump maps, and the
 pad-to-pillar alignment check uses it as a pad source.
 
 .. warning::
-   The pin list is **not formally specified**. There is no JSON Schema for it in
-   ``config/schema/``, no version pin in any reader, and no validator beyond the
-   handful of keys each consumer happens to need. What follows documents the
-   shape as the producers write it and as the consumers read it, which is the
-   only contract that exists today. Treat any field not listed under
+   The ADK does not specify the pin list formally. There is no JSON Schema for
+   it in the ADK's ``config/schema/``, no version check in either ADK reader,
+   and no validator beyond the handful of keys each consumer happens to need.
+   What follows documents the shape as the producers write it and as the ADK
+   consumers read it. Treat any field not listed under
    `What the ADK consumers read`_ as belonging to gds2kicad's own workflow.
+
+.. note::
+   The specification repository carries a structural schema for the geometry
+   form of this file, ``schemas/pins.schema.json``. It requires ``version``,
+   ``source_type``, ``dbu_um`` and ``pins``, and accepts the integer ``1`` as
+   the legacy spelling of version ``"1.0"``. The ADK consumers on this page do
+   not apply it, and the GDS path below writes neither ``source_type`` nor
+   ``dbu_um``. A ready die from ``chiplet-flow`` carries its own ``pins.json``
+   in the schema's form, beside its layout and die contract.
 
 Shape
 -----
@@ -150,6 +159,12 @@ From a die GDS
         --lyp-file pdk.lyp --pad-layer TopMetal2.drawing \
         --extract-pins die.pins.json
 
+In the tools image the gds2kicad scripts sit under ``$GDS_TO_KICAD_ROOT`` and
+the ADK ones under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 Pads are extracted from the pad layer, names are paired to pad polygons by
 proximity to text labels, and ``classify_pin`` assigns an initial symbol side
 and type. The result is meant to be reviewed: names from a real die are often
@@ -226,7 +241,7 @@ Consumer 1: bump maps for the 3Dblox export
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py --chiplet design.chiplet \
+    python3 openroad/chiplet2dbx.py --chiplet design.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
@@ -273,7 +288,7 @@ Consumer 2: pad positions for the alignment check
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py --chiplet design.chiplet \
+    python3 checks/pads_vs_pillars.py --chiplet design.chiplet \
         --pillars build/design_interposer.pillars.json \
         --pins U1=chiplets/die_a.pins.json
 

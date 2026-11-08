@@ -88,16 +88,21 @@ Running the exporter
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet demo.chiplet \
         --out-dir build/3dblox
 
     # Bump-aware export: one pin list per die
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet demo.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 .. literalinclude:: /adk/_usage/chiplet2dbx.txt
    :language: text

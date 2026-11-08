@@ -164,14 +164,16 @@ To inspect it:
 
 The browser lists one category per rule, using the rule identifier and its
 message as they were rendered at run time, for example ``ASM.b : Min.
-chiplet-to-chiplet spacing is 50.0 um`` or ``IXN.x.cupillar_opt1.vendorx_microbump
+chiplet-to-chiplet spacing is 200.0 um`` or ``IXN.x.cupillar_opt1.vendorx_microbump
 : Min. cross-method spacing ... is 40.0 um``. Selecting an item zooms the layout
 to the offending geometry.
 
-A category with no items is a rule that ran and found nothing, so the category
+A category with no items is a rule that ran and found nothing, unless its
+description reads ``<rule> : not applicable: <reason>``: that rule did not run,
+as ``ASM.g`` on an interposer that declares no wire-bond pads. So the category
 list is a record of *what was checked*; read it before concluding that a rule you
 expected was actually evaluated. The reference design's committed report carries
-eleven rule categories and no items.
+fourteen rule categories and no items.
 
 Viewing chiplet boundaries
 --------------------------
@@ -187,8 +189,13 @@ From the command line:
 
 .. code-block:: bash
 
-    python klayout/macros/boundaries_to_rdb.py \
+    python3 klayout/macros/boundaries_to_rdb.py \
         outputs/layout/two_die_interposer_complete.gds
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 Pass the assembly GDS and the sidecar is auto-discovered next to it by the same
 rule the runner uses; pass the manifest ``.json`` directly if it lives

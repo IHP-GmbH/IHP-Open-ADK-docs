@@ -190,6 +190,11 @@ CLI wrapper rather than invoked directly:
 
     python3 libs.tech/klayout/tech/drc/run_drc.py --path <layout.gds> --topcell <cell>
 
+In the tools image this PDK is ``$INTERPOSER_PDK_ROOT``; run its scripts with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 The runset always loads ``layers_def.drc`` first, then concatenates the selected
 rule decks and evaluates the whole thing as a single Ruby string. That single
 ``eval`` is deliberate: Ruby's ``load`` runs in main scope and separate ``eval``
@@ -199,8 +204,8 @@ layer definitions, the same ``drc_rules`` hash and the same logger.
 The decks
 ~~~~~~~~~
 
-Twenty decks are selectable. Nineteen of them run when you pass no ``--deck``;
-``density`` is skipped by default.
+Twenty-one decks are selectable. Twenty of them run when you pass no
+``--deck``; ``density`` is skipped by default.
 
 .. list-table::
     :header-rows: 1
@@ -254,9 +259,15 @@ Twenty decks are selectable. Nineteen of them run when you pass no ``--deck``;
     * - ``solderbump``
       - 6.9.1
       - Solder-bump opening size, space, pitch, enclosure, shape
+    * - ``ubm_floor``
+      - 6.9
+      - Passivation-opening width and space floor on the Cu-pillar and
+        solder-bump opening datatypes
     * - ``sealring``
       - 6.10
-      - Seal ring integrity, corners, uniqueness, outside structures
+      - Nothing outside the seal ring boundary, Passiv ring around the ring,
+        corners, one ring per chip; ring metal width, via ring widths, Passiv
+        ring width and its space to the ring metals
     * - ``mim``
       - 6.11
       - MIM width, space, enclosures, per-device min and max area, via
@@ -286,6 +297,44 @@ and ``--run_mode`` (``tiling``, ``deep`` or ``flat``, default ``tiling``).
 default deck. Raising it changes the execution strategy as well as the worker
 count: the decks are expanded and run one invocation each, which costs a layout
 load per deck and buys wall-clock time on a many-core machine.
+
+The seal ring checks
+~~~~~~~~~~~~~~~~~~~~
+
+Without a seal ring boundary (39/4), ``Seal.l`` is skipped. Without
+``EdgeSeal``, the rules that measure a distance to it (``Seal.n``, ``Pas.c``,
+``Pad.dR``, ``Padc.d``, ``Padb.d`` and ``LBE.d``) pass because there is nothing
+to measure to. A layout with no ring therefore passes these decks silently;
+``--require_sealring`` below is what makes a missing ring an error. When a
+closed
+``EdgeSeal`` ring is present, the deck measures the ring itself: the width of
+each ring metal from ``Metal4`` to ``TopMetal2`` (``Seal.a_<metal>``), each via
+ring at exactly its width (``Seal.c1.Via4``, ``Seal.c2``, ``Seal.c3``), the
+``Passiv`` ring width (``Seal.e``) and its space to each ring metal
+(``Seal.f.<metal>``). It does not check the 30 um from the seal ring boundary
+to ``EdgeSeal``, the via ring offset (``Seal.d`` has no ``Activ`` to measure
+against on this stack), or the space from design metal to the ring.
+
+``--require_sealring`` turns on the presence rules, which need the
+``sealring`` deck in the same run:
+
+.. code-block:: bash
+
+    python3 tech/drc/run_drc.py --path <layout.gds> \
+        --deck sealring --require_sealring
+
+``tech/drc/run_drc.py`` here and above is relative to ``libs.tech/klayout``; in the
+tools image that is ``$INTERPOSER_PDK_ROOT/libs.tech/klayout``.
+
+``SEAL.REQ.1`` and ``SEAL.REQ.2`` report a missing ``EdgeSeal`` or seal ring
+boundary (39/4). ``SEAL.REQ.3_<layer>`` reports a ring layer that is not a
+closed loop inside ``EdgeSeal``. ``SEAL.REQ.4`` reports a fabricated shape
+outside the ring, except the ``Passiv`` loop around it and the ``Metal4``
+filler version marks in the corners a stepped ``Passiv`` ring cuts off. A slit
+is accepted: ``EdgeSeal`` closed, every metal and via ring cut once by at most
+2.81 um, and each via ring under both of its metals so the cuts line up. The
+deck writes every seal ring category to the report even when it is clean, so a
+clean slit ring does not read as a deck that never ran.
 
 .. note::
    ``density`` is opt-in because it carries global *minimum* density rules.
@@ -373,6 +422,10 @@ top cell, compared against golden expectations.
     python3 tech/drc/testing/run_regression.py                  # all tables
     python3 tech/drc/testing/run_regression.py --table copperpillar
 
+The regression writes its results into ``testing/regression_run`` beside
+itself, so run it in a writable checkout of the PDK. In the tools image the
+PDK is read-only and the run stops at that directory.
+
 .. tip::
    Each testcase GDS has a ``gen_<table>_testcase.py`` beside it. Regenerate
    rather than hand-editing the GDS, otherwise the next regeneration silently
@@ -387,10 +440,11 @@ shorts. MIM capacitors are extracted as ``cap_cmim`` devices: bottom plate on
 Metal5, top plate on TopMetal1 through the ``Vmim`` via array, with parameters
 ``w``, ``l``, ``A``, ``P`` and parallel multiplicity ``m``.
 
-.. code-block:: bash
-
-    python3 tech/lvs/run_lvs.py --layout=<layout.gds>                       # connectivity only
-    python3 tech/lvs/run_lvs.py --layout=<layout.gds> --netlist=<ref.spice> # with compare
+.. note::
+   In this release the deck does not run on an exported interposer: it stops with
+   "Netlist contains more than a single top circuit",
+   because the pinless pad and pillar cells extract as extra top circuits. The
+   LVS this release supports on an assembly is ``assembly-lvs``, below.
 
 A reference netlist is optional. When one is given, KLayout's netlist compare
 runs in strict port mode in addition to the label checks, so a device terminal
@@ -401,10 +455,13 @@ The scope is one interposer layout against one reference netlist, in the
 interposer technology, with the interposer's own device set. That is level 2 of
 the three levels of LVS in a 2.5D assembly, and it is ordinary PDK LVS. A clean
 result here says nothing about level 3, whether the dies are connected to each
-other as the system netlist declares. That level is within the ADK's scope and no
-implementation of it is part of this preview release.
-:doc:`/intro/01_what_is_the_adk` sets out all three levels and both axes of
-assembly verification.
+other as the system netlist declares. This release checks level 3 with a
+separate tool, ``assembly-lvs`` (:doc:`/tools/09_assembly_lvs`), which compares
+the connectivity of the placed assembly's artwork with its declared nets. It
+does not check the devices inside the dies or inside the interposer, nor the
+electrical behaviour of the assembly, and it is not sign-off, so this deck and
+the die-level LVS stay needed beside it. :doc:`/intro/01_what_is_the_adk` sets
+out all three levels and both axes of assembly verification.
 
 The PCell library
 -----------------
@@ -442,12 +499,79 @@ way the SG13G2 open PDK serves its own pycell library.
         ``bondpad`` draws a ``dfpad`` 41/0 marker so bond-pad rules apply;
         ``probepad`` draws none. ``stack='t'`` adds Metal4, Metal5 and
         TopMetal1 rings tied with via arrays.
+    * - ``sealring``
+      - ``l`` and ``w`` (the whole outline, default ``1000.000u``),
+        ``addSlit`` (``nil`` or ``t``)
+      - The seal ring boundary 39/4 at the outline, with the ring inside it:
+        ``EdgeSeal`` and the four metals on one footprint, the ``Via4``,
+        ``TopVia1`` and ``TopVia2`` rings, a ``Passiv`` ring outside it, and
+        two TEXT 63/0 labels. Origin at the lower-left corner of the outline.
 
 .. note::
    ``bondpad`` and ``CuPillarPad`` are deliberate complements. ``bondpad``
    draws the plain ``dfpad`` purpose so the bond-pad rule table applies to it;
    ``CuPillarPad`` rides the ``pillar`` purpose (datatype 35) precisely to avoid
    those rules and to pick up the Cu-pillar table instead.
+
+The seal ring
+~~~~~~~~~~~~~
+
+``sealring`` draws the backend part of the IHP seal ring the way the open
+SG13G2 generator draws it: each corner a four-step staircase inside a
+``Seal.k`` square, the via rings 1.30 um in from the outer edge of the ring
+metal, and the ``Passiv`` ring 3.0 um outside the ring. Widths come from the
+same rule file the decks read. ``EdgeSeal`` sits 30 um inside the outline, and
+the scribe lane is the fab's, outside the outline. The smallest outline the
+cell draws is 114.25 um on a side, and both sizes must sit on the 5 nm grid.
+
+``addSlit='t'`` cuts the ring once, at the middle of its left side, for a
+design that cannot have a closed metal loop around the board. Each metal is cut
+by its minimum space and each via ring by 2.81 um; ``EdgeSeal`` and ``Passiv``
+stay closed. That is the slit the ``sealring`` deck accepts.
+
+One label gives the registration size and area. The other reads
+``PDK version: intm4tm2 <version> (<commit>)``: the version declared in
+``pyproject.toml`` and the commit the PDK tree is at, taken from git when the
+tree is its own checkout (with ``-dirty`` when a tracked file differs), from a
+``.shipped-ref`` file at the top of a tree installed without git, and
+``commit unknown`` otherwise.
+
+.. important::
+   Because the label names the PDK version and commit, every PDK release and
+   every commit changes the bytes of a layout that carries the ring. Compare
+   such layouts by XOR, not by digest.
+
+Adding the seal ring headlessly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tech/scripts/sealring.py`` adds the ring in KLayout batch mode. With
+``input`` it adds the ring to the only top cell of that layout; without it, it
+writes a layout whose single ``sealring_top`` cell holds only the ring.
+
+.. code-block:: bash
+
+    klayout -zz -rx -r tech/scripts/sealring.py \
+        -rd length=1000 -rd width=800 -rd output=sealring.gds
+
+.. code-block:: text
+
+    sealring: wrote sealring.gds: outline 1000.0 x 800.0 um at (0.0, 0.0) um, slit false
+
+``length`` (x) and ``width`` (y) are the whole outline in um. ``-rd input=``
+names a layout to add the ring to, ``-rd offset_x=`` and ``-rd offset_y=`` place
+the outline's lower-left corner (default 0), and ``-rd slit=true`` cuts the
+slit. Sizes and offsets must be on the 5 nm grid, and the output carries no
+PCell context.
+
+The script takes the PCell from the library of the tree it belongs to. It
+exits 1 after a single ``sealring: error:`` line when an argument is missing,
+empty or off the grid, when the input layout cannot be read or has other than
+one top cell or a database unit other than 0.001 um, when the output cannot be
+written, when the library or a module it imports was already loaded from
+another tree, and when ``KLAYOUT_LYP_FILE`` names an existing file other than
+this tree's ``tech/intm4tm2.lyp``, a copy included. ``-rx`` skips the autorun
+macros, which is the simplest way to keep another tree's library out of the
+run.
 
 Cu-pillar generation
 --------------------
@@ -571,6 +695,52 @@ dimensions from its bounding box and warns about components placed outside it.
 The template's example routing (a small mesh on ``Metal5``, a few traces, four
 vias) is there as a reference and is meant to be deleted.
 
+The rules and project files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+KiCad reads its custom design rules from the ``.kicad_dru`` file named after
+the board, and its board setup and net classes from the ``.kicad_pro``. The
+template ships both, ``interposer_template.kicad_dru`` and
+``interposer_template.kicad_pro``: copy them beside your board as
+``<board>.kicad_dru`` and ``<board>.kicad_pro``. Both are generated by
+``libs.tech/kicad/scripts/kicad_rules_gen.py`` from
+``interposer_tech_default.json``, the file the KLayout decks read, so do not
+edit them by hand.
+
+The rules file carries, per copper layer, the metal's minimum width and
+clearance, plus two warnings that rest on one item's own size:
+
+* ``TM2.bR``: a larger TopMetal2 clearance beside a track wider than
+  ``TM2_bR_w``, and beside a pad wider than ``TM2_bR_w`` and longer than
+  ``TM2_bR_cr``. Both hold TopMetal2 copper to other TopMetal2 copper only,
+  not to the board outline.
+* ``Slt.c``: a track wider than the ``Slt_c`` maximum on any copper layer. A
+  wider track needs slits, and cutting them is the designer's step, with the
+  KLayout slit macro ``interposer_filler_slit.lym`` on the GDS. No flow step
+  cuts them.
+
+The project file gives each metal a net class with its width and space and a
+via of the level that lands on it, and ``Default`` the TopMetal2 values with a
+TopVia2 via, which are legal on every layer. Each class carries every key the
+ADK KiCad build writes for one, because KiCad ignores an incomplete class and
+falls back to its printed-board defaults, which hold every via to a 0.3 mm
+minimum.
+The copper-to-edge floor is 0.001 mm, so copper that touches the outline is
+flagged.
+
+.. note::
+   KiCad's check is an aid while drawing and misses violations. It flags a
+   clearance only once it is more than its DRC epsilon (0.5 um by default)
+   under the rule, so the Metal4 and Metal5 space is never caught; it checks
+   one track or pad at a time, so merged copper, zones and graphic shapes stay
+   KLayout checks; and it sees the board, not the exported GDS. The
+   ``TM2.bR`` warnings have no parallel-run condition, so they also fire on
+   runs the deck accepts. The KLayout decks on the GDS are the DRC that
+   counts. ``libs.tech/kicad/README.md`` lists each rule's gaps.
+
+One PDK version names one set of bytes for the two files, and the PDK's tests
+pin their digests per version from 0.3.0 on, so a consumer may pin them too.
+
 Device footprints and symbols
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -597,7 +767,10 @@ and can solve an arbitrary target on demand:
 
     python3 scripts/cmim_footprint_gen.py --cap 250f --out my_cmim.kicad_mod
     python3 scripts/cmim_footprint_gen.py --w 12u --l 8u --out my_cmim.kicad_mod
-    python3 scripts/cmim_footprint_gen.py --family
+    python3 scripts/cmim_footprint_gen.py --family --outdir my_cmim.pretty
+
+Without ``--outdir``, ``--family`` rewrites the family the PDK ships in
+``intm4tm2.pretty``, which only a writable checkout of the PDK allows.
 
 The generator re-implements the PCell plate maths from the same
 ``intm4tm2_tech.json`` the PCell reads, so it has no KLayout dependency. The
@@ -616,9 +789,12 @@ What ``INTERPOSER_PDK_ROOT`` provides
 -------------------------------------
 
 Other tools in the flow do not hardcode any of the above. They locate this
-repository through ``INTERPOSER_PDK_ROOT`` (or a sibling checkout named
-``interposer`` or ``OpenIntM4TM2``, validated by the presence of
-``libs.tech/klayout``) and read from it:
+repository through ``INTERPOSER_PDK_ROOT``, or a sibling checkout named
+``interposer`` or ``OpenIntM4TM2``, and check a marker under the root before
+accepting it. The KiCad export plugin and ``hyp_to_gds`` look for
+``libs.tech/intm4tm2_stack.json`` and refuse a set root without it; Chiplet
+Studio and ``pads_vs_pillars`` look for ``libs.tech/klayout``.
+:doc:`/install/03_environment` has the details. They read from it:
 
 .. list-table::
     :header-rows: 1
@@ -642,6 +818,11 @@ repository through ``INTERPOSER_PDK_ROOT`` (or a sibling checkout named
         ``intm4tm2`` adapter, which is a file in the ADK, not in this PDK.
 
 The last row is the important one. See :doc:`/adk/01_architecture`.
+
+From 0.4.0 the tree also ships a technology manifest,
+``libs.tech/adk/technology.json``, and the routing descriptors it names under
+``libs.tech/adk/routing/``. No tool documented on this site reads them from
+this tree in this release.
 
 .. note::
    The ``assembly`` deck used to live in this repository and was promoted out of

@@ -79,11 +79,18 @@ assembly file in a text editor beside the viewer.
 The parse itself is not implemented in Chiplet Studio. ``src/formats/`` is a thin
 consumer that delegates ``.chiplet`` reading and validation to the vendored
 Apache-2.0 ``chiplet_format_io`` reference library, a copy of the specification
-repository's reader, and maps the resulting document into the studio's own
-``Assembly`` model. That vendoring is |vendored-reader-state|. A file the
-specification rejects is rejected here for the same reason and with the same
-message, so the viewer cannot quietly accept something the rest of the flow will
-not. See :doc:`/formats/01_chiplet`.
+repository's C++ reader, and maps the resulting document into the studio's own
+``Assembly`` model. A file the vendored reader rejects is rejected here with
+that reader's message. See :doc:`/formats/01_chiplet`.
+
+The copy is reader release 1.13.1, recorded in
+``src/formats/chiplet_format_io/VENDORED.md``. The ADK tools vendor a newer
+reader, described on :doc:`/formats/01_chiplet`, so the two agree on an
+ordinary ``"1.0"`` assembly but not on every file. Release 1.13.1 implements
+format ``"1.0"`` only: it loads a ``"1.1"`` assembly with a warning, does not
+refuse an ``assembly.units`` other than ``um``, and refuses a source document
+as an intermediate file rather than as a source. A file the studio opens is
+therefore not proof that the ADK tools will read it.
 
 Autosave runs on a timer, and a crash-recovery dialog offers the recovered
 assembly on the next start. A recovered assembly is deliberately detached from

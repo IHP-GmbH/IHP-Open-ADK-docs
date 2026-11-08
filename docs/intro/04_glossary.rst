@@ -94,14 +94,15 @@ Kits and rules
         axes: a geometric one, :term:`assembly DRC`, and a connectivity one,
         :term:`assembly LVS`. Neither subsumes the other, since legal geometry
         can implement the wrong netlist and correct connectivity can be drawn
-        illegally. This preview release ships the geometric axis only.
+        illegally. This preview release ships a check for each: the ADK rule
+        decks for the geometric axis and :term:`assembly-lvs` for the
+        connectivity axis.
 
     assembly DRC
         Design rule checking at the assembly level: relationships between dies
         and the substrate, rather than manufacturability of shapes. Distinct
         from the fabrication DRC each PDK ships. It is the geometric axis of
-        :term:`assembly-level verification`, and the axis this preview release
-        ships.
+        :term:`assembly-level verification`, checked by the ADK rule decks.
 
     assembly LVS
         The connectivity axis of :term:`assembly-level verification`:
@@ -112,8 +113,8 @@ Kits and rules
         which compares one die against its own schematic, and from interposer
         LVS, which asks whether the interposer routing connects its pads as
         drawn. A device-graph comparator does not reach this level; see
-        :doc:`/intro/01_what_is_the_adk` for why. In the ADK's scope and on its
-        roadmap; not part of this preview release.
+        :doc:`/intro/01_what_is_the_adk` for why. Checked in this release by
+        :term:`assembly-lvs`.
 
 Geometry and attachment
 -----------------------
@@ -216,8 +217,17 @@ Tools
 .. glossary::
 
     ADK-Tools
-        The container image that pins and builds every tool in the flow, and
-        carries the reference design. See :doc:`/tools/07_adk_tools_image`.
+        The container image that pins and builds every tool in the flow. Its
+        build checks itself against the reference design, which the image does
+        not carry: you copy it from the ADK-Tools checkout. See
+        :doc:`/tools/07_adk_tools_image`.
+
+    assembly-lvs
+        The engine that checks :term:`assembly LVS`. It extracts the
+        connectivity of the placed component layouts and reconciles it with the
+        declared nets, reporting every open and short. It does not check die
+        internals, devices or electrical behaviour. Ships in the ADK-Tools
+        image. See :doc:`/tools/09_assembly_lvs`.
 
     Chiplet Studio
         The 3D assembly viewer and ``.chiplet`` editor.

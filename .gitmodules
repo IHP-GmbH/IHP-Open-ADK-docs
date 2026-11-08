@@ -8,7 +8,7 @@
 	branch = main
 [submodule "src/chiplet-spec"]
 	path = src/chiplet-spec
-	url = https://github.com/IHP-GmbH/chiplet-spec.git
+	url = https://github.com/IHP-GmbH/chiplet-system-spec.git
 	branch = main
 [submodule "src/OpenIntM4TM2"]
 	path = src/OpenIntM4TM2

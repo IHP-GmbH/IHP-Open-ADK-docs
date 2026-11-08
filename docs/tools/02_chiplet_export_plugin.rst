@@ -168,6 +168,15 @@ so pointing the export at a vendor's interconnect PDK or a pinned release needs
 no code change. Changing the interconnect PDK re-reads the connection-stack list
 from that PDK's manifest. See :doc:`/install/03_environment`.
 
+The interposer root is held to IntM4TM2. A tree counts as one when it has
+``libs.tech/intm4tm2_stack.json``, the stack descriptor; ``libs.tech/klayout``
+cannot tell, because every KLayout PDK has it, the SG13G2 die PDK included. A
+set ``INTERPOSER_PDK_ROOT`` (or project text variable) without that file is
+shown in the picker as given, and the run is refused with
+``CARRIER_UNSUPPORTED_ROOT``, exit 1. It never falls back to a sibling
+checkout, which would draw with a PDK you did not choose. Point the variable at
+an IntM4TM2 checkout, or unset it to use the sibling one.
+
 Pipeline options
 ~~~~~~~~~~~~~~~~
 
@@ -195,11 +204,20 @@ Pipeline options
     interconnect ``.lyp``, which carries bump layers only and is consumed
     automatically through the ``.chiplet``.
 
+*Interposer export report*
+    A file picker for the report ``interposer-pnr export`` wrote beside the
+    board. Empty by default, and never guessed from the board's path. It is
+    required when an export-drawn carrier pad links a sheet symbol, and
+    checked against the board whenever it is given; see
+    :ref:`chiplet_export_report`. The headless equivalent is
+    ``chiplet-export --export-report PATH``.
+
 *I/O pads*
     Auto-extracted from the board's ``IO_CLASS`` footprints, rendered into the
     interposer GDS and injected under the interposer component. A headless
     caller can override with an explicit sidecar via
-    ``ExportOptions.io_pads_json``.
+    ``ExportOptions.io_pads_json``, which must already be in the planner's net
+    names; the worker never renames them.
 
 *Cu-pillars*
     Auto-generated from each flip-chip die's footprint pads when that die's
@@ -248,7 +266,72 @@ stays 0 and the verdict is reported separately, because the geometry is a
 faithful rendering of the board whether or not the board obeys the rules. A
 consumer of ``ExportResult`` must surface ``describe_assembly_drc()`` or check
 ``assembly_drc_exit_code`` itself; folding the two together would let a failing
-deck read as a green run. See :doc:`/adk/05_run_drc`.
+deck read as a green run. The headless command does that folding for you and
+exits 3 when the DRC did not pass (`Headless use`_). See
+:doc:`/adk/05_run_drc`.
+
+.. _chiplet_export_report:
+
+I/O pad carriers and the export report
+--------------------------------------
+
+The interposer's I/O pads, its carriers, are the board footprints with an
+``IO_CLASS`` field. Each becomes an entry under the interposer's ``io_pads`` in
+the ``.chiplet``, and in the ``io_pads.json`` sidecar the worker draws them
+from, with an id and a net. Both files are written from the same carrier set,
+BOM-excluded carriers included, so they always agree on which pads exist.
+
+**The id.** ``interposer-pnr export`` draws every carrier pad from the
+``chiplet_carrier`` footprint library and writes its io_pad id into a hidden
+``IO_PAD_ID`` property, because on a board drawn against a sheet the reference
+is the sheet's designator (``J1``), not the id. So on a board where any carrier
+comes from ``chiplet_carrier`` or carries ``IO_PAD_ID``, every carrier is read
+by its ``IO_PAD_ID``. A carrier without one, or two carriers with the same one,
+refuse the export. On a board drawn by hand the reference is the id.
+
+**The net.** A carrier's net is the one net all its pads carry. A carrier whose
+pads carry different nets is refused, naming them; an unnetted pad counts as a
+net of its own.
+
+**The names.** A board that ``interposer-pnr export`` drew against a sheet
+carries the sheet's net names, while the ``.chiplet`` and the sidecar name nets
+as interposer-pnr, the planner, does. The report that export wrote beside the
+board says how to go back, in its ``round_trip`` block. Give it with
+``--export-report``, or the dialog's *Interposer export report* field, whenever
+an export-drawn carrier links a sheet symbol: a board drawn against a sheet, or
+a draft board you updated from its draft sheet in KiCad. A routed net goes back
+to its planner name, a pad no routed net binds is written with an empty net,
+and a net the report names nowhere is refused. The ``.hyp`` keeps the board's
+own names. A board you drew by hand from your own sheet, with carriers from
+another library and no ``IO_PAD_ID``, names its nets itself and needs no
+report.
+
+The report is checked against the board before anything is taken from it:
+
+- it must be an ``interposer_pnr.export`` report, version 1;
+- ``round_trip`` versions up to 6 are read. A newer one is refused with advice
+  to update the plugin. A version 6 feature the plugin does not know is
+  ignored, because a feature may only add a block, never rename a net;
+- a report written for another board, one with other carrier references or
+  another ``IO_PAD_ID`` on one of them, is refused;
+- a report of a board that follows a sheet is refused on a board where no
+  carrier links a sheet symbol, or where no carrier was drawn by export.
+
+All of this runs before the output directory is created, so a refused board
+leaves nothing behind. The message says which input is at fault.
+``Export report refused: ...`` means the file is not a report the plugin reads.
+``IO pad carriers refused: ...`` means the board's carriers and the report (or
+its absence) do not fit; a carrier is named by its reference, followed by
+``(io_pad <id>)`` where the two differ. When the report is the cause, the
+command line appends ``; the export report is the file given with
+--export-report`` and the dialog appends ``; the export report is the file in
+'Interposer export report'``. A ``--export-report`` path that does not exist
+exits 2 before the run starts.
+
+The rules for reading the report are interposer-pnr's own, vendored into the
+plugin as ``vendor/round_trip_names.py``. gds2kicad's ``kicad_pcb_to_iopads.py``
+carries the same file, so both read a board's carriers alike
+(:doc:`/tools/03_gds2kicad`).
 
 The orchestrator
 ----------------
@@ -263,26 +346,29 @@ The sequence
 
 ``run_export`` runs this, in order:
 
-1. Create the output directory and its ``layout/`` subdirectory. The worker does
+1. Read the export report, when one is given, and check the board's carriers
+   against it (:ref:`chiplet_export_report`). A refusal here returns before
+   anything exists on disk.
+2. Create the output directory and its ``layout/`` subdirectory. The worker does
    not create parent directories, so this has to happen first.
-2. Resolve the worker Python and ``hyp_to_gds.py``, failing immediately if
+3. Resolve the worker Python and ``hyp_to_gds.py``, failing immediately if
    either is missing.
-3. Create a scratch workspace directory.
-4. Write the HyperLynx ``.hyp`` and the intermediate ``.chiplet`` into the
+4. Create a scratch workspace directory.
+5. Write the HyperLynx ``.hyp`` and the intermediate ``.chiplet`` into the
    workspace using the Python ports of the two C++ exporters.
-5. Auto-extract, from the board, whatever was not supplied explicitly: the I/O
+6. Auto-extract, from the board, whatever was not supplied explicitly: the I/O
    pads, the per-die pad locations that drive Cu-pillar generation, the per-die
    ``CONNECTION`` methods and the per-die ``DIE_THICKNESS_UM`` values.
-6. Validate the per-die method ids against the interconnect PDK manifest.
-7. Only now stage the intermediate ``.chiplet`` and the ``.hyp`` into the output
+7. Validate the per-die method ids against the interconnect PDK manifest.
+8. Only now stage the intermediate ``.chiplet`` and the ``.hyp`` into the output
    directory, so a validation failure leaves no partial artefact behind.
-8. Run ``hyp_to_gds.py`` as a subprocess, streaming stdout and stderr into the
+9. Run ``hyp_to_gds.py`` as a subprocess, streaming stdout and stderr into the
    log.
-9. Run the assembly DRC, if there is a complete GDS to check.
-10. Write ``MANIFEST.md`` and remove the workspace.
+10. Run the assembly DRC, if there is a complete GDS to check.
+11. Write ``MANIFEST.md`` and remove the workspace.
 
 .. note::
-   Step 8 rewrites the staged ``.chiplet`` in place. If the worker fails or is
+   Step 9 rewrites the staged ``.chiplet`` in place. If the worker fails or is
    cancelled it never gets that far, which would leave an unfinalised file
    sitting under the exact name a good one would have. The orchestrator renames
    it to ``<board>.chiplet.unfinalized`` and says so in the log, and
@@ -325,6 +411,9 @@ to ``hyp_to_gds.py``. The mapping is direct:
       - ``--cupillar-gds <path>``
     * - ``pad_locations``
       - ``--pad-locations REF=path,...``
+
+``export_report`` has no runner flag. The writers apply it in steps 5 and 6,
+so the ``io_pads.json`` the worker reads is already in the planner's names.
 
 The ``-o`` flag is unconditional for a specific reason: without it the worker
 writes the interposer GDS next to the ``.hyp``, which lives in the workspace
@@ -433,24 +522,64 @@ Headless use
 
 Two headless entry points exist.
 
-``chiplet_export_cli.py`` is the first-class command-line face of the pipeline.
-It must run under an interpreter that can ``import pcbnew``, which means the
-KiCad fork's interpreter; the worker Python for the GDS step is resolved
-separately through the discovery chain.
+``chiplet_export_cli.py`` is the first-class command-line face of the pipeline,
+and ``chiplet-export`` in the tools image runs it. It must run under an
+interpreter that can ``import pcbnew``, which means the KiCad fork's
+interpreter; the image's command already does. The worker Python for the GDS
+step is resolved separately through the discovery chain.
 
 .. code-block:: bash
 
-    python3 chiplet_export_cli.py \
+    chiplet-export \
         --board /path/to/board.kicad_pcb \
-        --output-dir /path/to/outputs \
-        --require-drc
+        --output-dir /path/to/outputs
 
-Unlike the dialog, the CLI always asks for the complete assembly GDS and always
-attempts the assembly DRC; the top cell is fixed at ``INTERPOSER``.
-``--require-drc`` exits non-zero unless that DRC ran and passed. It is off by
-default so that an environment without the KLayout CLI can still regenerate the
-GDS artefacts. ``--interposer-adapter``, ``--interconnect-adapter`` and
-``--connection`` override the corresponding options.
+Unlike the dialog, the command always asks for the complete assembly GDS and
+always runs the assembly DRC; the top cell is fixed at ``INTERPOSER``. The DRC
+is required by default, and the exit status says how the run ended:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 10 90
+
+    * - Exit
+      - Meaning
+    * - 0
+      - The files were written and the assembly DRC passed.
+    * - 1
+      - Nothing trustworthy was written: a refused board, a failed worker, a
+        ``.chiplet`` that could not be replaced, or a crash before the DRC.
+    * - 2
+      - The board, or the file given with ``--system-chiplet``,
+        ``--export-report`` or ``--die-layouts``, is missing, or KiCad cannot
+        read the board; also a usage error.
+    * - 3
+      - The files were written and the assembly DRC did not pass: it failed,
+        was refused or did not run.
+
+``--allow-drc-fail`` turns exit 3 into 0, and the last line still says how the
+DRC ended. ``--require-drc`` is accepted for older callers and changes nothing.
+``--interposer-adapter``, ``--interconnect-adapter`` and ``--connection``
+override the corresponding options.
+
+A board ``interposer-pnr export`` drew against a sheet takes its export report,
+exactly as the dialog's field does (:ref:`chiplet_export_report`):
+
+.. code-block:: bash
+
+    chiplet-export \
+        --board pnr/<system>.draft.kicad_pcb \
+        --system-chiplet design.chiplet \
+        --export-report pnr/export.json \
+        --output-dir out/export
+
+``--system-chiplet`` names the System ``.chiplet`` the assembly was built from;
+the interposer and each die take the technology of the System component with
+the same id. The interposer's technology must be ``intm4tm2``: a System whose
+carrier names another technology is refused with
+``CARRIER_UNSUPPORTED_TECHNOLOGY``, exit 1, nothing written. IntM4TM2 is the
+only carrier the export models. The plugin's command reference, linked at the
+foot of this page, lists every flag.
 
 ``run_export`` is the Python API the dialog itself calls:
 
@@ -526,3 +655,33 @@ Troubleshooting
     * - Plugin absent from External Plugins
       - Check the symlink, then *Tools > External Plugins > Refresh Plugins*.
         A failed import prints its traceback to KiCad's stdout.
+    * - "IO pad carriers refused: carrier pad J1 is linked to a sheet
+        symbol, ..."
+      - The board was drawn by ``interposer-pnr export`` and follows a sheet.
+        Give the report export wrote beside it in *Interposer export report*
+        or with ``--export-report``.
+    * - "... was written for another board: its carrier pads differ"
+      - The report belongs to another board, or to the draft when you gave
+        the sheet board, or the reverse. Give the report written with this
+        board.
+    * - "Export report refused: ... unsupported round_trip version"
+      - The report is newer than the plugin reads. Update the plugin.
+    * - ``CARRIER_UNSUPPORTED_ROOT``
+      - ``INTERPOSER_PDK_ROOT`` points at a tree without
+        ``libs.tech/intm4tm2_stack.json``, often the SG13G2 die PDK. Point it
+        at an IntM4TM2 checkout or unset it.
+    * - "ERROR: track ends refused" in the log
+      - Two nets' traces touch on one layer once their ends are drawn square.
+        Widen the clearance at the places it names; see
+        :doc:`/flow/05_hyp_to_gds`.
+
+The plugin's own pages
+----------------------
+
+The plugin repository keeps its README, its command reference and its status
+for this site. They are built from the pinned checkout as they stand.
+
+.. toctree::
+    :maxdepth: 2
+
+    /_repos/Chiplets-KiCad-Plugin/docs/index

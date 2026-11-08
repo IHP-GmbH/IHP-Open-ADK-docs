@@ -14,8 +14,8 @@
 
   <!-- ===================== OUTPUT (top) ===================== -->
   <rect x="300" y="40" width="600" height="96" rx="12" fill="#e6f3e6" stroke="#3f8f46" stroke-width="2"/>
-  <text x="600" y="80" text-anchor="middle" fill="#2c6e2f" font-size="22" font-weight="700">Assembly checked against the ADK rule deck</text>
-  <text x="600" y="110" text-anchor="middle" fill="#3a6b3d" font-size="15">GDS (interposer + chiplets)  +  assembly-DRC report / pass-fail verdict</text>
+  <text x="600" y="80" text-anchor="middle" fill="#2c6e2f" font-size="22" font-weight="700">Assembly checked by assembly DRC and LVS</text>
+  <text x="600" y="110" text-anchor="middle" fill="#3a6b3d" font-size="15">GDS (interposer + chiplets)  +  assembly-DRC and assembly-LVS reports</text>
   <line x1="600" y1="196" x2="600" y2="140" stroke="#5a6370" stroke-width="2.5" marker-end="url(#arrow)"/>
 
   <!-- ===================== ADK META-LAYER (middle, hero) ===================== -->
@@ -48,19 +48,18 @@
   <text x="341" y="627" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">IXN.*  interconnect</text>
   <text x="341" y="648" text-anchor="middle" fill="#3a4a5e" font-size="14">spacing &#183; pitch &#183; cross-method</text>
 
-  <!-- connectivity axis, scope only -->
-  <rect x="614" y="496" width="490" height="176" rx="10" fill="#f4f6f8" stroke="#8a9099" stroke-width="2.5"
-        stroke-dasharray="8 5"/>
-  <text x="859" y="528" text-anchor="middle" fill="#40474e" font-size="18" font-weight="700">Connectivity axis: assembly LVS</text>
-  <text x="859" y="550" text-anchor="middle" fill="#8a5a1a" font-size="12.5" font-weight="700" letter-spacing="0.6">IN SCOPE, NOT IN THIS PREVIEW RELEASE</text>
-  <text x="859" y="580" text-anchor="middle" fill="#40474e" font-size="14.5" font-weight="600">reference &#183; the system netlist</text>
-  <text x="859" y="601" text-anchor="middle" fill="#5b6169" font-size="14">die pins and the nets that join them</text>
-  <text x="859" y="627" text-anchor="middle" fill="#40474e" font-size="14.5" font-weight="600">implementation &#183; the placed layouts</text>
-  <text x="859" y="648" text-anchor="middle" fill="#5b6169" font-size="14">pad landings plus interposer routing</text>
+  <!-- connectivity axis, shipped -->
+  <rect x="614" y="496" width="490" height="176" rx="10" fill="#ffffff" stroke="#1f5fae" stroke-width="2.5"/>
+  <text x="859" y="528" text-anchor="middle" fill="#14457f" font-size="18" font-weight="700">Connectivity axis: assembly LVS</text>
+  <text x="859" y="550" text-anchor="middle" fill="#2c6e2f" font-size="12.5" font-weight="700" letter-spacing="1.2">SHIPPED IN THIS RELEASE</text>
+  <text x="859" y="580" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">reference &#183; the declared nets</text>
+  <text x="859" y="601" text-anchor="middle" fill="#3a4a5e" font-size="14">die pins and the nets that join them</text>
+  <text x="859" y="627" text-anchor="middle" fill="#243b57" font-size="14.5" font-weight="600">implementation &#183; the placed layouts</text>
+  <text x="859" y="648" text-anchor="middle" fill="#3a4a5e" font-size="14">pad landings plus interposer routing</text>
 
   <!-- strip: consumes -->
   <rect x="96" y="684" width="1008" height="38" rx="8" fill="#dce9f8" stroke="#aac4e6" stroke-width="1"/>
-  <text x="600" y="709" text-anchor="middle" fill="#1d4a82" font-size="16">Both axes read one assembly description:  .chiplet placement  +  &#60;gds-stem&#62;.boundaries.json manifest</text>
+  <text x="600" y="709" text-anchor="middle" fill="#1d4a82" font-size="16">Both axes check one placed assembly, described by its .chiplet placement</text>
 
   <!-- relationship label (sits above the arrowheads, clear of them) -->
   <text x="600" y="774" text-anchor="middle" fill="#6b7178" font-size="17">Ordinary PDKs: the ADK sits one layer above these and never touches their fab rules</text>

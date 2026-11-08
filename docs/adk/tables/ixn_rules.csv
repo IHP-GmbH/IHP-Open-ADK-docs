@@ -5,3 +5,5 @@
 "IXN.x.<method1>.<method2>","Min. cross-method spacing (the two methods) is the larger of the two declared spacings","cross method","IXN_spacing","per method"
 "IXN.b.unclaimed","Min. attachment-point spacing is 40 um (pads outside every method region)","pads outside every method region","IXN_spacing","40"
 "IXN.e.unclaimed","Min. attachment-point pitch is 75 um (pads outside every method region)","pads outside every method region","IXN_pitch","75"
+"IXN.x.<method>.unclaimed","Min. spacing between the method pads and pads outside every method region is the larger of the method's and the adapter's spacing","method vs pads outside every method region","IXN_spacing","per method"
+"IXN.unassociated","COVERAGE GAP, not a geometric violation: attachment pads outside every method region carry no interconnect rule (no assembly-level interconnect adapter); IXN spacing and pitch are NOT verified for them, including against named-method pads","pads outside every method region, no adapter","","none (coverage finding)"

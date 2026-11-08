@@ -7,21 +7,28 @@ Generate the ADK KiCad assembly DRU section.
 options:
   -h, --help            show this help message and exit
   --interposer-adapter INTERPOSER_ADAPTER
-                        Interposer adapter shortname or .drc path. Numeric
-                        drc_rules[] overrides in the adapter are merged on top
-                        of config/rule_params.json defaults.
+                        Interposer adapter: a registry id (see
+                        docs/adapter_contract.md); resolved through the ADK
+                        registry only. A path is refused. Numeric drc_rules[]
+                        overrides in the adapter are merged on top of
+                        config/rule_params.json defaults.
   --interconnect-adapter INTERCONNECT_ADAPTER
-                        Optional interconnect adapter shortname or .drc path.
-                        Adds a provenance comment for the bump pitch/spacing
-                        axis (IXN rules, post-layout only). Omit for
-                        interposer-only output (identical to before this axis
-                        existed).
-  --out OUT             Output path. If omitted, write to stdout.
+                        Optional interconnect adapter: a registry id (see
+                        docs/adapter_contract.md); resolved through the ADK
+                        registry only. A path is refused. Adds a provenance
+                        comment for the bump pitch/spacing axis (IXN rules,
+                        post-layout only). Omit for interposer-only output
+                        (identical to before this axis existed).
+  --out OUT             Output path for the section. If omitted, write to
+                        stdout.
   --rule-params RULE_PARAMS
                         Alternate rule_params.json path (default:
                         adk/config/rule_params.json).
 
 Examples:
-  generate_assembly_dru.py                                              # defaults, stdout
-  generate_assembly_dru.py --interposer-adapter intm4tm2    # adapter overrides
-  generate_assembly_dru.py --out assembly.kicad_dru                      # write to file
+  generate_assembly_dru.py                                   # defaults, stdout
+  generate_assembly_dru.py --interposer-adapter intm4tm2     # adapter overrides
+  generate_assembly_dru.py --out adk_section.txt             # write the section to a file
+
+The output is a section for a project's .kicad_dru, which starts with a
+(version 1) line; KiCad ignores a rules file without one, silently.

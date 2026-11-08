@@ -16,8 +16,8 @@ of the ``.chiplet`` format definition, it lives in the |spec-repo| repository
 at ``docs/coord_frame_contract.md``, and where it and the format specification
 could appear to differ, the contract governs.
 
-Any tool may implement the contract under any license. It is a format-level
-companion to the schema, not the property of one implementation.
+The contract is a format-level companion to the schema, not the property of one
+implementation.
 
 .. warning::
 

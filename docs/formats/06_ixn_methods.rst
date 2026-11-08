@@ -33,10 +33,15 @@ explicitly:
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py --path board_complete.gds \
+    python3 klayout/drc/run_drc.py --path board_complete.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
         --interconnect-methods board_complete.ixn_methods.json
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 Omitting it is a supported configuration: the interconnect axis then runs
 assembly-global with the adapter's numbers, exactly as it did before per-method
@@ -237,9 +242,10 @@ With the sidecar loaded, ``8_2_interconnect.drc`` switches from assembly-global
 mode to per-method mode: per-method spacing and pitch inside each method's
 region, a cross-method separation between every pair of regions, and the
 adapter's assembly-global numbers on anything no method claims, reported as
-``IXN.b.unclaimed`` and ``IXN.e.unclaimed``. If no interconnect adapter was
-loaded, those unclaimed pads are not checked on this axis at all, and the deck
-says so in its log. :doc:`/adk/04_ixn_rules` gives the rule names and the region
+``IXN.b.unclaimed`` and ``IXN.e.unclaimed``, with each method checked against
+those pads as ``IXN.x.<method>.unclaimed``. If no interconnect adapter was
+loaded, the unclaimed pads are not checked on this axis, and the deck reports
+them as ``IXN.unassociated``. :doc:`/adk/04_ixn_rules` gives the rule names and the region
 construction.
 
 Two constraints follow from that. The sidecar requires the boundary manifest,

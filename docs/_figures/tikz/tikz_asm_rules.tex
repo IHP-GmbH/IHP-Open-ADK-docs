@@ -1,4 +1,4 @@
-% What each ASM rule fires on: four plan-view panels for docs/adk/03_asm_rules.rst.
+% What each ASM rule fires on: five plan-view panels for docs/adk/03_asm_rules.rst.
 % Red geometry is what lands in the .lyrdb report; green geometry is deliberately legal.
 \documentclass[border=4pt]{standalone}
 \usepackage{tikz}
@@ -205,6 +205,53 @@
   \node[adkcap, anchor=north, text width=80mm] at (4.30,1.05)
     {read the selectors in order: \texttt{overlapping} keeps pads sharing area,
      \texttt{not\_inside} keeps what is not fully contained};
+\end{scope}
+
+% =====================================================================
+% PANEL g  (bottom, centred)
+% =====================================================================
+\begin{scope}[shift={(4.6,-7.2)}]
+  \draw[adkpanel] (0,0) rectangle (8.6,6.6);
+  \fill[adkbar] (0.12,5.75) rectangle (8.48,6.48);
+  \node[adktitle] at (0.34,6.12) {ASM.g\quad die edge to interposer wire-bond pad};
+
+  \begin{scope}[adksketch]
+    % carrier edge on the left, a row of carrier wire-bond pads along it
+    \draw[IHPaccent!85, line width=0.8pt] (0.40,1.95) -- (0.40,5.40);
+    \node[adklbl, anchor=south west] at (0.30,5.40) {carrier edge};
+
+    % the die
+    \draw[adkdie] (3.10,2.20) rectangle (6.20,4.90);
+    \node[adklbl, anchor=north east] at (6.10,4.80) {die};
+
+    % a die's own bond pad: in a die cell, never read
+    \draw[IHPaccent!85, line width=0.5pt, fill=IHPaccent!30] (5.45,2.45) rectangle (5.80,2.80);
+    \node[adklbl, anchor=south east, text width=22mm, align=right] at (5.95,2.85)
+      {die's own pad: its cell is pruned, not read};
+
+    % legal pad, far from the die
+    \fill[cLegal!25] (0.60,2.35) rectangle (0.95,2.70);
+    \draw[cLegal, line width=0.6pt] (0.60,2.35) rectangle (0.95,2.70);
+    \node[adkgreen, anchor=west, text width=28mm] at (1.05,2.52) {\texttt{ASM\_g} or more away: legal};
+
+    % flagged pad, closer than ASM_g, measured euclidean to the die corner
+    \fill[cFlag] (1.95,4.95) rectangle (2.30,5.30);
+    \draw[cFlag!60!black, line width=0.6pt] (1.95,4.95) rectangle (2.30,5.30);
+    \draw[adkdim, color=cFlag] (2.30,4.95) -- (3.10,4.90);
+    \node[adkred, anchor=west, text width=30mm] at (3.25,5.32)
+      {closer than \texttt{ASM\_g}, \texttt{euclidian}: flagged};
+
+    % carrier pad drawn under the die: read, and flagged
+    \fill[cFlag] (3.55,3.20) rectangle (3.90,3.55);
+    \draw[cFlag!60!black, line width=0.6pt] (3.55,3.20) rectangle (3.90,3.55);
+    \draw[adkleader] (3.55,3.38) -- (2.55,3.85);
+    \node[adkred, anchor=east, text width=21mm, align=right] at (2.55,3.85)
+      {carrier pad under the die: read, flagged};
+  \end{scope}
+
+  \node[adkcap, anchor=north, text width=80mm] at (4.30,1.05)
+    {pads are read from the carrier with each die cell pruned by name;
+     an adapter that declares no pads gets ASM.g reported not applicable, never passed};
 \end{scope}
 
 \end{tikzpicture}

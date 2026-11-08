@@ -332,11 +332,17 @@ This has moved, and older material describes the old arrangement.
 - **Chiplet export** has no native menu action. The C++ ``CHIPLET_EXPORTER``
   is reachable only through ``ExportBoardToChipletFile``, and the plugin at
   *Tools > External Plugins > Chiplet Export* is its sole entry point. See
-  :doc:`/tools/02_chiplet_export_plugin` for why.
-- **HyperLynx export** was removed along with it. The headless entry points
-  remain available through SWIG, so the plugin still drives the same
-  ``HYPERLYNX_EXPORTER`` and stages the ``.hyp`` into its output directory on
-  every run. There is no *File > Export* menu action for it in the fork.
+  :doc:`/tools/02_chiplet_export_plugin` for why. Its headless face is
+  ``chiplet-export`` in the tools image.
+- **HyperLynx export** is a native menu action, *File > Export > Hyperlynx...*.
+  It asks for a file name (the board's, with ``.hyp``) and runs
+  ``HYPERLYNX_EXPORTER``, the same C++ exporter that
+  ``ExportBoardToHyperlynxFile`` reaches through SWIG and that the plugin's
+  Python writer reproduces byte for byte. The ``.hyp`` it writes is therefore
+  the one the plugin stages into its output directory on every run. The
+  headless equivalent is the SWIG call above, from any interpreter that can
+  ``import pcbnew``. You do not need the menu action for the flow: the plugin
+  writes the ``.hyp`` itself.
 
 How it is built and pinned
 --------------------------
@@ -366,7 +372,11 @@ GUI. The container's regeneration and verification steps depend on it.
 Two consequences of the fork's version follow from this:
 
 - The fork reports version 9.99, the development line that becomes KiCad 10, so
-  its configuration lives under ``.config/kicad/9.99/``.
+  its configuration lives under ``.config/kicad/9.99/``. It reads the
+  ``duplicate_pin_numbers_are_jumpers`` symbol flag, which KiCad 9.0 cannot.
+  gds2kicad sets that flag on a die symbol whose repeated pad numbers are all
+  one power or ground port, so a schematic handout carrying such a symbol opens
+  in the fork and not in a stock KiCad 9.0 (:doc:`/tools/03_gds2kicad`).
 - It predates the ``.kicad_symdir`` library format, so the container ships the
   official KiCad **v9** symbol and footprint libraries (pinned by the
   ``KICAD_LIBS_TAG`` build argument, 9.0.9.1 at the documented revision) rather

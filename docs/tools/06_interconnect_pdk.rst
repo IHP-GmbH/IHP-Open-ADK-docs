@@ -7,7 +7,8 @@ The interconnect PDK owns the **post-fabrication** elements that join a chiplet
 to an interposer: Cu pillars, solder bumps and microbumps. It is a separate
 repository from the interposer PDK, and that separation is the point of it.
 
-Repository: |interconnect-repo|. Apache-2.0, version 0.1.0.
+Repository: |interconnect-repo|. Apache-2.0. The pinned version is in the
+version table on :doc:`/tools/07_adk_tools_image`.
 
 .. warning::
    IHP-Interconnect-IntM4TM2 is a |current-status|. The ``vendorx_microbump``
@@ -77,7 +78,7 @@ because it is the cross-tool contract of the whole PDK, not the data of one
 tool.
 
 Everything else in the repository derives from it: the 3D body generator, the
-LEF macro generator, the stackup fragments, the standalone DRC deck, and the
+LEF macro generator, the stackup fragments, the interconnect DRC deck, and the
 adapter each method maps to. Tools resolve a method id instead of hardcoding a
 bump table.
 
@@ -346,6 +347,11 @@ Bump macros for OpenROAD
 
     python3 libs.tech/openroad/python/bump_lef_generator.py cupillar_opt1 TopMetal2
 
+In the tools image this PDK is ``$INTERCONNECT_PDK_ROOT``; run its scripts with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
 .. code-block:: python
 
     from bump_lef_generator import bump_macro_name, render_bump_lef
@@ -409,28 +415,41 @@ each die render with its own option's heights.
    per-method value. Chiplet Studio implements exactly that policy in one place.
    See :doc:`/tools/04_chiplet_studio`.
 
-The standalone DRC deck
------------------------
+The interconnect DRC deck
+-------------------------
 
-``libs.tech/klayout/tech/drc/rule_decks/`` carries a small self-contained deck so
-the interconnect PDK owns its rules and can be exercised in isolation:
+``libs.tech/klayout/tech/drc/rule_decks/`` carries a small deck so the
+interconnect PDK owns its rules:
 
 * ``layers_def_3d.drc`` defines the 500-range body layers.
 * ``bump_pitch.drc`` derives the attachment region from the IHP UBM openings and
   checks the selected method's ``IXN.b`` (spacing) and ``IXN.e`` (pitch).
 * ``interconnect_rules.json`` holds the values, mirrored from the manifest.
 
+In this release ``bump_pitch.drc`` does not run on its own: it sets neither a
+``source`` nor a ``report``, so KLayout has no layout to read and nowhere to
+write its markers. Run the same ``IXN.b`` and ``IXN.e`` rules through the ADK
+assembly DRC, from an ADK checkout, on an exported assembly and the methods file
+beside it:
+
 .. code-block:: bash
 
-    klayout -b -r bump_pitch.drc -rd method=cupillar_opt2 ...
+    python3 klayout/drc/run_drc.py \
+        --path board_complete.gds \
+        --interposer-adapter intm4tm2 \
+        --interconnect-adapter ihp_cupillar \
+        --interconnect-methods board_complete.ixn_methods.json
+
+In the tools image the same check is ``adk-drc`` with these arguments. See
+:doc:`/adk/05_run_drc`.
 
 .. note::
-   This deck is not the canonical assembly check. The canonical one runs in the
-   ADK over the abstract ``chiplet_attachment_input`` region, which is why it
-   works on substrates this deck has never heard of. ``bump_pitch.drc`` hardcodes
-   the IHP UBM openings and exists so the rules are testable here. Both convert
-   pitch to a spacing the same way, ``min_space = min_pitch - pad_size``, because
-   KLayout has no native pitch check. See :doc:`/adk/04_ixn_rules`.
+   ``bump_pitch.drc`` is not the canonical assembly check. The canonical one runs
+   in the ADK over the abstract ``chiplet_attachment_input`` region, which is why
+   it works on substrates this deck has never heard of. ``bump_pitch.drc``
+   hardcodes the IHP UBM openings. Both convert pitch to a spacing the same way,
+   ``min_space = min_pitch - pad_size``, because KLayout has no native pitch
+   check. See :doc:`/adk/04_ixn_rules`.
 
 Relationship to the ADK
 -----------------------
@@ -438,7 +457,8 @@ Relationship to the ADK
 The ADK assembly DRC is interposer-agnostic *and* method-agnostic. It reaches the
 method through a second adapter axis, orthogonal to the interposer axis.
 
-Each method names an ``adapter`` in the manifest, and the ADK looks up
+Each method names an ``adapter`` in the manifest, and the ADK resolves that id
+through its registry, which maps the shipped ids to
 ``pdk_adapters/interconnect/<adapter>.drc``. The lookup uses the manifest's
 ``adapter`` field, not the method id: ``cupillar_opt1``,
 ``cupillar_opt2`` and ``cupillar_opt3`` all resolve to ``ihp_cupillar``. The ADK
@@ -497,7 +517,7 @@ takes precedence:
 
 .. code-block:: bash
 
-    git clone git@github.com:IHP-GmbH/IHP-Interconnect-IntM4TM2.git
+    git clone https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2.git
     export INTERCONNECT_PDK_ROOT="$PWD/IHP-Interconnect-IntM4TM2"
 
 What the rest of the toolchain takes from it:

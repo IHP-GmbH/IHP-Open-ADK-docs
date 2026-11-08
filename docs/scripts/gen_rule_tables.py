@@ -37,6 +37,7 @@ ASM_RULES = {
     "ASM.b": ("ASM_b", "um", ""),
     "ASM.e": ("ASM_e", "um2", ""),
     "ASM.f": (None, "", "none (geometric)"),
+    "ASM.g": ("ASM_g", "um", ""),
 }
 
 # Interconnect rule identifiers. The per-method forms are built at run time
@@ -51,12 +52,30 @@ IXN_RULES = {
     "IXN.x.<method1>.<method2>": ("IXN_spacing", "um", "", "cross method"),
     "IXN.b.unclaimed": ("IXN_spacing", "um", "", "pads outside every method region"),
     "IXN.e.unclaimed": ("IXN_pitch", "um", "", "pads outside every method region"),
+    "IXN.x.<method>.unclaimed": ("IXN_spacing", "um", "", "method vs pads outside every method region"),
+    "IXN.unassociated": ("", "", "", "pads outside every method region, no adapter"),
 }
 
+# One call on one line. The rule id never contains a quote, so the match can
+# not run on into the next call when this one passes a variable instead.
 OUTPUT_CALL = re.compile(
-    r"""\.output\(\s*(['"])(?P<rid>.+?)\1\s*,\s*(['"])(?P<desc>.+?)\3\s*\)""",
-    re.DOTALL,
+    r"""\.output\(\s*(['"])(?P<rid>[^'"\n]+)\1\s*,\s*(['"])(?P<desc>[^\n]+?)\3\s*\)""",
 )
+
+# A message the deck builds once and outputs under a variable, as ASM.g does:
+# ``asm_g_message = "ASM.g : ..."`` then ``.output('ASM.g', asm_g_message)``.
+MESSAGE_ASSIGNMENT = re.compile(
+    r"""^\s*(?P<var>[a-z_]\w*)\s*=\s*(['"])(?P<desc>.+?)\2\s*$""",
+    re.MULTILINE,
+)
+OUTPUT_VARIABLE = re.compile(
+    r"""\.output\(\s*(['"])(?P<rid>.+?)\1\s*,\s*(?P<var>[a-z_]\w*)\s*\)""",
+)
+
+# The description a deck gives a rule it did not apply ("ASM.g : not
+# applicable: <reason>"). It is a run status, not what the rule checks, so it
+# does not go in the rule table; the prose says when it happens.
+NOT_APPLICABLE = "not applicable: "
 
 
 def normalise(rule_id):
@@ -93,11 +112,13 @@ def clean_description(rule_id, description, values):
     description = description.replace("#{m1}", "method 1").replace("#{m2}", "method 2")
 
     if per_method:
-        replacement = (
-            "the larger of the two declared spacings"
-            if rule_id.startswith("IXN.x")
-            else "the value declared for that method"
-        )
+        if rule_id.endswith(".unclaimed"):
+            replacement = "the larger of the method's and the adapter's spacing"
+        elif rule_id.startswith("IXN.x"):
+            replacement = "the larger of the two declared spacings"
+        else:
+            replacement = "the value declared for that method"
+
         # Swallow the trailing unit too: the placeholder text already reads as
         # a quantity, so "is <placeholder> um" would be ungrammatical.
         description = re.sub(r"#\{[^}]*\}(\s*um2?)?", replacement, description)
@@ -117,11 +138,31 @@ def clean_description(rule_id, description, values):
 
 def parse_deck(path, values):
     """Return {rule_id: description} for every output() call in a rule deck."""
+    text = read_text(path)
+    messages = {}
+    for m in MESSAGE_ASSIGNMENT.finditer(text):
+        messages.setdefault(m.group("var"), set()).add(m.group("desc"))
+    outputs = [(m.group("rid"), m.group("desc")) for m in OUTPUT_CALL.finditer(text)]
+    for match in OUTPUT_VARIABLE.finditer(text):
+        if match.group("var") not in messages:
+            fail("{} outputs {} under {}, which is never assigned a message".format(
+                path, match.group("rid"), match.group("var")))
+        assigned = messages[match.group("var")]
+        if len(assigned) != 1:
+            fail("{} assigns {} more than one message: {}".format(
+                path, match.group("var"), sorted(assigned)))
+        outputs.append((match.group("rid"), next(iter(assigned))))
     found = {}
-    for match in OUTPUT_CALL.finditer(read_text(path)):
-        rule_id = normalise(match.group("rid"))
-        description = strip_prefix(match.group("rid"), match.group("desc"))
-        found[rule_id] = clean_description(rule_id, description, values)
+    for raw_id, raw_description in outputs:
+        rule_id = normalise(raw_id)
+        description = strip_prefix(raw_id, raw_description)
+        if description.startswith(NOT_APPLICABLE):
+            continue
+        description = clean_description(rule_id, description, values)
+        if found.get(rule_id, description) != description:
+            fail("{} gives {} two messages: {!r} and {!r}".format(
+                path, rule_id, found[rule_id], description))
+        found[rule_id] = description
     if not found:
         fail("no output() calls parsed from {}".format(path))
     return found
@@ -155,7 +196,7 @@ def main():
     # The deck interpolates local Ruby variables into its messages, not the
     # registry key names, so map both spellings to the shipped default.
     asm_interp = dict(asm_values)
-    asm_interp.update({"asm_b_value": asm_values["ASM_b"], "asm_e_value": asm_values["ASM_e"]})
+    asm_interp.update({key.lower() + "_value": value for key, value in asm_values.items()})
     ixn_interp = dict(ixn_values)
     ixn_interp.update(
         {
@@ -196,25 +237,30 @@ def main():
         "IXN.x.<method1>.<method2>",
         "IXN.b.unclaimed",
         "IXN.e.unclaimed",
+        "IXN.x.<method>.unclaimed",
+        "IXN.unassociated",
     ]
     ixn_rows = []
     for rule_id in ixn_order:
         param, unit, note, mode = IXN_RULES[rule_id]
-        source = "adapter default" if "unclaimed" in rule_id or "<" not in rule_id else "methods manifest"
-        value = fmt(ixn_values[param]) if source == "adapter default" else "per method"
+        if not param:
+            value = "none (coverage finding)"
+        elif "<" in rule_id:
+            value = "per method"
+        else:
+            value = fmt(ixn_values[param])
         ixn_rows.append([rule_id, ixn_found[rule_id], mode, param, value])
     write_csv(os.path.join(DOCS_DIR, "adk", "tables", "ixn_rules.csv"), ixn_rows)
 
     # Parameter registry tables, one row per tunable value.
+    units = {param: unit for param, unit, _ in ASM_RULES.values() if param}
     param_rows = []
     for key in sorted(asm_values):
+        if key not in units:
+            fail("rule_params.json has {}, which no rule in this generator reads. "
+                 "Add the rule to ASM_RULES.".format(key))
         param_rows.append(
-            [
-                key,
-                rule_params["rule_descriptions"][key],
-                fmt(asm_values[key]),
-                "um2" if key.endswith("_e") else "um",
-            ]
+            [key, rule_params["rule_descriptions"][key], fmt(asm_values[key]), units[key]]
         )
     write_csv(os.path.join(DOCS_DIR, "adk", "tables", "asm_params.csv"), param_rows)
 

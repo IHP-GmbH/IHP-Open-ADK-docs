@@ -5,11 +5,12 @@ Verification stages
 .. include:: /adk/tables/_rule_counts.inc
 
 Assembly-level verification has two axes, set out in
-:doc:`/intro/01_what_is_the_adk`. This page is about the geometric axis, which
-this preview release ships. The connectivity axis is in scope for the ADK and is
-not part of this preview release.
+:doc:`/intro/01_what_is_the_adk`, and this preview release ships a check for
+each. Most of this page is about the geometric axis. The connectivity axis has
+one stage, assembly LVS, described in `Stage 5: assembly LVS`_.
 
-Within that axis an assembly passes through four complementary checking stages.
+Within the geometric axis an assembly passes through four complementary checking
+stages.
 They are not successive approximations of one check: each one runs on a
 different artefact, in a different representation, and proves something the
 others structurally cannot see.
@@ -23,8 +24,8 @@ to ship a mistake through this flow.
     :alt: The four checking stages hung off the artefact spine that runs from the KiCad board to the 3Dblox model, each card stating what its stage proves and what it is blind to.
     :width: 90%
 
-    The four checking stages and the artefacts they read. A clean
-    result at one stage does not imply a clean result at another.
+    The four geometric checking stages and the artefacts they read. A
+    clean result at one stage does not imply a clean result at another.
 
 .. list-table::
     :header-rows: 1
@@ -50,6 +51,13 @@ to ship a mistake through this flow.
       - The ``.chiplet`` plus the pillar manifest
       - Every die pad has a pillar under it
       - Whether those pillars are legally spaced
+    * - ``assembly-lvs``
+      - The placed component layouts and the declared nets
+      - The drawn metal connects the declared nets, with no open and no short
+      - Die internals, devices, electrical behaviour, geometric legality
+
+The first four rows are the geometric axis and the last is the connectivity
+axis.
 
 Stage 1: KiCad design-time rules
 --------------------------------
@@ -58,15 +66,22 @@ Stage 1: KiCad design-time rules
 footprints.
 
 The ADK generates a DRU section from the same rule registry the KLayout deck
-reads, and you paste it into the project's ``.kicad_dru``:
+reads, and you append it to the project's ``.kicad_dru``, below its
+``(version 1)`` line. The section has no header of its own, and KiCad ignores
+a rules file without one without saying so:
 
 .. code-block:: bash
 
-    python kicad/dru/generate_assembly_dru.py \
+    python3 kicad/dru/generate_assembly_dru.py \
         --interposer-adapter intm4tm2 \
-        --out assembly.kicad_dru
+        --out adk_section.txt
 
-**What it proves.** That no two chiplet footprints are closer than the assembly
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
+
+**What it proves.** That no two die footprints are closer than the assembly
 spacing rule, enforced as a ``courtyard_clearance`` constraint, plus overlap,
 which KiCad's native courtyard collision check already covers. It proves this
 at the moment of the drag, with no export and no external tool run.
@@ -74,7 +89,8 @@ at the moment of the drag, with no export and no external tool run.
 **What it cannot prove.** It is a partial mirror of the deck, by design and by
 declaration. Of the |asm-rule-count| assembly rules, only ``ASM.b`` has a clean
 KiCad expression; ``ASM.a`` is delegated to KiCad's own courtyard collision;
-``ASM.e`` and ``ASM.f`` have no DRU equivalent and are post-layout only. The
+``ASM.e``, ``ASM.f`` and ``ASM.g`` have no DRU equivalent and are post-layout
+only. The
 entire interconnect axis is post-layout: at design time the attachment pads do
 not exist yet, because ``hyp_to_gds`` generates them from the pin lists later.
 
@@ -95,7 +111,7 @@ any layout file.
 
 .. code-block:: bash
 
-    python openroad/chiplet2dbx.py \
+    python3 openroad/chiplet2dbx.py \
         --chiplet two_die_interposer.chiplet \
         --out-dir build/3dblox \
         --pins U1=chiplets/metal_test_chiplet.pins.json \
@@ -148,7 +164,7 @@ Stage 3: the KLayout assembly DRC
 
 .. code-block:: bash
 
-    python klayout/drc/run_drc.py \
+    python3 klayout/drc/run_drc.py \
         --path outputs/layout/two_die_interposer_complete.gds \
         --interposer-adapter intm4tm2 \
         --interconnect-adapter ihp_cupillar \
@@ -164,7 +180,9 @@ supplied.
 **What it proves.** That the geometry actually present in the assembly layout
 satisfies the assembly rules: chiplet boundaries do not overlap and keep their
 spacing, no degenerate boundary polygon slipped through, attachment geometry
-that overlaps a chiplet lies fully inside it, and the attachment pads meet the
+that overlaps a chiplet lies fully inside it, no wire-bond pad on the carrier
+sits too close to a die (when the interposer adapter declares its pads), and
+the attachment pads meet the
 pitch and spacing of the method that owns them. With a per-method file the
 numbers are scoped per die group instead of assembly-wide, so a fine-pitch
 vendor method is not checked against a coarse Cu-pillar pitch.
@@ -174,8 +192,8 @@ vendor method is not checked against a coarse Cu-pillar pitch.
 - **Connectivity.** The deck compares polygons against rules, never nets against
   a netlist. An assembly whose dies are placed and attached legally but wired to
   the wrong nets is clean here. Reconciling the placed assembly against the
-  system netlist is the connectivity axis of assembly-level verification, and it
-  is not part of this preview release.
+  system netlist is the connectivity axis of assembly-level verification, which
+  is Stage 5.
 - **z.** The deck sees a flat 2D region. ``ASM.a`` therefore flags any XY
   overlap between chiplet boundaries, including dies that a multi-tier assembly
   would legally stack at different heights. Nothing in the current toolchain
@@ -208,7 +226,7 @@ pad source per die.
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py \
+    python3 checks/pads_vs_pillars.py \
         --chiplet outputs/two_die_interposer.chiplet \
         --pillars outputs/layout/two_die_interposer_complete.pillars.json \
         --pins U1=chiplets/metal_test_chiplet.pins.json \
@@ -250,6 +268,40 @@ assembly does not connect. Only this check compares pads against pillars.
 
 See :doc:`/adk/08_pads_vs_pillars`.
 
+Stage 5: assembly LVS
+---------------------
+
+**Runs on** the placed component layouts, the interposer layout and each die's
+layout, together with the declared nets. All of them are named in one resolved
+input, which packaging-flow derives from its run's own records.
+
+In a flow run, packaging-flow runs this stage as its ``assembly-lvs`` row in
+every run that composes an assembly. Outside a run, ``assembly-lvs verify``
+takes a resolved input directly. :doc:`/tools/09_assembly_lvs` shows a first
+run and documents the options, the nine final states and their exit codes.
+
+**What it proves.** That the metal drawn in the placed assembly connects the
+declared nets: each declared net is one connected piece of extracted metal, and
+no two nets touch. It follows geometry on the same layer, the declared vias and
+the declared die-to-interposer contacts, and it reports every open and every
+short.
+
+**What it cannot prove.** Anything inside a die: it extracts no devices and
+checks no die-internal connectivity. Anything electrical. Anything geometric: a
+correctly connected assembly can still break a spacing rule, and only assembly
+DRC sees that. In a flow run, placement error: the flow passes a placement bound
+of zero, so the check is at the nominal placement. The tool page lists every
+limit.
+
+**What it catches that the others miss.** An interposer route drawn to the wrong
+landing. Every die pad still has its pillar, the pillar field is legally spaced,
+and the 3Dblox model takes its connectivity from the declared netlist rather
+than from the drawn copper, so all four geometric stages pass. Only assembly LVS
+follows the drawn metal from pad to pad, and it reports the open on the net the
+route should have joined and the short on the net it lands on.
+
+See :doc:`/tools/09_assembly_lvs`.
+
 Producer-side checks
 --------------------
 
@@ -286,9 +338,9 @@ they are described above:
     * - KiCad DRU
       - Continuously, from the moment the chiplet footprints are placed.
     * - KLayout assembly DRC
-      - After every ``hyp_to_gds`` run. The export pipeline runs it for you, and
-        ``chiplet_export_cli.py --require-drc`` makes a failing deck fail the
-        export.
+      - After every ``hyp_to_gds`` run. The export pipeline runs it for you,
+        and a failing deck fails the headless ``chiplet-export`` (exit 3)
+        unless you pass ``--allow-drc-fail``.
     * - ``pads_vs_pillars``
       - After the same run, once the pillar manifest exists. Cheap, no KLayout
         session needed unless you use ``--gds-pads``.
@@ -296,6 +348,10 @@ they are described above:
       - Whenever die z, thickness, orientation or connection stacks change.
         The export half fails fast and needs no OpenROAD installation; the
         linter half needs an OpenROAD image with the 3Dblox commands.
+    * - Assembly LVS
+      - Once the interposer is routed and the assembly layout is written.
+        packaging-flow runs it in every run that composes an assembly; the
+        export pipeline of :doc:`/flow/04_export` does not call it.
 
 .. note::
     The KLayout assembly DRC and ``pads_vs_pillars`` read artefacts the
@@ -307,13 +363,13 @@ What none of these stages cover
 --------------------------------
 
 .. warning::
-    The ADK is a preview release. These four stages are the geometric axis of
-    assembly-level verification: they check assembly placement, attachment
-    geometry, pad correspondence and 3D consistency. They do not reconcile the
-    assembled layout against the system netlist, which is the connectivity axis
-    of assembly-level verification and is in the kit's scope but not part of
-    this preview release. They also do not check the interposer's own
-    fabrication rules, anything internal to a die, or any thermal,
-    power-integrity or timing property of the assembly. The ``thermal/``,
+    The ADK is a preview release. The first four stages are the geometric axis
+    of assembly-level verification: they check assembly placement, attachment
+    geometry, pad correspondence and 3D consistency. Assembly LVS is the
+    connectivity axis: it checks that the drawn metal connects the declared
+    nets, within the limits listed on :doc:`/tools/09_assembly_lvs`. None of
+    the five checks the interposer's own fabrication rules, anything internal
+    to a die, any electrical property, or any thermal, power-integrity or
+    timing property of the assembly. The ``thermal/``,
     ``power/`` and ``timing/`` directories of the ADK are reserved names with
     README stubs and no implementation. See :doc:`/roadmap`.

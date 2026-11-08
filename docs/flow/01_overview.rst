@@ -49,10 +49,11 @@ It produces:
    The kit is a |current-status|. The assembly checks described here are the
    geometric axis of assembly verification: placement, spacing, minimum area,
    attachment geometry and bump pitch. They do not reconcile the assembled
-   layout against a system netlist. That connectivity axis is within the kit's
-   scope but is not part of this preview release. They also do not replace the
-   per-PDK fabrication DRC that each die and the interposer still need in their
-   own technologies.
+   layout against a system netlist. That connectivity axis is checked by
+   ``assembly-lvs`` (:doc:`/tools/09_assembly_lvs`), which packaging-flow runs
+   and which none of the stages on this page calls. They also do not replace
+   the per-PDK fabrication DRC that each die and the interposer still need in
+   their own technologies.
 
 The flow at a glance
 --------------------
@@ -228,7 +229,7 @@ rules over the assembled GDS, plus a design-time subset mirrored into KiCad as
 a ``.kicad_dru``. :doc:`/adk/01_architecture` explains the split,
 :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules` list the rules, and
 :doc:`/flow/06_verification_stages` explains which check runs when and what
-each one cannot see.
+each one cannot see, including the assembly LVS stage that packaging-flow adds.
 
 Project layout
 --------------

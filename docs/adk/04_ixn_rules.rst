@@ -188,14 +188,19 @@ Three families of check then run.
     mention.
 
     They are checked with the **adapter's** assembly-global numbers, and only if
-    an interconnect adapter was supplied. With a methods file and no adapter,
-    the deck has no number to apply to them, and it says so in the log rather
-    than passing them silently:
+    an interconnect adapter was supplied.
 
-    .. code-block:: text
+``IXN.x.<method>.unclaimed``
+    Each method's pads against the unclaimed pads, at the larger of the method's
+    and the adapter's spacing, by the same reasoning as ``IXN.x``. The checks
+    above are blind to this pair: ``IXN.b.<method>`` sees only its own method's
+    pads, and ``IXN.b.unclaimed`` only unclaimed ones. Also only with an adapter.
 
-        ADK: attachment pads outside every method region are not checked on the
-        IXN axis (no assembly-level interconnect adapter)
+``IXN.unassociated``
+    With a methods file and no adapter, the deck has no number to apply to the
+    unclaimed pads. Rather than pass them, it reports every one of them under
+    this rule. It is a coverage finding, not a spacing violation: the marker
+    says the pad was not checked. Like any finding it makes the run exit 1.
 
 .. tip::
 

@@ -1,5 +1,6 @@
 usage: run_drc.py [-h] --path PATH --interposer-adapter INTERPOSER_ADAPTER
                   [--interconnect-adapter INTERCONNECT_ADAPTER]
+                  [--list-adapters]
                   [--interconnect-methods INTERCONNECT_METHODS]
                   [--topcell TOPCELL] [--run_dir RUN_DIR] [--threads THREADS]
                   [--run_mode {tiling,deep,flat}] [--report REPORT]
@@ -11,15 +12,18 @@ options:
   -h, --help            show this help message and exit
   --path PATH           Path to the input GDS/OAS file.
   --interposer-adapter INTERPOSER_ADAPTER
-                        Interposer adapter: a shortname (resolved against
-                        pdk_adapters/interposer/<name>.drc) or an absolute
-                        path to a .drc file.
+                        Interposer adapter: a registry id (see
+                        docs/adapter_contract.md); resolved through the ADK
+                        registry only. A path is refused.
   --interconnect-adapter INTERCONNECT_ADAPTER
-                        Optional interconnect adapter: a shortname (resolved
-                        against pdk_adapters/interconnect/<name>.drc) or an
-                        absolute path. Adds the bump-to-bump pitch/spacing
-                        axis (IXN rules). Omit for interposer-only checking
-                        (identical to before this axis existed).
+                        Optional interconnect adapter: a registry id (see
+                        docs/adapter_contract.md); resolved through the ADK
+                        registry only. A path is refused. Adds the bump-to-
+                        bump pitch/spacing axis (IXN rules). Omit for
+                        interposer-only checking (identical to before this
+                        axis existed).
+  --list-adapters       List the registered adapter ids with their decks and
+                        the registry that supplied each, then exit.
   --interconnect-methods INTERCONNECT_METHODS
                         Optional per-method interconnect file (<gds-
                         stem>.ixn_methods.json, emitted by the exporter from
@@ -46,5 +50,5 @@ options:
 
 Examples:
   run_drc.py --path design.gds --interposer-adapter intm4tm2
-  run_drc.py --path design.gds --interposer-adapter /abs/path/to/custom.drc
   run_drc.py --path design.gds --interposer-adapter intm4tm2 --interconnect-adapter ihp_cupillar
+  run_drc.py --list-adapters

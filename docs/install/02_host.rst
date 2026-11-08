@@ -163,9 +163,11 @@ a pcbnew action plugin and the writers are pure Python, so a stock KiCad 9.0
 runs the export. What the fork adds is the C++ side: the headless
 ``ExportBoardToChipletFile`` and ``ExportBoardToHyperlynxFile`` functions
 exposed through SWIG, which back the plugin's byte-exact writer parity tests.
-The legacy ``File > Export > Chiplet...`` and ``File > Export > Hyperlynx...``
-menu actions have been removed from the fork; the plugin is the sole entry
-point.
+The legacy ``File > Export > Chiplet...`` menu action has been removed from
+the fork; in the GUI, the plugin is the entry point for a ``.chiplet``.
+``File > Export > Hyperlynx...`` is still there. It calls the same C++
+exporter as ``ExportBoardToHyperlynxFile``, so it writes the same ``.hyp`` as
+the plugin's writer.
 
 Symbol and footprint libraries
     The fork reports itself as 9.99, the v10 development line, but predates the

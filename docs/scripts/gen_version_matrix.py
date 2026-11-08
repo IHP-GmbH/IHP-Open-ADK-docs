@@ -15,12 +15,14 @@ import json
 import os
 import re
 import subprocess
+import tomllib
 
 from _common import (
     ADK,
     DOCS_DIR,
     INTERCONNECT,
     INTERPOSER,
+    SPEC,
     SRC_DIR,
     fail,
     read_json,
@@ -33,19 +35,32 @@ from _common import (
 # Repository order matches the flow, not the alphabet.
 REPOSITORIES = [
     ("IHP-Open-ADK", "Assembly Design Kit", "Apache-2.0"),
-    ("chiplet-spec", "Interchange format specification", "Apache-2.0"),
+    ("chiplet-system-spec", "Interchange format specification", "Apache-2.0"),
     ("OpenIntM4TM2", "Interposer PDK", "Apache-2.0"),
     ("IHP-Interconnect-IntM4TM2", "Interconnect PDK", "Apache-2.0"),
-    ("KiCad-ADK-MOD", "KiCad fork", "GPL-3.0"),
-    ("Chiplets-KiCad-Plugin", "KiCad chiplet export plugin", "GPL-3.0"),
-    ("gds2kicad", "GDS to KiCad converter", "GPL-3.0"),
-    ("chiplet-studio", "3D assembly viewer", "GPL-3.0"),
-    ("ADK-Tools", "Toolchain image", "GPL-3.0"),
+    ("KiCad-ADK-MOD", "KiCad fork", "GPL-3.0-or-later"),
+    ("Chiplets-KiCad-Plugin", "KiCad chiplet export plugin", "GPL-3.0-or-later"),
+    ("gds2kicad", "GDS to KiCad converter", "GPL-3.0-or-later"),
+    ("chiplet-studio", "3D assembly viewer", "GPL-3.0-or-later"),
+    ("ADK-Tools", "Toolchain image", "GPL-3.0-or-later"),
 ]
 
 # KiCad-ADK-MOD is deliberately not a submodule of this repository: it is a
 # full KiCad tree and nothing on this site is generated from it.
 NOT_SUBMODULED = {"KiCad-ADK-MOD"}
+
+# A repository renamed after its submodule was added keeps its old path under
+# src/, so the path does not have to move with the name.
+SUBMODULE_DIRS = {"chiplet-system-spec": os.path.basename(SPEC)}
+
+# Repositories that release by the ``[project].version`` of their
+# pyproject.toml and keep no VERSION file. Elsewhere that field is a scaffold
+# value nobody moves, so it is read only where the repository bumps it.
+PYPROJECT_VERSIONED = {"OpenIntM4TM2"}
+
+# The specification repository versions by reader release; its tags are not a
+# reliable source (a clone may lack them), so the reader's own number is used.
+SPEC_READER = os.path.join(SPEC, "reference", "python", "chiplet_format_io", "__init__.py")
 
 
 def git(repo, *args):
@@ -62,12 +77,32 @@ def git(repo, *args):
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
-def declared_version(repo_path):
+def constant(path, name):
+    """A string constant, or a tuple of them joined as "1.0.0, 1.1.0"."""
+    match = re.search(
+        r"^{}\s*[:=]\s*(\([^)]*\)|['\"][^'\"]+['\"])".format(re.escape(name)),
+        read_text(path),
+        re.MULTILINE,
+    )
+    values = re.findall(r"['\"]([^'\"]+)['\"]", match.group(1)) if match else []
+    if not values:
+        fail("could not read {} from {}".format(name, path))
+    return ", ".join(values)
+
+
+def declared_version(repo_path, from_pyproject=False):
+    """The VERSION file, or for a PYPROJECT_VERSIONED repository that has none,
+    ``[project].version`` of pyproject.toml, named in the cell as its source."""
     version_file = os.path.join(repo_path, "VERSION")
     if os.path.isfile(version_file):
-        value = read_text(version_file).strip()
-        if value:
-            return value
+        return read_text(version_file).strip()
+    if from_pyproject:
+        pyproject = os.path.join(repo_path, "pyproject.toml")
+        with open(pyproject, "rb") as f:
+            value = tomllib.load(f).get("project", {}).get("version")
+        if not isinstance(value, str) or not value:
+            fail("{} has no [project].version".format(pyproject))
+        return "{} (pyproject.toml)".format(value)
     return ""
 
 
@@ -76,15 +111,15 @@ def main():
 
     rows = []
     for name, role, license_id in REPOSITORIES:
-        path = os.path.join(SRC_DIR, name)
+        directory = SUBMODULE_DIRS.get(name, name)
+        path = os.path.join(SRC_DIR, directory)
         if name in NOT_SUBMODULED:
             rows.append([name, role, license_id, "not pinned here", ""])
             continue
-        if not os.path.isdir(path):
-            fail(
-                "submodule src/{} is missing. Run: git submodule update --init".format(name)
-            )
-        version = declared_version(path)
+        require_submodule(path, "src/" + directory)
+        version = declared_version(path, name in PYPROJECT_VERSIONED)
+        if name == "chiplet-system-spec":
+            version = "reader " + constant(SPEC_READER, "__version__")
         described = git(path, "describe", "--tags", "--always")
         commit = git(path, "rev-parse", "--short", "HEAD")
         # A repo without a VERSION file versions by tag or by commit; say which
@@ -96,8 +131,9 @@ def main():
 
     # Schema and format versions. These are pinned independently of any
     # repository version, and they are what a file on disk actually has to
-    # match: every reader compares the file's version against a constant and
-    # treats a mismatch as a hard error, never a warning. The JSON Schemas
+    # match: every reader compares the file's version against a constant. The
+    # sidecar readers treat a mismatch as a hard error; the .chiplet reader
+    # refuses another major and warns on a higher minor. The JSON Schemas
     # themselves type the field as a plain string, so the constants in the
     # consuming modules are the authoritative pin.
     SIDECAR_PINS = [
@@ -119,29 +155,17 @@ def main():
             "Pillar manifest",
             "``adk-pillar-manifest``",
             os.path.join(ADK, "checks", "pads_vs_pillars.py"),
-            "SUPPORTED_PILLAR_MANIFEST_VERSION",
+            "SUPPORTED_PILLAR_MANIFEST_VERSIONS",
             "IHP-Open-ADK ``checks/pads_vs_pillars.py``",
         ),
     ]
 
-    def constant(path, name):
-        match = re.search(
-            r"^{}\s*[:=]\s*['\"]([^'\"]+)['\"]".format(re.escape(name)),
-            read_text(path),
-            re.MULTILINE,
-        )
-        if not match:
-            fail("could not read {} from {}".format(name, path))
-        return match.group(1)
-
     schema_rows = []
 
-    spec_reader = os.path.join(
-        SRC_DIR, "chiplet-spec", "reference", "python", "chiplet_format_io", "__init__.py"
-    )
+    spec_reader = SPEC_READER
     if not os.path.isfile(spec_reader):
         fail(
-            "chiplet-spec reference reader not found at {}. It moved or was "
+            "chiplet-system-spec reference reader not found at {}. It moved or was "
             "renamed.".format(spec_reader)
         )
     schema_rows.append(
@@ -149,7 +173,15 @@ def main():
             "Assembly file",
             "``.chiplet``",
             constant(spec_reader, "SUPPORTED_FORMAT_VERSION"),
-            "chiplet-spec ``reference/python/chiplet_format_io``",
+            "chiplet-system-spec ``reference/python/chiplet_format_io``",
+        ]
+    )
+    schema_rows.append(
+        [
+            "Source file (with a ``system`` block)",
+            "``.chiplet``",
+            constant(spec_reader, "SOURCE_FORMAT_VERSION"),
+            "chiplet-system-spec ``reference/python/chiplet_format_io``",
         ]
     )
 
@@ -261,19 +293,29 @@ def main():
     facts += ".. |adk-test-files| replace:: {}\n".format(adk_test_files)
     write_text(os.path.join(DOCS_DIR, "_counts.inc"), facts)
 
-    # The ADK vendors a copy of the chiplet-spec reference reader. Whether that
+    # The ADK vendors a copy of the chiplet-system-spec reference reader. Whether that
     # copy is currently identical to the specification is a fact readers of the
     # format page need, so derive it instead of asserting it in prose.
     vendored = os.path.join(ADK, "vendor", "chiplet_format_io", "__init__.py")
     if os.path.isfile(vendored):
-        in_sync = read_text(vendored) == read_text(spec_reader)
+        ours = constant(vendored, "__version__")
+        theirs = constant(spec_reader, "__version__")
+        if read_text(vendored) == read_text(spec_reader):
+            state = "identical to the specification's reference reader"
+        else:
+            def release(version):
+                return tuple(int(part) for part in version.split("."))
+
+            if release(ours) == release(theirs):
+                fail("the vendored reader and the specification's both say {} but "
+                     "differ in content".format(ours))
+            state = "reader {}, **{}** than the specification's reference reader ({}) at this documentation's pin".format(
+                ours, "newer" if release(ours) > release(theirs) else "older", theirs)
         note = (
             ".. Generated by docs/scripts/gen_version_matrix.py. Do not edit by hand.\n\n"
-            ".. |vendored-reader-state| replace:: {}\n".format(
-                "identical to the specification's reference reader"
-                if in_sync
-                else "**pinned to an older revision** of the specification's reference reader"
-            )
+            ".. |vendored-reader-state| replace:: {}\n"
+            ".. |vendored-reader-formats| replace:: {}\n".format(
+                state, constant(vendored, "ACCEPTED_FORMAT_VERSIONS"))
         )
         write_text(os.path.join(DOCS_DIR, "formats", "_vendored_state.inc"), note)
 

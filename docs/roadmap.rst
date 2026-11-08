@@ -25,12 +25,10 @@ noting that no rules are shipped yet.
 The connectivity axis of assembly verification
 ----------------------------------------------
 
-:doc:`/intro/01_what_is_the_adk` sets out the two axes of assembly verification
-and why a device-graph comparator cannot reach the connectivity one. In short:
-the geometric axis ships in this release, the connectivity axis asks whether the
-placed assembly is wired the way the system netlist says, and neither subsumes
-the other.
-
-That axis is in the scope of the kit and on its roadmap. No implementation,
-interface or result is part of this preview release. It will be documented when
-it is released.
+The axis itself is not a direction of work any more: it ships in this release
+as ``assembly-lvs``, and :doc:`/tools/09_assembly_lvs` documents what it checks
+and, as plainly, what it does not. What stays here is one direction of work on
+it, placement tolerance. The engine accepts a bound on how far each component
+may move in the plane, and packaging-flow passes a bound of zero, so a flow run
+checks the nominal placement only. Giving each bump method a placement accuracy
+for the flow to pass on is listed in :doc:`/contrib/01_contributing`.

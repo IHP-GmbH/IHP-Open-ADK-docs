@@ -54,8 +54,9 @@ is a usage error, as is repeating either flag for one reference.
 
 The manifest is validated after the ``.chiplet`` is loaded, and before any pad
 source is read or any matching runs. ``schema`` must be
-``adk-pillar-manifest`` and ``version`` must be exactly ``1.0.0``: an exact
-string match, never a range. ``units`` must be ``um``, every coordinate must be
+``adk-pillar-manifest`` and ``version`` must be exactly ``1.0.0`` or ``1.1.0``:
+an exact string match against that set, never a range. 1.1.0 only adds the
+optional ``methods`` block, which this check does not read. ``units`` must be ``um``, every coordinate must be
 a finite number, and ``diameter_um`` must be positive. Non-finite coordinates
 are rejected at read time on purpose, because a comparison against ``NaN`` is
 false and would make every distance check pass.
@@ -197,7 +198,7 @@ Running the check
 
 .. code-block:: bash
 
-    python checks/pads_vs_pillars.py \
+    python3 checks/pads_vs_pillars.py \
         --chiplet demo.chiplet \
         --pillars build/demo_interposer.pillars.json \
         --pins U1=chiplets/die_a.pins.json \
@@ -205,6 +206,11 @@ Running the check
         --tolerance-um 1.0 \
         --json build/pads_vs_pillars.json \
         --strict
+
+In the tools image these scripts sit under ``$ADK_ROOT``; run them with
+``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
+(KLayout, PyYAML); the image's own ``python3`` does not
+(:doc:`/install/01_container`).
 
 .. literalinclude:: /adk/_usage/pads_vs_pillars.txt
    :language: text
@@ -291,7 +297,7 @@ Importable entry points
 .. code-block:: python
 
     load_chiplet(path) -> dict
-    load_pillar_manifest(path) -> dict          # validated, exact version pin
+    load_pillar_manifest(path) -> dict          # validated, exact version set
     load_pads_config(path=None) -> dict         # pad layer vocabulary
     extract_gds_pads(gds_path) -> [{"name", "x_um", "y_um"}, ...]
     transform_pads(component, pads) -> [{"name", "x_um", "y_um"}, ...]
