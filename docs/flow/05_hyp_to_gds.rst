@@ -318,14 +318,23 @@ later pad-to-pillar check can tell an intentional shift from a real
 misalignment. Residual violations are reported and the run continues, with the
 complete report persisted to ``<stem>_cupillar_drc.json``.
 
-Why a missing interposer PDK is fatal here
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Why a missing interposer PDK is fatal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When at least one die requests a connection method and ``bump_mirror`` cannot
-be imported, the converter refuses to write anything and tells you to set
-``INTERPOSER_PDK_ROOT``.
+Every run with ``--update-chiplet-file``, which is every export, needs a
+readable interposer PDK, with or without pillars. The mount plane the dies sit
+on, ``beol.attachment_surface_z_um``, is read from
+``libs.tech/intm4tm2_stack.json`` under ``INTERPOSER_PDK_ROOT``, or under the
+sibling checkout the discovery chain finds, and there is no fallback value.
+When no root resolves, or the file or the key cannot be read, the converter
+prints ``Attach frame refused: ...`` and writes no layout, sidecar or
+``.chiplet``.
 
-This is the opposite policy from the via PCells, and the asymmetry is
+Pillars add a second dependency. When at least one die requests a connection
+method and ``bump_mirror`` cannot be imported, the converter refuses to write
+anything and tells you to set ``INTERPOSER_PDK_ROOT``.
+
+For pillars this is the opposite policy from the via PCells, and the asymmetry is
 deliberate. A missing via PCell degrades to geometry that is still there and
 still approximately right. A missing pillar generator produces a *complete
 looking* GDS with no attachment structures at all, and no downstream check can

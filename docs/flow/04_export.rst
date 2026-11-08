@@ -434,6 +434,14 @@ Common failures
     (``39/4`` for an SG13G2 die). The message lists every die at fault, so
     one run reports them all.
 
+``Attach frame refused: ...``
+    The worker could not read the mount plane,
+    ``beol.attachment_surface_z_um`` in ``libs.tech/intm4tm2_stack.json``,
+    because no interposer PDK resolved or the file is unreadable. Every export
+    needs it, with or without pillars. Set ``INTERPOSER_PDK_ROOT`` to an
+    IntM4TM2 checkout; :doc:`/flow/05_hyp_to_gds` explains why there is no
+    fallback.
+
 ``Die outline refused: U1: ...``
     The worker found the declared layer in the die GDS empty, or not one
     axis-aligned rectangle, or the GDS has more than one top cell. Nothing is

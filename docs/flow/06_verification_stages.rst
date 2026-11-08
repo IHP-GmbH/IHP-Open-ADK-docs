@@ -319,8 +319,12 @@ checks over two dies.
 
 The converter also refuses several classes of malformed output outright: more
 than half the routing on layers the PDK layer table does not map, a
-``--with-chiplets`` run in which no die GDS loaded, a pillar request with no
-reachable pillar generator, and a ``.chiplet`` that could not be finalised.
+``--with-chiplets`` run in which no die GDS loaded, a die whose outline layer
+does not give one rectangle, a pillar request with no reachable pillar
+generator, and a ``.chiplet`` that could not be finalised. Finalising one needs
+a readable interposer PDK whatever the attachment method, because the mount
+plane comes from its ``libs.tech/intm4tm2_stack.json``; without it the run
+stops with ``Attach frame refused:`` and writes nothing.
 
 Where each stage sits in the flow
 ----------------------------------
