@@ -76,7 +76,7 @@ and the neighbouring case it is meant to leave alone.
     :width: 90%
 
     What each ASM rule fires on. The marker geometry is shown in red;
-    the cases that are deliberately legal are shown in green.
+    the cases that are deliberately legal carry no marker.
 
 ASM.a: chiplet boundaries must not overlap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
