@@ -393,7 +393,7 @@ edits, so a script drives the live assembly rather than a copy of it.
     die = asm.create_component("my_die", "Die",
                                width=5000.0, height=5000.0, thickness=100.0)
     die.set_position(1000.0, 2000.0, 50.0)
-    die.set_technology("ihp-sg13g2")
+    die.set_technology("sg13g2")
 
     for comp in asm.components():
         print(f"{comp.id}: {comp.position}")
