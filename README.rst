@@ -41,11 +41,15 @@ repositories pinned as submodules under ``src/``:
 - `chiplet-system-spec <https://github.com/IHP-GmbH/chiplet-system-spec>`__, the ``.chiplet`` interchange format
 - `OpenIntM4TM2 <https://github.com/IHP-GmbH/OpenIntM4TM2>`__, the interposer PDK
 - `IHP-Interconnect-IntM4TM2 <https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2>`__, the attachment method registry
-- `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__, the KiCad fork
 - `Chiplets-KiCad-Plugin <https://github.com/IHP-GmbH/Chiplets-KiCad-Plugin>`__, the export plugin and GDS generation
 - `gds2kicad <https://github.com/IHP-GmbH/gds2kicad>`__, die GDS to KiCad conversion
 - `chiplet-studio <https://github.com/IHP-GmbH/chiplet-studio>`__, the 3D assembly viewer
 - `ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__, the container that pins and builds them all
+
+The KiCad fork, `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__,
+is not a submodule here: ADK-Tools pins it. Neither are the flow engines
+(packaging-flow, interposer-pnr, chiplet-flow, assembly-lvs and chiplet-cosim),
+which ADK-Tools stages from pinned commits and which are not public yet.
 
 
 Building locally
