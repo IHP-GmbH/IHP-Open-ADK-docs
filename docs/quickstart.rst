@@ -2,7 +2,7 @@ Quickstart
 ==========
 
 .. include:: /common.inc
-.. include:: /install/_generated/release_tag.inc
+.. include:: /install/_release_tag.inc
 
 .. warning::
     packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
@@ -24,9 +24,8 @@ prerequisites in full.
 1. Build the image
 ------------------
 
-.. literalinclude:: /install/_generated/build_recipe.sh
+.. literalinclude:: /install/_recipe/build.sh
     :language: bash
-    :end-before: "$ADK_TOOLS_ROOT/run.sh"
 
 |release-tag| is the release tag. The submodules are part of the version
 lockfile, so a clone without them cannot build. ``build.sh`` compiles KiCad

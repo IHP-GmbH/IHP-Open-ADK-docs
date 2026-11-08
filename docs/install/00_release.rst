@@ -2,7 +2,7 @@ The preview release
 ===================
 
 .. include:: /common.inc
-.. include:: /install/_generated/release_tag.inc
+.. include:: /install/_release_tag.inc
 
 .. warning::
     packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
@@ -62,9 +62,8 @@ checkout is the release you run, at the release tag |release-tag|; the
 ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
 clone, or in the directory ``STAGE_SIBLINGS`` names.
 
-.. literalinclude:: /install/_generated/build_recipe.sh
+.. literalinclude:: /install/_recipe/clone.sh
     :language: bash
-    :end-before: nix build
 
 The two ``--check`` calls write nothing. ``stage-sources.sh --check`` finds
 each sibling checkout and the commit ``staging.pin`` pins in it;

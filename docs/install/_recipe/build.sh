@@ -16,4 +16,3 @@ nix build .#openroad .#librelane .#librelane-python .#sg13g2-pdk \
 # run.sh takes the image by its ID (sha256:<64 hex>), never a tag, and has no
 # default: read the ID of the image you just built once
 export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
-"$ADK_TOOLS_ROOT/run.sh" --examples "$ADK_EXAMPLES_ROOT"

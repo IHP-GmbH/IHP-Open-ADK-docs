@@ -10,6 +10,7 @@ which is what the CI drift gate checks.
 
 import json
 import os
+import subprocess
 import sys
 
 DOCS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -36,6 +37,21 @@ def fail(message):
     """
     sys.stderr.write("error: {}\n".format(message))
     raise SystemExit(1)
+
+
+def git(repo, *args):
+    """The stripped stdout of a git command in repo, or "" if it fails."""
+    try:
+        result = subprocess.run(
+            ["git"] + list(args),
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""
 
 
 def require_submodule(path, name):

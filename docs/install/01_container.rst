@@ -61,11 +61,11 @@ Prerequisites
 Build the image
 ---------------
 
-The ADK-Tools README, section Build, gives the whole sequence:
+The ADK-Tools README, section Build, gives the sequence, up to reading the ID
+of the image you built:
 
-.. literalinclude:: /install/_generated/build_recipe.sh
+.. literalinclude:: /install/_recipe/build.sh
     :language: bash
-    :end-before: "$ADK_TOOLS_ROOT/run.sh"
 
 The submodules under ``tools/`` are part of the version lockfile, so a clone
 without ``--recurse-submodules`` cannot build; ``git submodule update --init

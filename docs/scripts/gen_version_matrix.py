@@ -14,7 +14,6 @@ import glob
 import json
 import os
 import re
-import subprocess
 import tomllib
 
 from _common import (
@@ -25,6 +24,7 @@ from _common import (
     SPEC,
     SRC_DIR,
     fail,
+    git,
     read_json,
     read_text,
     require_submodule,
@@ -61,20 +61,6 @@ PYPROJECT_VERSIONED = {"OpenIntM4TM2"}
 # The specification repository versions by reader release; its tags are not a
 # reliable source (a clone may lack them), so the reader's own number is used.
 SPEC_READER = os.path.join(SPEC, "reference", "python", "chiplet_format_io", "__init__.py")
-
-
-def git(repo, *args):
-    try:
-        result = subprocess.run(
-            ["git"] + list(args),
-            cwd=repo,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    return result.stdout.strip() if result.returncode == 0 else ""
 
 
 def constant(path, name):
