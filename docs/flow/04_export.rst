@@ -131,14 +131,10 @@ for. From ``/work``, on the board you drew in a project ``adk-new-project`` made
         --output-dir  heterogenic-designs/my_design/outputs
 
 It always writes the complete assembly GDS and always runs the assembly DRC.
-Exit 0 means the files were written and the DRC passed, exit 1 that nothing
-trustworthy was written, exit 2 that the board is missing or KiCad cannot read
-it (or a usage error), and exit 3 that the files were written but the DRC did
-not pass: ``FAILED``, ``REFUSED`` or ``NOT RUN``. ``--allow-drc-fail`` turns
-that 3 into 0 when you want the geometry regardless; the last line still says
-how the DRC ended. Add ``--export-report PATH`` for a board drawn against a
-sheet. :doc:`/tools/02_chiplet_export_plugin` lists the exit codes and the
-flags.
+Exit 0 means the files were written and the DRC passed, and exit 3 that they
+were written but the DRC did not pass; ``--allow-drc-fail`` turns that 3 into
+0. Add ``--export-report PATH`` for a board drawn against a sheet.
+:ref:`chiplet_export_headless` has the full exit table and the flags.
 
 .. note::
    Anything headless must run under a Python that can ``import pcbnew``, which

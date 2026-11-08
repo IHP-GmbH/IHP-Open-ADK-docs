@@ -581,6 +581,8 @@ re-deriving geometry from the GDS. Bumps that the collision auto-resolve moved
 are flagged. See :doc:`/formats/04_boundary_manifest` and
 :doc:`/formats/05_pillar_manifest`.
 
+.. _chiplet_export_headless:
+
 Headless use
 ------------
 
