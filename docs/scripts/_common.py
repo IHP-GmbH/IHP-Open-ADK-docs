@@ -39,8 +39,9 @@ def fail(message):
     raise SystemExit(1)
 
 
-def git(repo, *args):
-    """The stripped stdout of a git command in repo, or "" if it fails."""
+def run_git(repo, *args):
+    """Run a git command in repo. Returns (returncode, stdout, stderr), with
+    returncode None when git could not be run at all."""
     try:
         result = subprocess.run(
             ["git"] + list(args),
@@ -49,12 +50,40 @@ def git(repo, *args):
             text=True,
             timeout=30,
         )
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    return result.stdout.strip() if result.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError) as error:
+        return None, "", str(error)
+    return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
-def pinned_commit(path):
+def git(repo, *args):
+    """The stripped stdout of a git command in repo, or "" if it fails."""
+    code, out, _ = run_git(repo, *args)
+    return out if code == 0 else ""
+
+
+def git_or_fail(repo, *args):
+    """The stripped stdout of a git command that must succeed."""
+    code, out, err = run_git(repo, *args)
+    if code != 0:
+        fail("git {} failed in {}: {}".format(" ".join(args), repo, err or "no output"))
+    return out
+
+
+# Published release tags start with "v" and a digit. Clones in this ecosystem
+# also carry local tags (save points, review marks, archives) that are never
+# published, and none of them may reach a page.
+RELEASE_TAG_GLOB = "v[0-9]*"
+
+
+def release_tags(repo):
+    """The v-prefixed tags pointing exactly at HEAD of repo.
+
+    Exact, not the nearest tag: a commit past a release is not that release.
+    """
+    return git(repo, "tag", "--points-at", "HEAD", "--list", RELEASE_TAG_GLOB).split()
+
+
+def pinned_commit(path, name):
     """The commit this repository pins the submodule at, from the index.
 
     The index rather than HEAD, so that a pin move can be regenerated before
@@ -62,29 +91,36 @@ def pinned_commit(path):
     run the generators.
     """
     relative = os.path.relpath(path, REPO_ROOT)
-    entry = git(REPO_ROOT, "ls-files", "--stage", "--", relative).split()
-    # "<mode> <sha> <stage>\t<path>"; a submodule's mode is 160000.
-    if len(entry) < 2 or entry[0] != "160000":
-        return ""
-    return entry[1]
+    entries = git_or_fail(REPO_ROOT, "ls-files", "--stage", "--", relative).splitlines()
+    # "<mode> <sha> <stage>\t<path>"; a submodule's mode is 160000 and an
+    # unconflicted entry has stage 0.
+    fields = [entry.split() for entry in entries]
+    if any(len(f) >= 3 and f[2] != "0" for f in fields):
+        fail("the pin of {} is conflicted in the index. Resolve it first".format(name))
+    if len(fields) != 1 or len(fields[0]) < 3 or fields[0][0] != "160000":
+        fail(
+            "{} is not a submodule in this repository's index. Check the path, "
+            "or restore the gitlink with: git checkout HEAD -- {}".format(name, name)
+        )
+    return fields[0][1]
 
 
 def require_submodule(path, name):
-    """Fail unless the submodule is checked out exactly at its pin.
+    """Fail unless the submodule is checked out exactly at its pin, clean.
 
-    A checkout that has drifted from the pin would write tables for code the
-    site does not pin, and the drift gate would then compare against the
-    wrong source. Uncommitted edits to tracked files inside the submodule are
-    refused for the same reason.
+    A checkout that has drifted from its pin writes tables for code the site
+    does not pin; committed, they would then fail the CI drift gate, which
+    builds from the pins. Local changes inside the submodule, tracked or not,
+    are refused for the same reason: the generators glob directories, so an
+    untracked deck or test file would change a count. Ignored files, such as
+    the __pycache__ a captured --help leaves, do not count.
     """
     if not os.path.isdir(path):
         fail(
             "submodule {} is not checked out at {}. "
             "Run: git submodule update --init".format(name, path)
         )
-    pinned = pinned_commit(path)
-    if not pinned:
-        fail("{} is not a submodule pinned by this repository".format(name))
+    pinned = pinned_commit(path, name)
     # An empty or uninitialised submodule directory makes git answer for the
     # enclosing repository instead, so check whose HEAD this is first.
     toplevel = git(path, "rev-parse", "--show-toplevel")
@@ -93,28 +129,21 @@ def require_submodule(path, name):
             "submodule {} is not initialised at {}. "
             "Run: git submodule update --init".format(name, path)
         )
-    checked_out = git(path, "rev-parse", "HEAD")
+    checked_out = git_or_fail(path, "rev-parse", "HEAD")
     if checked_out != pinned:
         fail(
-            "submodule {} is checked out at {} but pinned at {}. "
-            "Run: git submodule update --init {}, or, when moving the pin, "
-            "git add {} first".format(
-                name, checked_out[:12] or "an unknown commit", pinned[:12], name, name
+            "submodule {} is checked out at {} but pinned at {}. To build the "
+            "pin, run: git submodule update --init {}. To move the pin to the "
+            "checkout, run: git add {}, then rerun".format(
+                name, checked_out[:12], pinned[:12], name, name
             )
         )
-    if git(path, "status", "--porcelain", "--untracked-files=no", "--ignore-submodules=all"):
-        fail("submodule {} has uncommitted changes to tracked files".format(name))
+    if git_or_fail(path, "status", "--porcelain", "--ignore-submodules=all"):
+        fail(
+            "submodule {} has local changes (see git -C {} status). "
+            "Commit, stash or remove them first".format(name, name)
+        )
     return path
-
-
-def release_tags(repo):
-    """The published release tags pointing at HEAD of repo.
-
-    Clones in this ecosystem carry local tags (save points, review marks,
-    archives) that are never published. Only tags starting with ``v`` and a
-    digit are releases.
-    """
-    return git(repo, "tag", "--points-at", "HEAD", "--list", "v[0-9]*").split()
 
 
 def read_json(path):

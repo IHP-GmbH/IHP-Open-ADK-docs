@@ -67,14 +67,15 @@ Updating to newer sources
 
     git submodule update --remote src/IHP-Open-ADK
     git add src/IHP-Open-ADK
+    git diff --cached --submodule=log src/IHP-Open-ADK
     make -C docs preprocess
-    git diff --cached src/IHP-Open-ADK
     git diff
 
 The generators refuse a submodule whose checkout differs from the commit the
-index pins, so stage the new pin before regenerating. Review the diff in the generated tables. It tells you exactly what changed in
-the code that this site makes claims about, and therefore which prose needs
-rereading.
+index pins, so stage the new pin before regenerating. The ``--cached`` diff
+lists the commits the move pulls in. Review the diff in the generated tables.
+It tells you exactly what changed in the code that this site makes claims
+about, and therefore which prose needs rereading.
 
 Pages a repository keeps for this site
 --------------------------------------

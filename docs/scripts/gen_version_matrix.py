@@ -25,6 +25,7 @@ from _common import (
     SRC_DIR,
     fail,
     git,
+    release_tags,
     read_json,
     read_text,
     require_submodule,
@@ -106,14 +107,13 @@ def main():
         version = declared_version(path, name in PYPROJECT_VERSIONED)
         if name == "chiplet-system-spec":
             version = "reader " + constant(SPEC_READER, "__version__")
-        # Release tags only: a local save-point or review tag must never end
-        # up in a published Version cell.
-        described = git(path, "describe", "--tags", "--always", "--match", "v[0-9]*")
         commit = git(path, "rev-parse", "--short", "HEAD")
-        # A repo without a VERSION file versions by tag or by commit; say which
-        # rather than leaving the cell blank.
+        # A repo without a VERSION file versions by release tag when it is
+        # pinned exactly at one, and by commit otherwise: a pin past a release
+        # is not that release. Release tags are v-prefixed (RELEASE_TAG_GLOB).
         if not version:
-            version = described if described and described != commit else "by commit"
+            tags = release_tags(path)
+            version = ", ".join(sorted(tags)) if tags else "by commit"
         rows.append([name, role, license_id, version, commit])
     write_csv(os.path.join(DOCS_DIR, "tools", "tables", "versions.csv"), rows)
 
