@@ -63,7 +63,7 @@ jobs:
           check() {
             local pattern="$1" message="$2"
             local hits
-            hits=$(grep -rniE --include='*.rst' --include='*.md' --include='*.tex' \
+            hits=$(grep -rniE --include='*.rst' --include='*.md' \
                    "$pattern" docs/ | grep -v "^${EXEMPT}:" || true)
             if [ -n "$hits" ]; then
               echo "::error::$message"

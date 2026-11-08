@@ -144,3 +144,8 @@ back even if the prose is good.
   and no prose on this site cites a figure by number. Every figure sits next to
   the paragraph it illustrates. If a paginated build is ever added, that is the
   moment to reconsider ``numfig`` deliberately.
+- A figure enters as a rendered SVG with a same-name PDF, text outlined, and a
+  page references it as ``/_figures/<name>.*``: the HTML build takes the SVG
+  and the PDF build the PDF. Drawing sources and render tooling stay out of the
+  repository, and a new or changed figure comes in the documentation's house
+  style. Screenshots and other images a tool produced stay PNG.
