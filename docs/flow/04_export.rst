@@ -103,9 +103,9 @@ command, below, exits 3 in that case unless you pass ``--allow-drc-fail``.
 Headless
 --------
 
-The same pipeline runs without the GUI. In the tools image, the end-to-end
-self test exercises it on the two-die test design, copied to ``/work/example``
-as :doc:`/install/01_container` describes:
+The same pipeline runs without the GUI. In the tools image, the end-to-end self
+test exercises it on the reference design, copied to ``/work/example`` as
+:doc:`/install/01_container` describes:
 
 .. code-block:: bash
 

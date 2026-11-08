@@ -30,8 +30,8 @@ is the recommended one for your own designs.
     checkout when you want it back. The container starts in ``/work``, so the
     ``example/`` paths on this page name that copy.
 
-What the demo assembles
------------------------
+What the reference design assembles
+-----------------------------------
 
 .. list-table::
     :header-rows: 1
@@ -58,13 +58,14 @@ Both dies are instances of the same ``Metal_Test`` layout, an SG13G2 test die
 whose 58 external I/O pads sit on ``TopMetal2`` (134/0) with their names on the
 text layer 134/25.
 
-The two connection stacks are what make the demo interesting, because they are
-what forces every per-method mechanism in the flow to actually do something. The
-die z values follow from them directly. The interposer's attachment surface is
-at 13.83 um; ``cupillar_opt1`` is a 28 um Cu pillar plus a 16 um SnAg cap, so
-``U1`` sits at 57.83 um; ``vendorx_microbump`` is 18 um plus 6 um, so ``U2``
-sits at 37.83 um. That arithmetic is not decoration: the 3Dblox exporter
-verifies it exactly and refuses assemblies that do not satisfy it.
+The two connection stacks are what make the reference design interesting,
+because they are what forces every per-method mechanism in the flow to actually
+do something. The die z values follow from them directly. The interposer's
+attachment surface is at 13.83 um; ``cupillar_opt1`` is a 28 um Cu pillar plus
+a 16 um SnAg cap, so ``U1`` sits at 57.83 um; ``vendorx_microbump`` is 18 um
+plus 6 um, so ``U2`` sits at 37.83 um. That arithmetic is not decoration: the
+3Dblox exporter verifies it exactly and refuses assemblies that do not satisfy
+it.
 
 Directory tree
 --------------
@@ -244,15 +245,15 @@ Step 2: author the board
 
 The board is drawn in the KiCad fork, with the physical stackup naming the
 copper layers after the process metals and a closed ``Edge.Cuts`` outline. That
-is covered by :doc:`/flow/03_interposer_design`; the demo's ``.kicad_pcb`` is
-the finished result.
+is covered by :doc:`/flow/03_interposer_design`; the reference design's
+``.kicad_pcb`` is the finished result.
 
 Step 3: export and generate the GDS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Normally this is the Chiplet Export plugin inside pcbnew, with its output
-directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
-the same export the image build runs, is:
+directory pointed at the sibling ``outputs/``. The reference design's headless
+equivalent, the same export the image build runs, is:
 
 .. code-block:: bash
 
@@ -296,16 +297,17 @@ auto-discovers ``two_die_interposer_complete.boundaries.json`` next to the GDS.
 The runner logs a pass or fail banner and the report path; a violation leaves
 items in the ``.lyrdb`` under the rule that flagged them.
 
-Step 5: checks the demo does not run for you
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 5: checks the reference design does not run for you
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Only stage 3, the KLayout assembly DRC of step 4, is part of the demo pipeline.
-The other three of the four :doc:`verification stages
+Only stage 3, the KLayout assembly DRC of step 4, is part of the reference
+design's pipeline. The other three of the four :doc:`verification stages
 </flow/06_verification_stages>` are not. Two of them you can run yourself
 against the shipped artefacts, and they are given below. The third, the KiCad
-design-time check, cannot be run here at all: the demo ``kicad/`` tree ships no
-generated ``.kicad_dru``, so there is nothing for pcbnew to enforce. Generate
-one as :doc:`/adk/06_kicad_dru` describes for a board of your own.
+design-time check, cannot be run here at all: the reference design's ``kicad/``
+tree ships no generated ``.kicad_dru``, so there is nothing for pcbnew to
+enforce. Generate one as :doc:`/adk/06_kicad_dru` describes for a board of your
+own.
 
 Pad-to-pillar alignment, which needs the ``.chiplet``, the pillar manifest and a
 pad source per die:
@@ -340,7 +342,7 @@ Step 6: the one-command self test
     adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 ``adk-smoke`` takes one board and has no default, because the runtime image
-carries no demo; without a board it exits 2 and says where to copy this design
+carries no board; without one it exits 2 and says where to copy this design
 from. It verifies that the ``intm4tm2`` KLayout technology is registered and
 its layer properties resolve, then exports the board end to end into a
 throwaway directory and fails unless the assembly DRC passed. It is the
@@ -351,8 +353,8 @@ exits non-zero before that.
 What the committed reports say
 ------------------------------
 
-Two result files are tracked, so you can read the demo's verification outcome
-without running anything.
+Two result files are tracked, so you can read the reference design's
+verification outcome without running anything.
 
 ``reports/two_die_interposer_cupillar_drc.json`` records the producer-side
 Cu-pillar checks: version 2 of the report format, the per-die method assignment
@@ -386,12 +388,12 @@ wire-bond pads, so the rule ran on them and found none closer than 200 um to a d
 Reproducibility
 ---------------
 
-The demo outputs are not decorative. The image build regenerates them headless
-from the board and then compares the fresh regeneration against the committed
-tree, failing the build on any semantic difference: a committed deliverable a
-fresh run no longer produces, a new sidecar a fresh run emits that is not
-committed, or a change in the ``.chiplet``, the manifests, the reports or the
-GDS geometry.
+The reference design's outputs are not decorative. The image build regenerates
+them headless from the board and then compares the fresh regeneration against
+the committed tree, failing the build on any semantic difference: a committed
+deliverable a fresh run no longer produces, a new sidecar a fresh run emits
+that is not committed, or a change in the ``.chiplet``, the manifests, the
+reports or the GDS geometry.
 
 The comparison is not a naive byte diff. GDS files are hashed with the
 ``BGNLIB`` and ``BGNSTR`` timestamps zeroed, so a real geometry, layer or cell
@@ -405,8 +407,8 @@ build's regeneration, so a tracked set that had drifted from what the current
 board and toolchain produce could ship on a green build. A stale ``.chiplet`` and
 a missing pillar manifest reached a release candidate that way.
 
-What the demo demonstrates
---------------------------
+What the reference design demonstrates
+--------------------------------------
 
 - A die layout becoming a KiCad symbol and footprint, reproducibly, from
   shipped inputs.
@@ -427,8 +429,8 @@ What it does not demonstrate
 ----------------------------
 
 - **Two different dies.** ``U1`` and ``U2`` are two instances of the same
-  layout. Nothing in the flow requires that, but the demo does not exercise a
-  genuinely heterogeneous die set.
+  layout. Nothing in the flow requires that, but the reference design does not
+  exercise a genuinely heterogeneous die set.
 - **A stacked or multi-tier assembly.** Everything sits on one tier. The
   assembly rules assume that, and ``ASM.a`` would flag legally stacked dies as
   overlapping.
