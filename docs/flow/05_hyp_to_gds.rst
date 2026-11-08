@@ -60,8 +60,13 @@ A KLayout layer properties file (``--lyp``)
     falling back to the sibling checkout.
 
 Die layouts
-    One GDS per distinct ``GDS_FILE`` referenced by the ``.hyp``, read only when
-    ``--with-chiplets`` is given.
+    One GDS per distinct ``GDS_FILE`` referenced by the ``.hyp``. With
+    ``--with-chiplets`` each one is placed into the complete GDS. With
+    ``--update-chiplet-file`` or ``--with-chiplets``, the layer that
+    ``--die-outline-layers`` names for a die is read from its GDS, and the one
+    rectangle on it gives the die's size and boundary. Every die must be named
+    there or in ``--die-outline-exempt``, which keeps the size the ``.chiplet``
+    already carries.
 
 Optional sidecars
     ``--tech-json`` for the interposer via parameters, ``--pad-locations`` for
@@ -111,7 +116,8 @@ What it produces
     * - The finalised ``.chiplet``
       - Rewritten in place with ``--update-chiplet-file``: absolute or
         board-relative layout paths, interposer dimensions taken from the
-        outline, per-die connection stacks and thicknesses, placed I/O pads.
+        outline, die dimensions taken from each die's outline layer, per-die
+        connection stacks and thicknesses, placed I/O pads.
 
 The output paths default to ``<hyp-stem>_interposer.gds`` and
 ``<hyp-stem>_complete.gds`` next to the ``.hyp``; ``-o`` and

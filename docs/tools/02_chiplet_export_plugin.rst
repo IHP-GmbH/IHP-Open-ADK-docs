@@ -210,12 +210,16 @@ Pipeline options
     connection is a Cu-pillar stack. A pre-generated GDS can be supplied through
     ``ExportOptions.cupillar_gds``, which disables the auto-extraction.
 
+.. _export_per_die_settings:
+
 Per-die settings
 ~~~~~~~~~~~~~~~~
 
-One row per die footprint. Both columns are initialised from the footprint's
-fields and written back to them on Run, so the board remains the source of
-truth and the choice survives in version control.
+One row per die footprint, with two columns, *Interconnect method* and
+*Outline layer (L/D)*. The die thickness sits in the collapsed *3D / advanced*
+pane below the table. All three are initialised from the footprint's fields and
+written back to them on Run, so the board remains the source of truth and the
+choice survives in version control.
 
 **Interconnect method** maps to the ``CONNECTION`` field. A die left on *(use
 default)* follows the assembly-wide connection stack; an explicit selection
@@ -224,6 +228,28 @@ the current PDK does not declare is kept in the list rather than dropped, so
 pointing at another checkout never silently rewrites a board's selection.
 Unknown method ids fail the export before the worker starts, rather than
 degrading somewhere downstream.
+
+**Outline layer** maps to the ``DIE_OUTLINE_LAYER`` field: the
+``LAYER/DATATYPE`` on which the die's own GDS, the file its ``GDS_FILE`` names,
+draws the die outline. Use ``39/4``, the SG13G2 ``EdgeSeal`` boundary, for an
+SG13G2 die, and ``206/0`` for a black-box die written by gds2kicad's
+``blackbox_chiplet.py``. The worker reads that layer from the die GDS, merges
+it, and takes the die's width and height in the ``.chiplet``, and its boundary
+in the complete GDS, from the one rectangle it finds. It never sizes a die from
+the footprint courtyard. The layer must merge to exactly one axis-aligned
+rectangle under the file's one top cell; anything else is refused.
+
+The field has no default. A die whose field is empty, or is not two integers from 0
+to 65535 separated by ``/``, refuses the run before any output exists, with
+``Die outline layer refused:`` followed by every die at fault and the cause.
+Two kinds of footprint need no value, and their row shows a note instead of a
+text box: a die marked with ``CHIPLET_PAD_DOMAINS``, which keeps the size
+archived with its pin list and is passed to the worker as exempt, and a
+footprint the ``.chiplet`` does not export as a die (excluded from the bill of
+materials, an ``IO_CLASS`` pad, or a ``cap_cmim`` capacitor). Every other
+footprint is exported as a die, so it needs a ``GDS_FILE`` and an outline
+layer. gds2kicad can write the field into the library footprint
+(``--die-outline-layer``, :doc:`/tools/03_gds2kicad`).
 
 **Die thickness** maps to the ``DIE_THICKNESS_UM`` field and becomes the
 ``.chiplet``'s ``components[].dimensions.thickness``. This is the z-extent of

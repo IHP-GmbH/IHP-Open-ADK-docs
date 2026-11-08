@@ -180,10 +180,24 @@ reads as seen from the interposer side. It also changes the ``ORIENTATION``
 property written into the footprint from ``face_up`` to ``flip_chip``, which is
 the value the ``.chiplet`` exporter later keys its flip-chip handling on.
 
+``--die-outline-layer N/D`` names the layer that carries the die outline, for
+example ``39/4`` for an SG13G2 die or ``206/0`` for the output of
+``blackbox_chiplet.py``. With it the courtyard (``F.CrtYd``) is the die outline
+rather than the pad bounding box, the layer is recorded as a
+``DIE_OUTLINE_LAYER`` property, and an absent, ambiguous or non-rectangular
+outline, or a pad outside it, is an error rather than a fallback. With
+``--generate-pad-review`` the outline is copied into the review GDS, so a
+curated conversion keeps it. Omit the flag to keep the pad-hull courtyard.
+
+``--die-thickness-um UM`` writes the die body thickness as a
+``DIE_THICKNESS_UM`` property. Omit it to leave the property out; the export
+then writes ``thickness: 0.0`` unless the board sets the field.
+
 Traceability properties
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Every generated footprint carries four properties recording where it came from:
+Every generated footprint carries four properties recording where it came
+from, and two more when you pass the flags that set them:
 
 .. list-table::
     :header-rows: 1
@@ -200,6 +214,12 @@ Every generated footprint carries four properties recording where it came from:
         ``TopMetal2.drawing (134/0)``.
     * - ``ORIENTATION``
       - ``face_up`` or ``flip_chip``.
+    * - ``DIE_THICKNESS_UM``
+      - The die body thickness in micrometres, only with ``--die-thickness-um``.
+    * - ``DIE_OUTLINE_LAYER``
+      - The outline layer as bare ``N/D``, for example ``39/4``, only with
+        ``--die-outline-layer`` and only once the outline on that layer was
+        read.
 
 These are not documentation. ``GDS_FILE`` is the field the KiCad fork's
 HyperLynx exporter emits on the device record, and the field the chiplet
@@ -207,15 +227,19 @@ exporter reads to fill in a die's ``layout:`` entry. It is what lets the
 downstream converter instantiate the real die layout instead of a placeholder
 rectangle, without anyone typing a path into a board. ``ORIENTATION`` feeds the
 flip-chip path in the same exporter. See :doc:`/tools/01_kicad_adk_mod`.
+``DIE_OUTLINE_LAYER`` is the field the export sizes the die from, and it is
+required there; it can equally be set on the board instead
+(:ref:`export_per_die_settings`).
 
 .. note::
-   The generated courtyard (``F.CrtYd``) is a rectangle over the **pad bounding
-   box**, not over the die outline. The chiplet exporter takes a component's
-   width and height from the courtyard when one is present, so a die whose pads
-   sit well inside its edge will export with dimensions smaller than the
-   physical die. Draw the courtyard to the die outline in the footprint editor
-   if the assembly dimensions matter, which they do for the assembly placement
-   rules.
+   Without ``--die-outline-layer``, the generated courtyard (``F.CrtYd``) is a
+   rectangle over the **pad bounding box**, not over the die outline. The
+   export does not size the die from it: the ``.chiplet`` dimensions come from
+   the outline layer of the die GDS. The courtyard is what KiCad's courtyard
+   clearance check, the design-time spacing check, measures, so a die whose
+   pads sit well inside its edge is checked as smaller than it is. Pass
+   ``--die-outline-layer``, or draw the courtyard to the die outline in the
+   footprint editor.
 
 Die to symbol
 -------------

@@ -55,8 +55,11 @@ The fields that matter:
 
 **Per-die settings.**
    One row per die footprint, initialised from the board and written back to it
-   on Run. Interconnect method and die thickness, as described in
-   :doc:`/flow/03_interposer_design`.
+   on Run: the interconnect method and the outline layer
+   (``DIE_OUTLINE_LAYER``), with the die thickness in the collapsed
+   *3D / advanced* pane. The outline layer is required: an empty one stops the
+   run. :doc:`/flow/03_interposer_design` describes the fields and
+   :ref:`export_per_die_settings` has the rules.
 
 **Interposer export report.**
    Only for a board ``interposer-pnr export`` drew against a sheet, or a draft

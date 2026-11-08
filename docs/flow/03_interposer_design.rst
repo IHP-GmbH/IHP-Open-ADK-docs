@@ -157,10 +157,11 @@ the die.
 Place the dies
 --------------
 
-Place each die footprint on the board and set two fields per die instance.
-These are per-instance fields on the board, not properties of the library
-footprint, and the export dialog reads and writes them, so the board remains
-the source of truth.
+Place each die footprint on the board and set three fields per die instance.
+These are per-instance fields on the board, and the export dialog reads and
+writes them, so the board remains the source of truth. A footprint gds2kicad
+generated with ``--die-outline-layer`` or ``--die-thickness-um`` already
+carries the matching field.
 
 .. list-table::
     :header-rows: 1
@@ -174,9 +175,18 @@ the source of truth.
         z position, the 3D bodies rendered downstream, and the pitch and
         spacing numbers the interconnect rules will check. Left unset, the die
         follows the assembly-wide default chosen in the export dialog.
+    * - ``DIE_OUTLINE_LAYER``
+      - The ``LAYER/DATATYPE`` on which the die's own GDS draws its outline:
+        ``39/4`` for an SG13G2 die, ``206/0`` for a black-box die from
+        ``blackbox_chiplet.py``. The export sizes the die from the one
+        rectangle on that layer. It is required and has no default: a die
+        without it refuses the export.
     * - ``DIE_THICKNESS_UM``
       - The physical z extent of the silicon die body, in micrometres. It lands
         in the ``.chiplet`` as ``components[].dimensions.thickness``.
+
+:ref:`export_per_die_settings` has the full rules for ``DIE_OUTLINE_LAYER``,
+including the dies that are exempt from it.
 
 ``DIE_THICKNESS_UM`` deserves a moment. It is **not** the interconnect
 thickness: the stack height of the attachment method comes from the

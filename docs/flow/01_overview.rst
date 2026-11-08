@@ -13,10 +13,13 @@ What goes in and what comes out
 The flow takes three kinds of input:
 
 **Die layouts.**
-   One GDSII per chiplet you intend to place. Only the external pad layer and
-   the text layer that names those pads are actually consumed, so a stripped
-   or black-boxed die works as well as a full one. The dies keep their own
-   PDKs, and the flow never checks their internals.
+   One GDSII per chiplet you intend to place. The flow reads three of its
+   layers: the external pad layer, the text layer that names those pads, and
+   the layer that carries the die outline, which sizes the die. Nothing else is
+   interpreted, so a die stripped down to those layers, or a black-boxed one,
+   works as well as a full one; the complete assembly GDS places whatever the
+   die GDS contains. The dies
+   keep their own PDKs, and the flow never checks their internals.
 
 **An interposer technology.**
    A KLayout technology describing the substrate the dies are mounted on:
