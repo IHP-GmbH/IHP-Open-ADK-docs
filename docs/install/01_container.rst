@@ -63,26 +63,9 @@ Build the image
 
 The ADK-Tools README, section Build, gives the whole sequence:
 
-.. code-block:: bash
-
-    # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
-    # adk-examples checkout at ADK_EXAMPLES_ROOT is at the same v2026.11 tag
-    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
-    git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git \
-        "$ADK_TOOLS_ROOT"
-    cd "$ADK_TOOLS_ROOT"
-    ./stage-sources.sh --check && ./stage-die-views.sh --check
-    nix build .#openroad .#librelane .#librelane-python .#sg13g2-pdk \
-        .#cosim-devshell .#mixsim-ngspice .#mixsim-iverilog .#sg13g2-osdi \
-        .#gtkwave .#gaw .#xschem .#vams-devshell
-    # ~1 h the first time, cached afterwards; JOBS=N overrides the default 8
-    # parallel compile jobs
-    ./build.sh
-
-    # run.sh takes the image by its ID (sha256:<64 hex>), never a tag, and has no
-    # default: read the ID of the image you just built once
-    export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
+.. literalinclude:: /install/_generated/build_recipe.sh
+    :language: bash
+    :end-before: "$ADK_TOOLS_ROOT/run.sh"
 
 The submodules under ``tools/`` are part of the version lockfile, so a clone
 without ``--recurse-submodules`` cannot build; ``git submodule update --init

@@ -2,6 +2,7 @@ The alpha release
 =================
 
 .. include:: /common.inc
+.. include:: /install/_generated/release_tag.inc
 
 .. warning::
     packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
@@ -57,20 +58,13 @@ What you need
 Keep both checkouts outside your work directory (``ADK_WORK``,
 ``~/adk-work`` by default), which the container can write: ``run.sh`` refuses
 to start when ``ADK_WORK`` holds its clone or lies inside it. The adk-examples
-checkout is the release you run, at the release tag ``v2026.11``; the
+checkout is the release you run, at the release tag |release-tag|; the
 ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
 clone, or in the directory ``STAGE_SIBLINGS`` names.
 
-.. code-block:: bash
-
-    # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
-    # adk-examples checkout at ADK_EXAMPLES_ROOT is at the same v2026.11 tag
-    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
-    git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git \
-        "$ADK_TOOLS_ROOT"
-    cd "$ADK_TOOLS_ROOT"
-    ./stage-sources.sh --check && ./stage-die-views.sh --check
+.. literalinclude:: /install/_generated/build_recipe.sh
+    :language: bash
+    :end-before: nix build
 
 The two ``--check`` calls write nothing. ``stage-sources.sh --check`` finds
 each sibling checkout and the commit ``staging.pin`` pins in it;
