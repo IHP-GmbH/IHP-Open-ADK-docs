@@ -82,8 +82,11 @@ runs one stage again: the way on is a new run.
 
 ``--tier`` is ``hermetic``, ``smoke`` or ``full`` (the default). The examples
 run ``full``; the shorter tiers are for testing the flow itself.
-``--view-store`` names the store of die views a run admits from; for a
-``system.chiplet`` it defaults to ``$ADK_DIE_VIEWS``. ``--admitted-by`` names
+``--view-store`` names the store of die views the co-simulation check reads
+(chiplet-cosim's ``select`` and the ``sim`` check kind), pinned with its tree
+digest. Dies are admitted from their contracts, not from this store. For a
+``system.chiplet`` it defaults to ``$ADK_DIE_VIEWS`` when that is set, and
+otherwise to an empty store under the verification root. ``--admitted-by`` names
 the role that admits a die built elsewhere, never a person's name. ``--skip
 CHECK`` leaves a check out, for iteration only: ``verify`` then exits 17 and
 the run is not green.
