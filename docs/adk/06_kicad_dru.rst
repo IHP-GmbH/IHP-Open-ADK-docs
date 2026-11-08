@@ -227,22 +227,26 @@ directories carry no ``__init__.py``), so put the generator's directory on
     import sys
     sys.path.insert(0, "/path/to/adk/kicad/dru")
     from generate_assembly_dru import (
-        load_defaults, parse_adapter_overrides, render_assembly_rules,
-        resolve_adapter_path,
+        _apply_overrides, load_defaults, parse_adapter_overrides,
+        render_assembly_rules, resolve_adapter_path,
     )
 
     rules = load_defaults()
-    rules.update(parse_adapter_overrides(resolve_adapter_path("intm4tm2")))
+    adapter = resolve_adapter_path("intm4tm2")
+    _apply_overrides(rules, parse_adapter_overrides(adapter), adapter, "Interposer")
     section = render_assembly_rules(rules, adapter_name="intm4tm2")
 
 ``render_assembly_rules`` renders the numbers it is given. ``adapter_name`` is
 only the provenance label in the file's ``Source:`` comment: passing it does not
 merge the adapter's overrides, so merge them yourself, as above, or the file
-claims overrides it does not contain. The CLI also refuses an override of an
-unknown key or a negative value before it merges; a generator that merges by
-hand should check the same. ``render_assembly_rules`` returns a string ready to
-append to a ``.kicad_dru``, below its ``(version 1)`` line. Its signature is
-append-only:
+claims overrides it does not contain. Merge through ``_apply_overrides``, as
+the CLI does, rather than with ``dict.update``: it refuses an override of an
+unknown key or a negative value before it merges. It is the module's only
+merge-and-validate path today, although its name marks it private.
+``parse_adapter_overrides`` is defined in ``adk_rule_params`` at the ADK root;
+the module re-exports it and puts that root on ``sys.path`` itself.
+``render_assembly_rules`` returns a string ready to append to a
+``.kicad_dru``, below its ``(version 1)`` line. Its signature is append-only:
 
 .. code-block:: python
 
