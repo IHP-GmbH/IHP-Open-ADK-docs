@@ -68,12 +68,21 @@ A contract is not a qualification of the die, not a fabrication approval, and
 not a claim that the die is compatible with any assembly. It carries no die
 LVS verdict either: that stays in the record of the run that built the die.
 
-The die flow writes contract version 1.1. A contract is read by a strict
-reader, ``chiplet_format_io`` from the reference readers of |spec-repo|,
-which versions its own boundary as a reader revision. The image
-stages reader revision 4, the one packaging-flow 0.1.0 requires; the die flow
-accepts revisions 3 and 4. A reader the die flow cannot use stops it with
-exit 11 before anything is read.
+The die flow writes contract version 1.1, or 1.2 when ``--supply-volts FILE``
+(on ``emit-ready-die``, and on ``build-die``, which forwards it) states the
+die's supply voltages. ``FILE`` is a JSON object of supply domain to nominal
+volts, for example ``{"VDD": 1.2, "VSS": 0}``. Its keys must be exactly the
+domains the power and ground terminals name, a ground domain is 0 and a power
+domain is above 0. A 1.2 contract carries them as ``supply_domains``, and the
+build record binds the file by name and digest. Both ready dies of
+``two_die_echo_shifted_gf180`` are 1.2 contracts.
+
+A contract is read by a strict reader, ``chiplet_format_io`` from the
+reference readers of |spec-repo|, which versions its own boundary as a reader
+revision. The image stages reader revision 4, the one packaging-flow 0.1.0
+requires; the die flow accepts revisions 3 and 4. Revision 4 admits a 1.2
+contract and its ``supply_domains``; revision 3 reads one and ignores them. A
+reader the die flow cannot use stops it with exit 11 before anything is read.
 
 Building a die
 --------------
