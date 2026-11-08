@@ -234,7 +234,8 @@ include, in this order:
    ``.chiplet`` readers against the staged chiplet-spec, and the plane the
    dies mount on in every IntM4TM2 ``.chiplet`` the image carries.
 #. Three checks before the tool suites: the tracked-tree digest test
-   (``nix/test_tracked_tree.py``), KLayout's build-date stamp, and
+   (``nix/test_tracked_tree.py``), KLayout's date stamp (its commit's day, not
+   the build day), and
    interposer-pnr's live single-layer route cases on the image's OpenROAD,
    where a skip counts as a failure.
 #. ADK suite: boundary manifest validation, DRC regressions through the KLayout
