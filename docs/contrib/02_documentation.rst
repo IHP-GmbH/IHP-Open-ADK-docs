@@ -44,11 +44,13 @@ the generated files: they are overwritten on every build.
     * - ``gen_build_recipe.py``
       - The image build recipe, copied from the ADK-Tools README with the
         pinned release tag, and the ``|release-tag|`` substitution.
-    * - ``gen_reference_values.py``
-      - ``_reference_values.inc``: the interposer PDK's mount plane and the
-        dimensions and die heights of the specification's worked example and
-        of the reference design. It fails when a file's plane or a die height
-        disagrees with the PDK key.
+    * - ``gen_frame_values.py``
+      - ``_frame_values.inc``: the interposer PDK's mount plane and the
+        dimensions and die z of the specification's worked example and of the
+        reference design, and the usage-class table. It fails when a file's
+        plane or a die z disagrees with the PDK key, and when the validation
+        rules on :doc:`/formats/01_chiplet` drift from the specification's
+        numbering.
 
 The generators fail the build when the source drifts from what is documented.
 Adding a rule to a deck without describing it, renaming a command line tool, or

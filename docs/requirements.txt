@@ -19,3 +19,7 @@ sphinx-autobuild==2024.10.3
 # `ARG KLAYOUT_PIP` in the adk-tools Dockerfile. The captured transcripts
 # describe the toolchain as it ships, so they have to come from the same build.
 klayout==0.30.5
+
+# Needed only by docs/scripts/gen_frame_values.py, which reads the .chiplet
+# examples with exact decimal floats.
+PyYAML==6.0.3

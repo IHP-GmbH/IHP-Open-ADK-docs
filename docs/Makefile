@@ -25,7 +25,7 @@ preprocess:
 	$(PYTHON) scripts/gen_version_matrix.py
 	$(PYTHON) scripts/gen_cli_usage.py
 	$(PYTHON) scripts/gen_build_recipe.py
-	$(PYTHON) scripts/gen_reference_values.py
+	$(PYTHON) scripts/gen_frame_values.py
 
 build:
 	$(SPHINXBUILD) -b html $(SPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html

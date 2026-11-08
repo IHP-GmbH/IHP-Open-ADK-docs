@@ -32,7 +32,7 @@ build:
       - python3 docs/scripts/gen_version_matrix.py
       - python3 docs/scripts/gen_cli_usage.py
       - python3 docs/scripts/gen_build_recipe.py
-      - python3 docs/scripts/gen_reference_values.py
+      - python3 docs/scripts/gen_frame_values.py
 
 # The documented sources are pinned submodules under src/. recursive: false
 # because ADK-Tools carries its own submodule set (the toolchain lockfile),

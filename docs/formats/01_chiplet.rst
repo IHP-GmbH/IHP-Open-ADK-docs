@@ -134,9 +134,8 @@ and ``unplaced``, exist only in a source document (see `Source documents`_).
     * - ``format_version``
       - yes
       - string
-      - Quoted ``"MAJOR.MINOR"``. An assembly is written ``"1.0"`` unless its
-        content needs ``"1.1"``. A reader accepts a higher minor of its major
-        with a warning and refuses any other major.
+      - Quoted ``"MAJOR.MINOR"``, stamped as described above. What a reader
+        accepts is `validation rule 1 <Validation rules_>`_.
     * - ``assembly``
       - yes
       - object
@@ -382,27 +381,42 @@ The division of labour is strict:
   byte-identical to each other under the parity gate.
 - **Readers expand on read**, using the discovery chain: environment variable
   first, then an upward walk for a conventional sibling checkout, then loud
-  failure naming the variable. In the ADK readers and in Chiplet Studio, a
-  set-but-invalid environment value (the marker subdirectory is missing)
-  falls through to the walk rather than winning. The KiCad export plugin makes
-  one exception: a set ``INTERPOSER_PDK_ROOT`` without
-  ``libs.tech/intm4tm2_stack.json`` is refused with
-  ``CARRIER_UNSUPPORTED_ROOT`` and never falls back to a sibling checkout,
-  because another KLayout PDK tree, the SG13G2 die PDK included, would
-  otherwise pass for the interposer.
+  failure naming the variable.
 
-Expansion is restricted to a fixed set of ecosystem roots. The ADK readers and
-the KiCad export plugin expand five: ``ADK_ROOT``, ``INTERPOSER_PDK_ROOT``,
-``INTERCONNECT_PDK_ROOT``, ``GDS_TO_KICAD_ROOT`` and ``PDK_ROOT``. Chiplet
-Studio expands those five and three more: ``GF180MCU_PDK_ROOT``,
-``CHIPLET_STUDIO_ROOT`` and ``CHIPLET_FLOW_TECH``, the last one from the
-environment only. An unknown ``${NAME}`` is treated as a typo and fails,
-rather than as licence to read arbitrary environment variables, so a file that
-uses one of Studio's extra roots opens in Studio and fails in any ADK tool
-that has to expand that path. A path that silently
-kept a literal ``${VAR}`` component would simply "not exist" downstream and
-mask the real problem, so unresolvable references abort with the variable name
-in the message.
+Expansion is restricted to a fixed set of ecosystem roots, and the readers
+differ in which roots they know and in what they do with a root that is set
+but lacks its marker subdirectory:
+
+.. list-table:: ``${VAR}`` expansion in the reference readers
+    :header-rows: 1
+    :widths: 24 40 36
+    :class: adk-wide-table
+
+    * - Reader
+      - Roots
+      - Set but invalid
+    * - ADK, ``checks/pads_vs_pillars.py`` (the only ADK tool that expands)
+      - ``ADK_ROOT``, ``INTERPOSER_PDK_ROOT``, ``INTERCONNECT_PDK_ROOT``,
+        ``GDS_TO_KICAD_ROOT``, ``PDK_ROOT``
+      - Falls through to the walk.
+    * - KiCad export plugin, ``layer_map.py`` (``hyp_to_gds`` and the
+        orchestrator)
+      - The same five
+      - ``INTERPOSER_PDK_ROOT`` without ``libs.tech/intm4tm2_stack.json`` is
+        refused with ``CARRIER_UNSUPPORTED_ROOT`` and never falls back to a
+        sibling checkout, because another KLayout PDK tree, the SG13G2 die PDK
+        included, would otherwise pass for the interposer.
+    * - Chiplet Studio, ``ChipletFormat.cpp``
+      - The same five, plus ``GF180MCU_PDK_ROOT``, ``CHIPLET_STUDIO_ROOT`` and
+        ``CHIPLET_FLOW_TECH`` (the last from the environment only)
+      - Falls through to the walk.
+
+An unknown ``${NAME}`` is treated as a typo and fails, rather than as licence
+to read arbitrary environment variables, so a file that uses one of Studio's
+extra roots opens in Studio and fails in any ADK tool that has to expand that
+path. A path that silently kept a literal ``${VAR}`` component would simply
+"not exist" downstream and mask the real problem, so unresolvable references
+abort with the variable name in the message.
 
 :doc:`/install/03_environment` lists the variables, what each root must contain
 for the discovery walk to accept it, and how to set them.
@@ -589,10 +603,11 @@ Reader behaviour that warns or falls back rather than failing:
 
 10. New files should declare ``anchor`` on every component. A reader defaults
     an absent ``anchor`` to ``bbox_center`` and warns.
-11. An absent or unresolved ``connection`` falls back to the interposer's
-    mounting plane: its ``attachment_surface_z``, else the technology
-    stackup's, else ``dimensions.thickness`` (see
-    :doc:`/formats/03_coordinate_frames`).
+11. A ``connection``, when present, should name a known interconnect method.
+    An absent or unresolved one falls back to the interposer's
+    ``attachment_surface_z``, or to ``dimensions.thickness`` when that field
+    is absent. The contract's full chain is
+    :ref:`chiplet_mounting_plane`.
 12. A reader must warn, or reject, when any ``position.x`` or ``position.y``
     exceeds 1e5 um in magnitude. This is the leak guard for un-converted
     absolute coordinates.

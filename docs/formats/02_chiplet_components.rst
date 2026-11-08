@@ -2,7 +2,7 @@ Components and optional blocks
 ==============================
 
 .. include:: /common.inc
-.. include:: /_reference_values.inc
+.. include:: /_frame_values.inc
 
 This page continues :doc:`/formats/01_chiplet` with the blocks that describe
 what an assembly places, the blocks a file may omit entirely, and a complete
@@ -161,14 +161,13 @@ interconnect method registry). Z-mounting is per-die:
 
     z_die = mounting_surface + connection.total_height()
 
-so one assembly can mix methods. In the specification's worked example, shown
-in full :ref:`below <chiplet_complete_example>`, U1 sits on ``cupillar_opt1``
-(28 + 16 = |spec-u1-stack| um) and U2 on ``vendorx_microbump``
-(18 + 6 = |spec-u2-stack| um) over the same interposer, landing at z
-|spec-u1-z| and |spec-u2-z| respectively. A die with no ``connection``, or one
-whose ``connection`` does not resolve, falls back to the interposer's mounting
-surface with zero connection height. A die with an explicit non-zero
-``position.z`` keeps that value; the reader does not recompute it.
+so one assembly can mix methods: the specification's worked example, shown in
+full :ref:`below <chiplet_complete_example>`, seats its two dies at different
+heights over the same interposer, and :ref:`chiplet_z_worked_case` does the
+arithmetic. A die with no ``connection``, or one whose ``connection`` does not
+resolve, falls back to the interposer's mounting plane with zero connection
+height. A die with an explicit non-zero ``position.z`` keeps that value; the
+reader does not recompute it.
 
 The interposer attachment_surface_z
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,17 +175,11 @@ The interposer attachment_surface_z
 ``attachment_surface_z`` is the newest field in the schema and applies to the
 interposer only. It is the z of the die-attachment surface, the BEOL top
 through the passivation opening, expressed in the interposer-local frame. It is
-the plane dies mount on:
-
-.. code-block:: text
-
-    z_die = attachment_surface_z + connection height
-
-For the IHP IntM4TM2 interposer the value is |attach-z|, the top of
-TopMetal2. It is the interposer PDK's key ``beol.attachment_surface_z_um`` in
-``libs.tech/intm4tm2_stack.json`` of |interposer-repo|, and a file on an
-IntM4TM2 interposer must declare exactly that value
-(:ref:`plane check <chiplet_plane_check>`).
+the plane dies mount on. :ref:`chiplet_mounting_plane` gives its value for the
+IHP IntM4TM2 interposer, the PDK key it comes from in |interposer-repo|, and
+what a reader uses when a file declares none. A file on an IntM4TM2 interposer
+must declare exactly the PDK's value (:ref:`plane check
+<chiplet_plane_check>`).
 
 The field exists to decouple the mount reference from ``dimensions.thickness``.
 Before it existed, ``thickness`` had to double as the mount reference, so it
@@ -194,19 +187,9 @@ could not also carry the physical substrate body. With
 ``attachment_surface_z`` present, ``thickness`` means what it means everywhere
 else, the physical z-extent of the body (silicon plus BEOL), and the body
 extends **downward** from the attachment surface while dies sit above it.
-
-The change is backward compatible. When the file declares no
-``attachment_surface_z``, consumers take the plane from the interposer
-technology's stackup, and only when that has none either do they fall back to
-``dimensions.thickness`` as the mount reference, which is its historical
-meaning. Files written before the field existed still seat their dies
-correctly.
-
-.. note::
-
-    Neither fallback ever puts dies at world z = 0. Returning 0 for an
-    unresolvable mount reference was a real bug that dropped every die to the
-    origin.
+Files written before the field existed still seat their dies on the BEOL top,
+through the fallback. The plane is not the substrate's maximum z either; see
+:ref:`chiplet_passivation_trap`.
 
 io_pads
 ~~~~~~~
@@ -235,19 +218,11 @@ interposer PDK defines.
 A usage class allows only some interface types, and the specification makes
 the pairing normative:
 
-.. list-table:: Usage class against interface type
-    :header-rows: 1
+.. csv-table:: Usage class against interface type
+    :file: tables/io_class_interface_types.csv
+    :header: "``io_class``", "Allowed ``interfaces[].type``"
     :widths: 30 70
     :class: adk-wide-table
-
-    * - ``io_class``
-      - Allowed ``interfaces[].type``
-    * - ``wire_bond``
-      - ``wire_bond``
-    * - ``flipped_bump``
-      - ``micro_bump``, ``copper_pillar``, ``solder_bump``
-    * - ``tsv_bump``
-      - ``tsv``
 
 The reference validator refuses an interface whose endpoint pads carry a class
 that does not allow its type (validation rule 8 of the specification, see
@@ -434,41 +409,39 @@ specification ships it, without its header comment:
 
 .. literalinclude:: ../../src/chiplet-spec/examples/interposer_demo_design.chiplet
     :language: yaml
-    :start-at: format_version
+    :start-at: format_version:
 
 Read it in this order:
 
-1. ``attachment_surface_z``, |attach-z|, fixes the plane dies mount on. It
-   is the interposer PDK's key, the top of TopMetal2. The interposer's own
-   ``thickness: 300.0`` is the physical body below that plane and plays no
-   part in seating the dies.
-2. U1's ``connection: cupillar_opt1`` totals 28 + 16 = |spec-u1-stack| um, so
-   its z is |spec-u1-z| = |attach-z| + |spec-u1-stack|.
-3. U2's ``connection: vendorx_microbump`` totals 18 + 6 = |spec-u2-stack| um,
-   so its z is |spec-u2-z| = |attach-z| + |spec-u2-stack|. The two dies share
-   an interposer and an assembly but not a height, which is the point of
-   making the rule per-die.
-4. The interposer's ``anchor: bbox_center`` and ``position`` at
-   ``(3246.156, 2801.000)`` place its bbox centre at half its extent, which is
-   what you expect when the origin is that same bbox's lower-left corner.
-5. Both dies use ``anchor: gds_origin`` because ``gds_to_kicad`` puts the
+1. The interposer's ``attachment_surface_z`` fixes the plane dies mount on
+   (:ref:`chiplet_mounting_plane`). Its ``dimensions.thickness`` is the
+   physical body below that plane and plays no part in seating the dies.
+2. Each die's ``connection`` names a stack under ``connection_stacks``, and
+   its ``position.z`` is the plane plus the sum of that stack's layer
+   ``height`` values. U1 and U2 name different stacks, so they share an
+   interposer and an assembly but not a height, which is the point of making
+   the rule per-die. :ref:`chiplet_z_worked_case` does the sums.
+3. The interposer's ``anchor: bbox_center`` and its ``position`` place its
+   bbox centre at half its extent, which is what you expect when the origin is
+   that same bbox's lower-left corner.
+4. Both dies use ``anchor: gds_origin`` because ``gds_to_kicad`` puts the
    footprint origin at GDS ``(0, 0)``. Their ``position`` is therefore where
    each die's GDS origin lands, not the centre of the die.
 
 The ADK reference design, ``examples/two_die_interposer/`` in |tools-repo|,
 is the same topology as actually generated by the flow. Its dimensions and
-positions are its own, not the illustrative file's; :doc:`/flow/08_reference_design`
-quotes them from the generated file. It also differs from the illustrative
-file above in three instructive ways: it carries every published connection stack
-whether used or not, it declares the ``interconnect:`` adapter block that,
-with the ``interposer:`` block both files carry, drives the DRC run, and its
-technology paths are written as ``${VAR}`` references so that the file
-survives being read from a different checkout.
+positions are its own, not the illustrative file's;
+:doc:`/flow/08_reference_design` quotes them from the generated file. It also
+differs from the illustrative file above in three instructive ways: it carries
+every published connection stack whether used or not, it declares the
+``interconnect:`` adapter block that, with the ``interposer:`` block both files
+carry, drives the DRC run, and its technology paths are written as ``${VAR}``
+references so that the file survives being read from a different checkout.
 
 .. tip::
 
     Two things in a real exported file look like noise and are not.
-    Coordinates such as |ref-interposer-x-text|, the reference design's
+    Coordinates such as |refdesign-interposer-x-text|, the reference design's
     interposer ``position.x``, are the honest float result of a bbox halving,
     not sloppy rounding, and the component order is the exporter's
     traversal order, not a meaningful sequence: readers are key driven and order
