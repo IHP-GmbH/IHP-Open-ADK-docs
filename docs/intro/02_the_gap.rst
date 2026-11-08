@@ -48,7 +48,7 @@ GDSII, and a die's pads are not footprints.
 
 **No board tool that works at these scales.** PCB tools are built around
 millimetres. An interposer is designed in micrometres, with features down to
-0.2 um on a 5 nm grid, which stresses assumptions about coordinate precision,
+about 0.2 um on a 5 nm grid, which stresses assumptions about coordinate precision,
 rendering and zone filling that hold comfortably at PCB scale.
 
 **No way back from board-level routing to fabricable geometry.** Routing
