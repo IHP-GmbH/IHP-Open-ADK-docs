@@ -79,12 +79,29 @@ The variables
       - Base IHP SG13G2 PDK
       - ``hyp_to_gds`` ``via_stack`` PCells, Chiplet Studio
       - ``/opt/adk-tools/IHP-Open-PDK``
+    * - ``GF180MCU_PDK_ROOT``
+      - GF180MCU PDK, holding ``gf180mcuD/``
+      - Chiplet Studio, for ``${GF180MCU_PDK_ROOT}`` paths in a ``.chiplet``
+        file (the GF180MCU layer sheet); GF180MCU die builds
+      - ``/opt/adk-tools/gf180mcu``
+    * - ``CHIPLET_STUDIO_ROOT``
+      - A Chiplet Studio checkout or install
+      - Chiplet Studio, for ``${CHIPLET_STUDIO_ROOT}`` paths to its bundled
+        stackups
+      - ``/opt/adk-tools/chiplet-studio``
+    * - ``CHIPLET_FLOW_TECH``
+      - A project's own technology files (``<id>/layers.lyp``,
+        ``<id>/stackup.yaml``)
+      - Chiplet Studio, for ``${CHIPLET_FLOW_TECH}`` paths; environment only,
+        never walked for
+      - Not set
     * - ``KICAD_CHIPLET_PYTHON``
       - Worker interpreter, not a root
       - Plugin orchestrator
       - ``/opt/adk-tools/venv/bin/python3``
 
-The container sets all of them, which is why nothing inside it needs
+The container sets all of them except ``CHIPLET_FLOW_TECH``, which whoever
+runs the flow sets for a project of their own, so nothing inside it needs
 configuring. It additionally sets ``ADK_TOOLS=/opt/adk-tools`` as the parent of
 all of them, and a ``KLAYOUT_PATH`` that registers the interposer KLayout
 technology.
@@ -92,10 +109,10 @@ technology.
 Marker subpaths and accepted directory names
 --------------------------------------------
 
-The walk and the environment check share one table, reproduced in the KiCad
-plugin's ``layer_map.py`` (which ``hyp_to_gds.py`` and the export dialog
-use), the ADK's ``pads_vs_pillars.py`` and Chiplet Studio's
-``ChipletFormat.cpp``:
+The walk and the environment check share one table for the five roots every
+consumer reads, reproduced in the KiCad plugin's ``layer_map.py`` (which
+``hyp_to_gds.py`` and the export dialog use), the ADK's ``pads_vs_pillars.py``
+and Chiplet Studio's ``ChipletFormat.cpp``:
 
 .. list-table::
     :header-rows: 1
@@ -125,6 +142,25 @@ The plugin's ``INTERPOSER_PDK_ROOT`` marker is the interposer PDK's stack
 descriptor because every KLayout PDK tree has a ``libs.tech/klayout``
 directory, the SG13G2 die PDK included, so that directory cannot tell an
 IntM4TM2 tree from another.
+
+Chiplet Studio's table has three more rows, which only Studio reads:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 30 34 36
+
+    * - Variable
+      - Directory names accepted by the walk
+      - Marker that must exist under the root
+    * - ``GF180MCU_PDK_ROOT``
+      - ``gf180mcu``, ``wafer-space-gf180mcu``
+      - ``gf180mcuD/libs.tech/klayout``
+    * - ``CHIPLET_STUDIO_ROOT``
+      - ``chiplet-studio``
+      - ``configs/stackups``
+    * - ``CHIPLET_FLOW_TECH``
+      - None: the environment is the only source
+      - None: the folder itself
 
 Two consequences are worth stating plainly. First, a development layout where
 all checkouts are siblings in one directory needs almost no environment: the
