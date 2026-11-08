@@ -77,30 +77,15 @@ Inside the container the plugin is already registered. It is symlinked into
 image's venv, pre-set as ``KICAD_CHIPLET_PYTHON``. Open pcbnew and go to
 *Tools > External Plugins > Chiplet Export*.
 
-On a host install there are two steps.
-
-**Make it discoverable.** Symlink or copy the ``plugins/chiplet_export``
-directory of the repository, not the repository root, into KiCad's scripting
-plugins folder:
-
-.. code-block:: bash
-
-    ln -s /path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export \
-          ~/.config/kicad/9.0/scripting/plugins/chiplet_export
-
-The version segment is the KiCad version whose configuration you are extending,
-``9.0`` for a stock KiCad 9 and ``9.99`` for the ADK fork
-(:doc:`/tools/01_kicad_adk_mod`).
-
-**Give it a worker Python.** The plugin itself runs inside KiCad's bundled
-interpreter, which has neither the KLayout module nor PyYAML. The GDS worker
-therefore runs as a subprocess under a different interpreter:
-
-.. code-block:: bash
-
-    cd /path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export
-    python3 -m venv .venv
-    .venv/bin/pip install -r requirements.txt
+On a host install there are two steps, with the commands in
+:ref:`host_plugin_install`. First, link the repository's
+``plugins/chiplet_export`` directory, not the repository root, into KiCad's
+scripting plugins folder. The version segment of that folder is the KiCad
+version whose configuration you are extending, ``9.0`` for a stock KiCad 9 and
+``9.99`` for the ADK fork (:doc:`/tools/01_kicad_adk_mod`). Second, give the
+plugin a worker Python: the plugin itself runs inside KiCad's bundled
+interpreter, which has neither the KLayout module nor PyYAML, so the GDS worker
+runs as a subprocess under a venv of its own.
 
 Then restart pcbnew. If the plugin does not appear, use
 *Tools > External Plugins > Refresh Plugins*; a registration failure prints its
@@ -610,9 +595,9 @@ foot of this page, lists every flag.
 
 .. tip::
    ``plugins/chiplet_export/tests/regenerate_wirebond_demo.py`` in the plugin
-   repository is a complete
-   worked example, and it is what the container's verify stage runs to
-   regenerate the reference design headless on every image build. See
+   repository is a complete worked example, and it is what the container's
+   verify stage runs to regenerate the reference design headless on every image
+   build. See
    :doc:`/flow/08_reference_design`.
 
 Writer parity

@@ -99,9 +99,8 @@ the pcbnew half and the plugin's worker handoff stops making sense.
 
 The versions above are the ones the image pins. They are exact rather than
 minimum because the loose alternative let behaviour-defining packages drift
-against live PyPI and silently change test outcomes. The declared minimums in
-the individual repositories can be looser (``PyQt6>=6.6.0`` for gds2kicad; the
-plugin worker's floors equal the image pins), but the pinned set is the
+against live PyPI and silently change test outcomes. Each repository declares
+its own minimums, and some are looser than these pins, but the pinned set is the
 combination that is actually verified together.
 
 Then export the interpreter so the KiCad plugin uses it:
@@ -185,6 +184,8 @@ Symbol and footprint libraries
     so trimming the global footprint table to a small useful set costs you
     nothing in this flow.
 
+.. _host_plugin_install:
+
 The chiplet export plugin
 -------------------------
 
@@ -196,8 +197,8 @@ Python package.
 .. code-block:: bash
 
     git clone https://github.com/IHP-GmbH/Chiplets-KiCad-Plugin.git
-    ln -s "$PWD/Chiplets-KiCad-Plugin/plugins/chiplet_export" \
-          ~/.config/kicad/9.0/scripting/plugins/chiplet_export
+    PLUGIN="$PWD/Chiplets-KiCad-Plugin/plugins/chiplet_export"
+    ln -s "$PLUGIN" ~/.config/kicad/9.0/scripting/plugins/chiplet_export
 
 Adjust the version directory to your KiCad installation. Restart pcbnew and the
 action appears under ``Tools > External Plugins > Chiplet Export``.
@@ -209,9 +210,8 @@ inside the plugin directory:
 
 .. code-block:: bash
 
-    cd Chiplets-KiCad-Plugin/plugins/chiplet_export
-    python3 -m venv .venv
-    .venv/bin/pip install -r requirements.txt
+    python3 -m venv "$PLUGIN/.venv"
+    "$PLUGIN/.venv/bin/pip" install -r "$PLUGIN/requirements.txt"
 
 If you would rather use the shared venv from above, set
 ``KICAD_CHIPLET_PYTHON`` to its interpreter before launching KiCad, or define
@@ -219,8 +219,8 @@ it as a KiCad project text variable. The full resolution order, including the
 fact that a plugin-local ``.venv`` outranks the project text variable, is in
 :doc:`/install/03_environment`.
 
-``hyp_to_gds.py`` is also a standalone command. Run
-``plugins/chiplet_export/hyp_to_gds.py`` with the worker interpreter directly when you want the conversion without the
+``hyp_to_gds.py`` is also a standalone command. Run ``"$PLUGIN/hyp_to_gds.py"``
+with the worker interpreter directly when you want the conversion without the
 GUI.
 
 gds2kicad
@@ -242,17 +242,18 @@ above.
 The ADK
 -------
 
-The ADK is pure Python with no build step and no installable package:
+The ADK is pure Python with no build step, and nothing in it is installed as a
+module:
 
 .. code-block:: bash
 
     git clone https://github.com/IHP-GmbH/IHP-Open-ADK.git
     export ADK_ROOT="$PWD/IHP-Open-ADK"
 
-Its dependencies are modest: ``klayout`` for the module and the executable,
-``PyYAML`` for the vendored ``.chiplet`` reader, and ``jinja2`` for the KiCad
-DRU generator. ``jsonschema`` is needed only by the test suite, which skips the
-schema checks when it is absent.
+Its dependencies are modest and declared in its ``pyproject.toml``: ``klayout``
+for the module and the executable, ``PyYAML`` for the vendored ``.chiplet``
+reader, ``jinja2`` for the KiCad DRU generator and ``jsonschema`` for the
+configuration schemas.
 
 There is no installed ``adk`` package and no ``__init__.py``, which is
 deliberate: importers add the relevant directory to ``sys.path`` and import the
@@ -273,19 +274,18 @@ source build. Build KLayout in-tree first, then the application against it:
 .. code-block:: bash
 
     git clone --recurse-submodules https://github.com/IHP-GmbH/chiplet-studio.git
-    cd chiplet-studio
-    (cd extern/klayout && ./build.sh -j8 -without-qtbinding)
-    mkdir -p build && cd build
-    cmake .. -DKLAYOUT_BUILD_DIR="$PWD/../extern/klayout/bin-release"
-    make -j8
+    (cd chiplet-studio/extern/klayout && ./build.sh -j8 -without-qtbinding)
+    cmake -S chiplet-studio -B chiplet-studio/build \
+        -DKLAYOUT_BUILD_DIR="$PWD/chiplet-studio/extern/klayout/bin-release"
+    cmake --build chiplet-studio/build -j8
 
-The binary lands at ``build/chiplet-studio``. It needs the in-tree KLayout
-libraries at run time:
+The binary lands at ``chiplet-studio/build/chiplet-studio``. It needs the
+in-tree KLayout libraries at run time:
 
 .. code-block:: bash
 
-    export LD_LIBRARY_PATH=/path/to/chiplet-studio/extern/klayout/bin-release
-    ./build/chiplet-studio path/to/assembly.chiplet
+    export LD_LIBRARY_PATH="$PWD/chiplet-studio/extern/klayout/bin-release"
+    chiplet-studio/build/chiplet-studio path/to/assembly.chiplet
 
 .. note::
     CMake bakes an absolute configuration directory into the binary. If you
@@ -350,12 +350,13 @@ that slice, a few megabytes rather than the full PDK.
 OpenROAD
 --------
 
-The image carries OpenROAD (``$OPENROAD`` points at it) because the
-interposer router drives it (:doc:`/tools/11_interposer_pnr`). On a host, the
-main flow does not need it: the ADK's ``chiplet2dbx`` exporter derives a 3Dblox
-view from a finalised ``.chiplet`` file without OpenROAD. You need a host
-OpenROAD installation only to route with ``interposer-pnr`` outside the image or
-to run OpenROAD's ``check_3dblox`` command on the exported view. Install it from
+The image carries OpenROAD (``$OPENROAD`` points at it) for the die build,
+which LibreLane and chiplet-flow drive (:doc:`/tools/12_chiplet_flow`), and for
+the interposer router (:doc:`/tools/11_interposer_pnr`). The assembly flow on a
+host does not need it: the ADK's ``chiplet2dbx`` exporter derives a 3Dblox view
+from a finalised ``.chiplet`` file without OpenROAD. You need a host OpenROAD
+installation only to build dies or route with ``interposer-pnr`` outside the
+image, or to run OpenROAD's ``check_3dblox`` command on the exported view. Install it from
 its own upstream instructions and keep it outside this environment. See
 :doc:`/adk/07_chiplet2dbx`.
 
@@ -364,8 +365,11 @@ Wiring it together
 
 Once the pieces are on disk, the tools find each other through the discovery
 chain, not through hard-coded paths. A host installation that keeps every
-checkout as a sibling in one directory is resolved automatically by the upward
-walk. Anything else needs the environment variables set. The full precedence
+checkout as a sibling in one directory is resolved by the upward walk, with one
+exception: the export plugin looks for the ADK only next to its own package
+directory, which inside the plugin repository never matches. Set ``ADK_ROOT``
+in the environment KiCad starts from, or as a KiCad project text variable.
+Anything else needs the environment variables set. The full precedence
 rules, the accepted directory names, and which lookups fail loudly rather than
 degrading silently are in :doc:`/install/03_environment`.
 

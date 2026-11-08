@@ -10,24 +10,9 @@ that state facts about that code are generated from it rather than typed.
 Getting a local build
 ---------------------
 
-.. code-block:: bash
-
-    git clone https://github.com/IHP-GmbH/IHP-Open-ADK-docs.git
-    cd IHP-Open-ADK-docs
-    git submodule update --init
-    python3 -m venv .venv
-    . .venv/bin/activate
-    pip install -r docs/requirements.txt
-    make -C docs preprocess
-    sphinx-build -b html -W --keep-going docs docs/_build/html
-
-Initialise the direct submodules only, as CI and Read the Docs do.
-``--recurse-submodules`` would also pull ADK-Tools' own submodule set, which
-this site never reads. The generators need Python 3.11 or later.
-
-``make -C docs docs`` runs the whole chain including the generators and opens
-the result. It calls ``pip``, ``python3`` and ``sphinx-build`` from ``PATH``, so
-run it with the venv activated.
+.. include:: ../../README.rst
+    :start-after: .. build-steps-start
+    :end-before: .. build-steps-end
 
 .. important::
    The build must be warning free. ``-W`` is set in the Makefile and

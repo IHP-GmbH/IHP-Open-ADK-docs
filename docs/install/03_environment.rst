@@ -205,7 +205,9 @@ walk behind:
 #. The ``ADK_ROOT`` environment variable.
 #. The ``ADK_ROOT`` KiCad project text variable.
 #. ``<plugin_dir>/../adk``, a single conventional sibling rather than a full
-   upward walk.
+   upward walk. ``<plugin_dir>`` is the resolved ``plugins/chiplet_export``
+   directory, so with the repository's layout this leg looks inside
+   ``plugins/`` and does not find a checkout. In practice set ``ADK_ROOT``.
 
 Each candidate is tested by whether ``klayout/drc/run_drc.py`` exists beneath
 it, and the failure message lists every path that was tried.

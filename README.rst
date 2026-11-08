@@ -51,25 +51,29 @@ repositories pinned as submodules under ``src/``:
 Building locally
 ================
 
-.. code:: bash
+.. build-steps-start
 
-   git clone https://github.com/IHP-GmbH/IHP-Open-ADK-docs.git
-   cd IHP-Open-ADK-docs
-   # Direct submodules only, as CI and Read the Docs do.
-   git submodule update --init
+.. code-block:: bash
 
-   python3 -m venv .venv
-   . .venv/bin/activate
-   pip install -r docs/requirements.txt
+    git clone https://github.com/IHP-GmbH/IHP-Open-ADK-docs.git
+    cd IHP-Open-ADK-docs
+    git submodule update --init
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -r docs/requirements.txt
+    make -C docs preprocess
+    sphinx-build -b html -W --keep-going docs docs/_build/html
 
-   # Regenerate the tables and command transcripts from the pinned sources,
-   # then build. The build must be warning free.
-   make -C docs preprocess
-   sphinx-build -b html -W --keep-going docs docs/_build/html
+Initialise the direct submodules only, as CI and Read the Docs do.
+``--recurse-submodules`` would also pull the submodules of ADK-Tools and
+chiplet-studio, which this site never reads. The generators need Python 3.11 or
+later. The result is in ``docs/_build/html/index.html``.
 
-Open ``docs/_build/html/index.html``. With the venv activated,
-``make -C docs docs`` runs the whole chain and opens the result. The generators
-need Python 3.11 or later.
+``make -C docs docs`` runs the whole chain, generators included, and opens the
+result. It installs the requirements with ``python3 -m pip`` and calls
+``sphinx-build`` from ``PATH``, so run it with the venv activated.
+
+.. build-steps-end
 
 Generated content
 =================
