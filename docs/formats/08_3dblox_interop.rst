@@ -2,6 +2,7 @@
 =======================
 
 .. include:: /common.inc
+.. include:: /_reference_values.inc
 
 3Dblox and ``.chiplet`` describe the same thing, a multi-die physical assembly,
 bound to two different abstraction levels. An exploration-level model and a
@@ -85,10 +86,13 @@ target and are dropped deliberately, not by accident.
       - def thickness
       - **Always** the physical thickness. Never derived from a visualisation
         stackup.
-    * - ``position`` (geometric centre)
+    * - ``position`` (the anchor reference point)
       - instance placement
-      - 3Dblox places by corner. Convert centre to corner through the outline
-        before emitting.
+      - 3Dblox places by corner. Convert the anchor point to the outline's
+        lower-left corner before emitting: half the outline back from a
+        ``bbox_center`` position, the die's GDS bbox offset from a
+        ``gds_origin`` one. See the exporter section below for what
+        ``chiplet2dbx`` does.
     * - ``orientation: face_up`` (default)
       - ``R0``
       -
@@ -238,9 +242,9 @@ The attachment surface is not the maximum z
 
 ``mounting_surface`` resolves to the technology's attachment surface, the pad
 top through the passivation opening, which is generally **not** the substrate's
-maximum z. Passivation can rise above it: on the reference interposer stackup
-the attachment surface sits at 13.83 um while the passivation top lies above
-that.
+maximum z. Passivation can rise above it: on the IntM4TM2 interposer the attachment
+surface is the top of TopMetal2, at |attach-z| um, and the passivation films
+lie above that plane.
 
 A converter that derives the die-to-substrate gap from an outline maximum z
 instead of the attachment surface disagrees with ``total_height()`` by the
@@ -252,8 +256,10 @@ Flip is a mounting intent, not a shared mirror convention
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``orientation: flip_chip``, a die mounted with its active side toward the
-substrate, corresponds to the 3Dblox flipped orientation ``MZ``. The **intent**
-maps cleanly. The 2D **realisation** does not: this ecosystem realises the flip
+substrate, corresponds to the 3Dblox flipped orientation ``MZ``, which
+``chiplet2dbx`` emits for a die without an eda-views record; a flipped die
+exported with one is placed ``MZ_MY`` instead (see below). The **intent** maps
+cleanly. The 2D **realisation** does not: this ecosystem realises the flip
 as a layout mirror when it emits 2D views, while 3Dblox composes a formal 3D
 orientation with a corner anchor.
 
@@ -338,11 +344,33 @@ build provenance. The only proposed schema hook is the component-level
 The exporter in the ADK
 -----------------------
 
-``chiplet2dbx`` implements this mapping. It emits dies as black-box
-``ChipletDef`` entries (design area, thickness, and full-outline front and back
-bond regions, with no cell LEF, DEF or Verilog), the interposer as a
-``substrate`` def, and each die's connection stack as a ``Connection`` whose
-thickness is the stack's exact total height.
+``chiplet2dbx`` implements this mapping. By default it emits dies as
+black-box ``ChipletDef`` entries (design area, thickness, and full-outline
+front and back bond regions, with no cell LEF, DEF or Verilog), the interposer
+as a ``substrate`` def, and each die's connection stack as a ``Connection``
+whose thickness is the stack's exact total height.
+
+A die given an eda-views record (``--views``) is exported with its recorded
+views instead: its def names the record's LEFs, Liberty files and DEF, and its
+bump map lists the DEF pad instances in the DEF frame. Such a die declares
+``anchor: bbox_center``, because the DEF frame is the die outline, and a
+flipped one is placed ``MZ_MY``: the target's ``MZ`` mirrors z only, so the
+flip's x mirror goes into the orientation and the bump map stays in the DEF
+frame. A flipped die with a record and a quarter turn is refused.
+
+Every instance is placed at ``position`` minus half its outline, with the
+spans swapped for a quarter turn: the exporter reads ``position`` as the
+outline centre. That is the contract's reading for ``bbox_center``. A
+``gds_origin`` die, which every die without a record must declare, is placed
+correctly only when its GDS origin sits at its outline centre, which is also
+what the bump map assumes when it adds pin offsets to the outline centre.
+
+.. warning::
+
+    For a black-box ``gds_origin`` die whose GDS origin is not its outline
+    centre, the ``.3dbx`` instance is off by that offset and the export
+    reports nothing. With a pin list, a large enough offset pushes pins
+    outside the outline and the export aborts, but a small one does not.
 
 The technology LEF the mapping lists as an external input is the one thing
 ``chiplet2dbx`` supplies itself rather than asking for: it generates one

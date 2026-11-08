@@ -133,9 +133,14 @@ Coordinate frame
 ~~~~~~~~~~~~~~~~
 
 Pin coordinates are **die-local**, y-up, relative to the die GDS origin, which is
-the ``gds_origin`` anchor of the frame contract. Both ADK consumers reject a die
-that declares ``bbox_center``, or no ``anchor`` at all, rather than silently
-misplacing its pads by the bounding-box corner offset.
+the ``gds_origin`` anchor of the frame contract, so the die's ``position``
+is where that origin lands in the assembly. Both ADK consumers reject a die
+that comes with a pin list and declares ``bbox_center``, or no ``anchor`` at
+all, rather than silently misplacing its pads by the offset between its GDS
+origin and its bbox centre. ``chiplet2dbx`` has one case the other way round:
+a die exported with an eda-views record (``--views``) is placed in the DEF
+frame of its outline and must declare ``bbox_center``
+(:doc:`/adk/07_chiplet2dbx`).
 
 The coordinates are also **unmirrored**: they describe the die as drawn, not as
 placed. Flip-chip handling belongs to the consumer, and each one applies it.
@@ -215,7 +220,7 @@ a later edit round trip through the editor.
    Take ``dbu_um`` from the die layout it was extracted from, not from a
    default. gds2kicad resolves the database unit per GDS, and a die drawn at
    0.005 um DBU with ``0.001`` recorded would place every bump 5 times too far
-   from the die centre.
+   from the die origin.
 
 What the ADK consumers read
 ---------------------------
@@ -254,7 +259,9 @@ is purely a black-box geometric view.
 
 The transform into the def-local frame is a translation and, for flip-chip
 dies, a mirror. The def-local frame is the outline rectangle
-``(0, 0)..(width, height)`` with the die centre at ``(width/2, height/2)``:
+``(0, 0)..(width, height)``, and the exporter takes the die's GDS origin to
+sit at its centre, ``(width/2, height/2)``
+(:doc:`/formats/08_3dblox_interop` describes what that assumption costs):
 
 .. code-block:: text
 
