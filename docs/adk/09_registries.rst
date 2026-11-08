@@ -99,9 +99,9 @@ the registry's own description: they mirror the IHP Cu-pillar default option in
 the bumping vendor's table, a 35 um passivation opening, 40 um edge-to-edge space
 and 75 um pitch. The interposer PDK's ``Padc_a``, ``Padc_b`` and ``Padc_e`` carry
 the same three numbers, so the interposer stage and the assembly stage of the
-two-stage DRC check the same values. The interposer stage does not emit
-``Padc.e``, which would duplicate ``Padc.b``, so pitch is checked at the
-assembly stage only; see :doc:`/adk/04_ixn_rules`.
+two-stage DRC check the same values. The interposer DRC deck does not emit
+``Padc.e``; :ref:`adk_ixn_pitch_as_spacing` explains why, and where pitch is
+checked instead.
 
 Designs using the larger Cu-pillar options are checked against this conservative
 floor, exactly as they are at the interposer stage. Option-specific adapters are

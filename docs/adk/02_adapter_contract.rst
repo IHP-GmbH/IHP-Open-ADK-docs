@@ -234,10 +234,10 @@ Shipped interconnect adapters
 
 ``ihp_cupillar`` and ``ihp_sbump`` mirror the corresponding interposer-stage
 rules, so the interposer stage and the assembly stage of the two-stage DRC
-check the same numbers. Pitch is the exception: the interposer stage does not
-emit its pitch rules (``Padc.e``, ``Padb.e``), because with these numbers they
-would duplicate the space rules, so only the assembly stage checks pitch. See
-:doc:`/adk/04_ixn_rules`.
+check the same numbers. Pitch is the exception: the interposer DRC deck does
+not emit ``Padc.e`` or ``Padb.e``, so in the two-stage DRC pitch is checked
+only at the assembly stage, by the IXN axis when it is enabled; see
+:ref:`adk_ixn_pitch_as_spacing`.
 ``vendorx_microbump`` is a demonstration adapter for a fictional non-IHP vendor:
 it exists to show that swapping the interconnect axis retightens the checks on
 the *same* interposer geometry without touching the interposer adapter.
@@ -248,8 +248,8 @@ The parameter pack
 An interconnect adapter is a **parameter pack**, nothing more. It MUST set these
 three keys on the ``interconnect_rules`` dictionary, whose defaults the deck
 loads from ``config/interconnect.json`` before the adapter runs. Set all three
-explicitly: as the next paragraphs explain, a key the adapter leaves out is not
-reported.
+explicitly: a key the adapter leaves out takes the registry default and is not
+reported (see :ref:`adk_ixn_fail_loud`).
 
 .. list-table::
     :header-rows: 1
@@ -273,13 +273,10 @@ The whole of ``pdk_adapters/interconnect/ihp_cupillar.drc``, comments aside, is:
     interconnect_rules['IXN_pitch']    = 75.0   # centre-to-centre pitch
     interconnect_rules['IXN_pad_size'] = 35.0   # passivation opening
 
-The wrapper appends a presence check per key after the adapter, but
-``config/interconnect.json`` has already seeded all three, so an adapter that
-omits a key inherits the registry default rather than aborting. The check fires
-only when that registry is absent. The deck also enforces ``IXN_pitch > IXN_pad_size`` at rule
-time, because the pitch check is implemented as a spacing of
-``pitch - pad_size``: KLayout has no native pitch check, so a pitch that does not
-exceed the pad size would produce a non-positive spacing and a meaningless rule.
+The deck enforces ``IXN_pitch > IXN_pad_size`` at rule time, because the pitch
+check is implemented as a spacing of ``pitch - pad_size``: KLayout has no
+native pitch check, so a pitch that does not exceed the pad size would produce
+a non-positive spacing and a meaningless rule.
 :doc:`/adk/04_ixn_rules` explains that conversion and its conservatism.
 
 Optional region narrowing

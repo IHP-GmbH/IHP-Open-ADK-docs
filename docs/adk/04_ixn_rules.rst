@@ -208,6 +208,8 @@ Three families of check then run.
     method demands; the adapter provides the fallback floor for everything the
     methods file does not claim, so no attachment geometry escapes checking.
 
+.. _adk_ixn_pitch_as_spacing:
+
 Why pitch is checked as a spacing
 ---------------------------------
 
@@ -237,13 +239,17 @@ names the pitch that produced it.
 
 .. note::
 
-    The interposer deck does not check its own pitch rule, ``Padc.e``, in
-    ``6_9_copperpillar.drc``. There, pitch minus pad size equals the ``Padc.b``
-    space at every Table 6.1 option, so a pitch-as-spacing check would
-    duplicate ``Padc.b`` marker for marker. The IXN axis keeps the
-    pitch-as-spacing form because per-method numbers need not have that
-    property: a method whose pitch minus pad size exceeds its spacing is
-    checked on pitch here and nowhere else.
+    The interposer DRC deck does not emit its own pitch rules, ``Padc.e`` in
+    ``6_9_copperpillar.drc`` and ``Padb.e`` in ``6_9_solderbump.drc``. There,
+    pitch minus pad size equals the matching space rule (``Padc.b`` at every
+    Table 6.1 option, ``Padb.b`` for the solder bump), so a pitch-as-spacing
+    check would duplicate the space check marker for marker. In the two-stage
+    KLayout DRC, pitch is therefore checked only at the assembly stage, by the
+    IXN axis when it is enabled. The interposer's standalone ``bump_mirror.py``
+    pre-DRC still checks ``Padc.e`` as a centre-to-centre pitch. The IXN axis
+    keeps the pitch-as-spacing form because per-method numbers need not have
+    the interposer's property: a method whose pitch minus pad size exceeds its
+    spacing is checked on pitch here and nowhere else in that DRC.
 
 The 10 nm circle tolerance
 --------------------------
@@ -269,15 +275,17 @@ without weakening the rule in any way a designer could exploit. It is the same
 constant, for the same reason, as the interposer deck's ``padc_b_tol`` on the
 Cu-pillar spacing check and ``padc_c_tol`` on the Cu-pillar enclosure check.
 
+.. _adk_ixn_fail_loud:
+
 Fail-loud validation
 --------------------
 
 The IXN axis reads numbers and die names from files that other tools wrote.
 Almost every way that input can be wrong is turned into an abort rather than a
 quiet under-check. Two cases are not: an interconnect adapter that omits a key,
-described below, and a zero or negative ``IXN_spacing``, which nothing rejects
-at run time and which therefore flags nothing (see
-:doc:`/formats/06_ixn_methods`). There are four layers of checking.
+described below, and an ``IXN_spacing`` that is zero, negative, ``null`` or not
+a number, which nothing rejects at run time and which therefore flags nothing
+(see :doc:`/formats/06_ixn_methods`). There are four layers of checking.
 
 The runner, before KLayout starts
     ``resolve_ixn_methods_path`` requires the file to exist, to parse as a JSON
@@ -291,11 +299,12 @@ The wrapper, before the rules are evaluated
     also raises if a methods file is supplied without a boundary manifest.
 
     For the adapter path, the wrapper generates a validation snippet per
-    required key and appends it to the eval chain right after the adapter. Note
-    that ``config/interconnect.json`` has already seeded all three keys before
-    any adapter is evaluated, so in a normal checkout the snippet only fires
-    when that registry is absent; an adapter that omits a key silently inherits
-    the registry default rather than aborting.
+    required key and appends it to the eval chain right after the adapter. The
+    snippet tests ``interconnect_rules.key?``, and ``config/interconnect.json``
+    has already seeded that dictionary with all three keys before any adapter
+    is evaluated. The snippet therefore fires only when that registry is absent
+    or lacks the key; in a normal checkout an adapter that omits a key silently
+    inherits the registry default rather than aborting.
 
 Die-instance resolution, in the deck
     .. code-block:: ruby
@@ -346,11 +355,11 @@ They were chosen to match the interposer technology's own defaults rather than
 to be independently reasonable. ``interposer_tech_default.json`` sets
 ``Padc_a = 35``, ``Padc_b = 40`` and ``Padc_e = 75`` from the same table. The
 interposer's ``6_9_copperpillar.drc`` checks Padc.a and Padc.b; ``Padc_e``
-carries the same 75 um but is not emitted, as the note above explains. Mapping
-``IXN_pad_size``, ``IXN_spacing`` and ``IXN_pitch`` onto those three numbers
-means the interposer stage and the assembly stage of the two-stage DRC check
-the same values, so a design cannot pass one stage and fail the other on the
-same physical constraint.
+carries the same 75 um, but that deck emits no Padc.e rule (see
+:ref:`adk_ixn_pitch_as_spacing`). Mapping ``IXN_pad_size``, ``IXN_spacing``
+and ``IXN_pitch`` onto those three numbers means the interposer stage and the
+assembly stage of the two-stage DRC check the same values, so a design cannot
+pass one stage and fail the other on the same physical constraint.
 
 The consequence for the coarser options of the table (Option 2 at 40 um opening
 and 80 um pitch, Option 3 at 45 um and 95 um) is that a design using them is
