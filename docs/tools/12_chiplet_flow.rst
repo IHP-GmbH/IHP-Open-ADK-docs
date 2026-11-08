@@ -14,8 +14,9 @@ It is for whoever designs a die that goes into an assembly. You keep authoring
 your LibreLane project as usual; the die flow adds the step that turns a
 finished run into something the rest of the flow can check.
 
-Version 0.1.0 of chiplet-flow ships in the ADK-Tools image as the
-``chiplet-die-flow`` command. It is licensed GPL-3.0-or-later.
+chiplet-die-flow 0.1.0 ships in the ADK-Tools image as the
+``chiplet-die-flow`` command, staged as
+``/opt/adk-tools/staging/chiplet-flow``. It is licensed GPL-3.0-or-later.
 
 .. warning::
    The die flow is part of the |current-status|. A ready die records the
