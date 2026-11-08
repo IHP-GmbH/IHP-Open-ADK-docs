@@ -255,10 +255,10 @@ Twenty-one decks are selectable. Twenty of them run when you pass no
       - Pad recognition consistency, metal exit length, pad to seal ring
     * - ``copperpillar``
       - 6.9.2
-      - Cu-pillar opening size, space, pitch, TopMetal2 enclosure, shape
+      - Cu-pillar opening size, space, TopMetal2 enclosure, shape
     * - ``solderbump``
       - 6.9.1
-      - Solder-bump opening size, space, pitch, enclosure, shape
+      - Solder-bump opening size, space, enclosure, shape
     * - ``ubm_floor``
       - 6.9
       - Passivation-opening width and space floor on the Cu-pillar and
@@ -406,9 +406,9 @@ are the same for all three.
    the assembly flow. It does not emit ``Padc.e``: at every bump option the
    pitch minus the pad size equals the ``Padc.b`` space, so the space check
    already covers it, and carrier pitch is checked per method by the assembly
-   DRC's IXN axis (:ref:`adk_ixn_pitch_as_spacing`). The ``Padc_e`` key stays
-   in the JSON because the Cu-pillar generator's own pre-DRC still checks
-   pitch. Several Cu-pillar rules also carry a 10 nm tolerance, because a
+   DRC's IXN axis when it is enabled (:ref:`adk_ixn_pitch_as_spacing`). The
+   ``Padc_e`` key stays in the JSON because the Cu-pillar generator's own
+   pre-DRC still checks pitch. Several Cu-pillar rules also carry a 10 nm tolerance, because a
    circle drawn exactly at the minimum measures a few nanometres short after
    256-point approximation and nanometre-grid snapping.
 
