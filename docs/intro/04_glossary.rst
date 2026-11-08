@@ -82,11 +82,11 @@ Kits and rules
         A name a rule refers to without knowing what layer implements it, such
         as ``chiplet_attachment_input``. Adapters bind these to real layers.
 
-    rule axis
-        One of the two independent groups of assembly checks. The placement axis
-        (``ASM.*``) and the interconnect axis (``IXN.*``) are selected by
-        separate adapters and neither depends on the other. Both are geometric,
-        so both sit inside :term:`assembly DRC`.
+    rule family
+        One of the two independent groups of assembly DRC rules: placement
+        (``ASM.*``) and interconnect (``IXN.*``). Each is selected by its own
+        adapter and neither depends on the other. Both are geometric, so both
+        sit inside :term:`assembly DRC`.
 
     assembly-level verification
         The checking layer whose unit is the whole assembly, above the signoff

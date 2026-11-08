@@ -96,9 +96,9 @@ The ecosystem in one line
 =========================
 
 Die GDS becomes KiCad symbols and footprints, the interposer is authored in a
-nanometre-capable KiCad fork, the board is exported as a ``.chiplet`` assembly
-plus a HyperLynx netlist, the netlist becomes the assembly GDS, the assembly
-is checked by the ADK rule decks, and the result is inspected in 3D.
+sub-micrometre-capable KiCad fork, the board is exported as a ``.chiplet``
+assembly plus a HyperLynx netlist, the netlist becomes the assembly GDS, the
+assembly is checked by the ADK rule decks, and the result is inspected in 3D.
 In a packaging-flow run, assembly LVS also checks the placed assembly's
 connectivity against its declared nets.
 :doc:`intro/03_ecosystem` names every repository and what it owns.

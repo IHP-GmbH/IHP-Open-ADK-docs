@@ -145,10 +145,10 @@ Who owns which rules
     * - Can these vias and pads be built on the interposer
       - The interposer PDK.
     * - Is this bump pitch achievable by this attachment method
-      - The interconnect PDK provides the numbers, the ADK's IXN axis applies
+      - The interconnect PDK provides the numbers, the ADK's IXN rules apply
         them to the assembly.
     * - May this die sit here, at this spacing
-      - The ADK's ASM axis.
+      - The ADK's ASM rules.
     * - Do the pads of this die land on the pillars actually drawn
       - The ADK's manifest-level check.
 
