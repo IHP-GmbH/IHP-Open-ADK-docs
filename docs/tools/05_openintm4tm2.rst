@@ -401,14 +401,16 @@ in its own description:
 are the same for all three.
 
 .. note::
-   Two of these rules are checked here even though the source layout rules mark
-   them "not checked during DRC": ``Padc.e`` (pitch) and ``Padc.f`` (shape).
-   They are checked anyway as safeguards for the assembly flow. KLayout has no
-   native pitch check, so pitch is converted to a spacing as
-   ``min_space = min_pitch - min_pad_size``, which is conservative for pads
-   larger than ``Padc_a``. Several Cu-pillar rules also carry a 10 nm tolerance,
-   because a circle drawn exactly at the minimum measures a few nanometres short
-   after 256-point approximation and nanometre-grid snapping.
+   The source layout rules mark ``Padc.e`` (pitch) and ``Padc.f`` (shape) "not
+   checked during DRC". This deck checks ``Padc.f`` anyway, as a safeguard for
+   the assembly flow. It does not emit ``Padc.e``: at every bump option the
+   pitch minus the pad size equals the ``Padc.b`` space, so the space check
+   already covers it, and carrier pitch is checked per method by the assembly
+   DRC's IXN axis (:ref:`adk_ixn_pitch_as_spacing`). The ``Padc_e`` key stays
+   in the JSON because the Cu-pillar generator's own pre-DRC still checks
+   pitch. Several Cu-pillar rules also carry a 10 nm tolerance, because a
+   circle drawn exactly at the minimum measures a few nanometres short after
+   256-point approximation and nanometre-grid snapping.
 
 Testing
 ~~~~~~~

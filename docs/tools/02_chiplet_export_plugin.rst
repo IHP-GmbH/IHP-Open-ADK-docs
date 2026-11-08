@@ -572,7 +572,7 @@ in KLayout and you can see where each die sits.
    That layer is read by **no** rule. It carries no contract, it cannot produce
    a false clean result, and it cannot alias a fabrication layer. The manifest
    remains the sole assembly contract. The option is off by default so the
-   production GDS carries no synthetic geometry, and painting is idempotent: the
+   exported GDS carries no synthetic geometry, and painting is idempotent: the
    layer is cleared in the top cell before each pass, so repeated writes do not
    accumulate duplicate shapes.
 
