@@ -171,6 +171,9 @@ Stage 3: the KLayout assembly DRC
         --interconnect-methods outputs/layout/two_die_interposer_complete.ixn_methods.json \
         --run_dir /tmp/adk_drc
 
+In the tools image, ``adk-drc`` takes the place of ``python3
+klayout/drc/run_drc.py`` with the same arguments.
+
 This is the full rule set: the |asm-rule-count| placement rules on one axis and
 the |ixn-rule-count| interconnect rule forms on the other. The placement axis is
 always on and selected by the interposer adapter. The interconnect axis is
