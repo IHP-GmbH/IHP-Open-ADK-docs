@@ -86,9 +86,11 @@ Top level
 Method entries
 ~~~~~~~~~~~~~~
 
-Every entry under ``methods`` must carry all four keys. This is enforced twice:
-by the schema, and again by ``adk_assembly.drc``, which raises by name on the
-first missing key rather than letting a ``nil`` reach a rule.
+Every entry under ``methods`` must carry all four keys. The schema says so,
+and at run time ``adk_assembly.drc`` enforces it, raising by name on the first
+missing key rather than letting a ``nil`` reach a rule. The value constraints
+in the table below are the schema's; at run time only
+``IXN_pitch > IXN_pad_size`` is enforced (see `Version policy`_).
 
 .. list-table::
    :header-rows: 1
@@ -123,8 +125,9 @@ negative spacing that silently checks nothing.
 The schema file
 ~~~~~~~~~~~~~~~
 
-``config/schema/ixn_methods.schema.json``, validated against the shipped
-sidecars in CI so the committed schema cannot drift from the data.
+``config/schema/ixn_methods.schema.json``. The ADK test suite validates the
+sidecar its resolved-v2 entry writes against it. No tool applies it at run
+time.
 
 .. literalinclude:: /../src/IHP-Open-ADK/config/schema/ixn_methods.schema.json
     :language: json
@@ -201,8 +204,8 @@ The derivation degrades rather than guesses, at every step:
 * A manifest entry with a missing or malformed number is skipped, again leaving
   it to the adapter.
 * A non-positive number is skipped, because the schema requires values greater
-  than zero and one bad entry would make ``run_drc.py`` reject the whole
-  sidecar.
+  than zero. Nothing downstream would catch it: ``run_drc.py`` does not apply
+  the schema.
 * When nothing is derivable, no file is written at all and the DRC runs exactly
   as it did before this refinement existed.
 
@@ -256,8 +259,19 @@ Version policy
 ``run_drc.py`` pins ``schema`` and ``version`` with exact string matches, the
 same fail-loud policy as the boundary manifest, and for the same reason: the
 deck JSON-parses the file blind, so a stale or foreign sidecar has to be
-rejected by the runner or not at all. Per-method key presence is validated by
-the deck, and the numeric values are validated by the schema.
+rejected by the runner or not at all. That is all the runner checks. The deck
+then checks that every method entry carries the four keys and that
+``IXN_pitch`` exceeds ``IXN_pad_size``, and converts each value with Ruby's
+``to_f`` without checking it further.
+
+.. warning::
+   Nothing at run time checks that ``IXN_spacing`` is greater than zero. A
+   hand-written or edited sidecar with ``IXN_spacing`` set to ``0``, a
+   negative number, ``null`` or a string that does not read as a number runs a
+   spacing check that can never fail, so that method's
+   ``IXN.b.<method>`` passes on any layout, and its ``IXN.x`` pairs fall back
+   to the other method's spacing. Validate a sidecar you did not get from the
+   exporter against the schema before you pass it.
 
 .. tip::
    If the DRC report suddenly shows ``IXN.b`` instead of ``IXN.b.<method>``, the
