@@ -20,10 +20,9 @@ prints STOP, and you go no further.
 .. note::
     The examples are at alpha maturity. A page marked Draft has not yet been
     read against a run of this release by hand, and the dies are built but not
-    qualified.
-    A verdict covers only the checks that ran. No assembly here has been
-    fabricated, and no verdict is a sign-off for fabrication. Run times were
-    measured on one computer and are a guide only.
+    qualified. A verdict covers only the checks that ran. No assembly here has
+    been fabricated, and no verdict is a sign-off for fabrication. Run times
+    were measured on one computer and are a guide only.
 
 The examples in this release
 ----------------------------
