@@ -84,8 +84,7 @@ die's supply voltages. ``FILE`` is a JSON object of supply domain to nominal
 volts, for example ``{"VDD": 1.2, "VSS": 0}``. Its keys must be exactly the
 domains the power and ground terminals name, a ground domain is 0 and a power
 domain is above 0. A 1.2 contract carries them as ``supply_domains``, and the
-build record binds the file by name and digest. Both ready dies of
-``two_die_echo_shifted_gf180`` are 1.2 contracts.
+build record binds the file by name and digest.
 
 A contract is read by a strict reader, ``chiplet_format_io`` from the
 reference readers of |spec-repo|, which versions its own boundary as a reader
