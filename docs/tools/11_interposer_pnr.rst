@@ -11,8 +11,9 @@ Each step is one subcommand that reads files and writes one, so
 refusal. You can also run them by hand.
 
 Version 0.5.0 ships in the ADK-Tools image as the ``interposer-pnr`` command.
-It is licensed GPL-3.0-or-later; the schema of the record ``signoff --check``
-writes is Apache-2.0.
+It is licensed GPL-3.0-or-later. The shipped routing descriptors, the vendored
+``.chiplet`` reader and the schema of the record ``signoff --check`` writes are
+Apache-2.0.
 
 .. warning::
    Automated 2.5D place and route in the ADK is a proof of concept, at alpha
