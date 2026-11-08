@@ -5,7 +5,7 @@ Designing the interposer
 
 The interposer is authored as a KiCad board: a few metal layers, vias between
 them, pads at the top for the dies and pads at the edge for the outside world,
-and routing in between, at feature sizes three orders of magnitude below a PCB.
+and routing in between, at feature sizes nearly three orders of magnitude below a PCB.
 That scale is why the flow uses the ADK KiCad build rather than upstream KiCad.
 This page covers setting up the board,
 placing the dies, routing, and running the design-time assembly checks.
