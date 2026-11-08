@@ -472,8 +472,8 @@ to their identifying phrase.
 
 ``ADK DRC engine failure: the deck exited <n> before a verdict``
     KLayout exited non-zero, usually because the deck raised one of the errors
-    above. The run exits ``2``. The deck's own message is on the console just
-    before this line.
+    above. The run exits ``2``. The deck's own message is on the console above
+    the runner's ``Assembly DRC failed with exit code <n>`` line.
 
 ``ADK DRC engine failure: result database not generated at <path>``
     KLayout exited zero but wrote no report. The run exits ``2``. Check the
