@@ -34,7 +34,7 @@ localized backside etch (LBE).
     :width: 70%
 
     Cross-section of the IntM4TM2 interposer: four aluminium metals (Metal4,
-    Metal5, TopMetal1, TopMetal2) on a high-resistivity silicon carrier, with the
+    Metal5, TopMetal1, TopMetal2) on a silicon carrier, with the
     thin-film resistor between Metal4 and Metal5, the MIM capacitor between Metal5
     and TopMetal1, and the top passivation. The dielectric constants and layer
     thicknesses are the typical-corner values published in the PDK extraction
@@ -860,19 +860,25 @@ separately for the tools that need it:
       - Notes
     * - ``libs.tech/openems/openems_intm4tm2/workflow/INTM4TM2.xml``
       - openEMS
-      - 300 um Si carrier (default)
+      - 250 um Si carrier at 2.0 S/m (default)
     * - ``libs.tech/openems/openems_intm4tm2/workflow/INTM4TM2_nosub.xml``
       - openEMS
       - No lossy substrate, 2 um SiO2 spacer
     * - ``libs.tech/palace/workflow/INTM4TM2.xml``
       - Palace
-      - 300 um Si carrier, backside ground sheet
+      - 250 um Si carrier at 2.0 S/m, backside ground sheet
     * - ``libs.tech/palace/workflow/INTM4TM2_nosub.xml``
       - Palace
       - No substrate
     * - ``libs.tech/parasitics/itf/intm4tm2_typ.itf``
       - RC extraction
       - Typical corner, single stack
+
+The carrier thickness in the substrate variants is ``substrate.thickness_um``
+of ``libs.tech/intm4tm2_stack.json``, and the PDK's own tests fail when the
+two disagree. The carrier conductivity is the public SG13G2 substrate value,
+because the interposer carrier's resistivity is not specified yet. Change the
+``Substrate`` conductivity in the XML if your carrier is high-resistivity.
 
 ``libs.tech/ngspice/models/`` carries the ``cap_cmim`` subcircuit and its
 corners, ported from the SG13G2 open PDK and trimmed to the devices the
