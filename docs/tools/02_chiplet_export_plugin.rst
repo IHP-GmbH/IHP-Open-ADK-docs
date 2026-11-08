@@ -125,9 +125,10 @@ as something missing.
 Output directory
 ~~~~~~~~~~~~~~~~
 
-Where the tree above is written. Defaults to the directory holding the loaded
-``.kicad_pcb``. In a scaffolded project you point it at the sibling
-``outputs/``.
+Where the tree above is written. When the loaded ``.kicad_pcb`` sits in a
+directory named ``kicad`` (in any case) that has a sibling ``outputs/``, as in a
+project ``adk-new-project`` scaffolded, the default is that ``outputs/``.
+Otherwise it is the directory holding the board.
 
 Outputs
 ~~~~~~~
@@ -135,7 +136,7 @@ Outputs
 The canonical ``.chiplet`` and the interposer GDS are **not** toggles. The
 worker writes the GDS on every run regardless, and the ``.chiplet`` is unusable
 until the same run finalises it, so an opt-out could only throw away work
-already done. Two things are optional:
+already done. The extras are optional:
 
 *Complete assembly GDS* (default off)
     The interposer plus every chiplet instance flattened into one layout. This
@@ -144,6 +145,23 @@ already done. Two things are optional:
 
 *Annotate chiplet boundaries* (default off)
     A viewer-only annotation layer, discussed below.
+
+*Insert metal density fill (interposer GDS)* (default off)
+    Stamps dummy metal on Metal4, Metal5, TopMetal1 and TopMetal2 with the
+    interposer PDK's own fill engine, to meet the IntM4TM2 density rules. It
+    needs the PDK's fill engine and the ``klayout`` binary on ``PATH``, honours
+    keep-outs drawn on the board's ``NoMetFiller`` and ``<metal>.nofill``
+    layers, and adds ``layout/<board>_interposer.fill_coverage.json`` and
+    ``reports/<board>_fill_density.json`` to the outputs. The complete GDS is
+    left unfilled.
+
+*Fill mode* (enabled with the fill)
+    *Single pass (fast)*, the default, stamps each metal once. *Density closure
+    (iterative, M4/M5)* repeats Metal4 and Metal5 against the density deck
+    until they are in band.
+
+:ref:`hyp_to_gds_fill_seal_ring` covers the fill and the seal ring, which the
+dialog does not offer; headless, ``chiplet-export --seal-ring`` draws it.
 
 The HyperLynx ``.hyp`` is always staged into the output directory next to the
 ``.chiplet``, so a downstream tool can consume the exact netlist the layout was
@@ -384,8 +402,9 @@ The sequence
 5. Write the HyperLynx ``.hyp`` and the intermediate ``.chiplet`` into the
    workspace using the Python ports of the two C++ exporters.
 6. Auto-extract, from the board, whatever was not supplied explicitly: the I/O
-   pads, the per-die pad locations that drive Cu-pillar generation, the per-die
-   ``CONNECTION`` methods and the per-die ``DIE_THICKNESS_UM`` values.
+   pads, the no-fill keep-outs, the ``cap_cmim`` devices, the per-die pad
+   locations that drive Cu-pillar generation, the per-die ``CONNECTION``
+   methods and the per-die ``DIE_THICKNESS_UM`` values.
 7. Validate the per-die method ids against the interconnect PDK manifest.
 8. Only now stage the intermediate ``.chiplet`` and the ``.hyp`` into the output
    directory, so a validation failure leaves no partial artefact behind.
@@ -424,16 +443,33 @@ to ``hyp_to_gds.py``. The mapping is direct:
       - ``--with-chiplets --complete-output layout/<board>_complete.gds``
     * - ``annotate_boundaries``
       - ``--annotate-boundaries``
+    * - ``insert_metal_fill`` with ``fill_mode``
+      - ``--insert-metal-fill --fill-mode <mode>``
+    * - ``seal_ring``
+      - ``--seal-ring``
+    * - ``nofill_regions_json``
+      - ``--nofill-regions <path>``
     * - ``emit_chiplet``
-      - ``--update-chiplet-file <output-dir>/<board>.chiplet``
+      - ``--update-chiplet-file <path>``: ``<output-dir>/<board>.chiplet``, or
+        the staging file ``run_export`` passes instead
+    * - ``system_chiplet``
+      - ``--system-chiplet <path>``
+    * - ``die_layouts_json``
+      - ``--die-layouts <path>``
     * - ``connection_type``
       - ``--connection-type <id>``
     * - ``die_connections``
       - ``--die-connections REF=method,...``
     * - ``die_thicknesses``
       - ``--die-thicknesses REF=um,...``
+    * - ``die_outline_layers``
+      - ``--die-outline-layers=REF=L/D,...``
+    * - ``die_outline_exempt``
+      - ``--die-outline-exempt=REF,...``
     * - ``io_pads_json``
       - ``--io-pads <path>``
+    * - ``cmim_devices_json``
+      - ``--cmim-devices <path>``
     * - ``cupillar_gds``
       - ``--cupillar-gds <path>``
     * - ``pad_locations``
@@ -441,6 +477,13 @@ to ``hyp_to_gds.py``. The mapping is direct:
 
 ``export_report`` has no runner flag. The writers apply it in steps 5 and 6,
 so the ``io_pads.json`` the worker reads is already in the planner's names.
+
+The two outline flags carry what the step 1 preflight returned, not the raw
+options: a non-empty ``die_outline_layers`` replaces the board's
+``DIE_OUTLINE_LAYER`` fields wholesale before the preflight checks it, and
+``die_outline_exempt`` is always derived from the ``CHIPLET_PAD_DOMAINS``
+markers, whatever a caller set. Both use the ``--flag=VALUE`` form, because a
+reference may start with ``-``.
 
 The ``-o`` flag is unconditional for a specific reason: without it the worker
 writes the interposer GDS next to the ``.hyp``, which lives in the workspace
