@@ -147,21 +147,15 @@ already done. The extras are optional:
     A viewer-only annotation layer, discussed below.
 
 *Insert metal density fill (interposer GDS)* (default off)
-    Stamps dummy metal on Metal4, Metal5, TopMetal1 and TopMetal2 with the
-    interposer PDK's own fill engine, to meet the IntM4TM2 density rules. It
-    needs the PDK's fill engine and the ``klayout`` binary on ``PATH``, honours
-    keep-outs drawn on the board's ``NoMetFiller`` and ``<metal>.nofill``
-    layers, and adds ``layout/<board>_interposer.fill_coverage.json`` and
-    ``reports/<board>_fill_density.json`` to the outputs. The complete GDS is
-    left unfilled.
+    Stamps dummy metal on the interposer GDS with the interposer PDK's own
+    fill engine, to meet the IntM4TM2 density rules.
 
 *Fill mode* (enabled with the fill)
-    *Single pass (fast)*, the default, stamps each metal once. *Density closure
-    (iterative, M4/M5)* repeats Metal4 and Metal5 against the density deck
-    until they are in band.
+    *Single pass (fast)*, the default, or *Density closure (iterative, M4/M5)*.
 
-:ref:`hyp_to_gds_fill_seal_ring` covers the fill and the seal ring, which the
-dialog does not offer; headless, ``chiplet-export --seal-ring`` draws it.
+:ref:`hyp_to_gds_fill_seal_ring` covers what the fill needs, the keep-out
+layers, the files it adds and the seal ring, which the dialog does not offer;
+headless, ``chiplet-export --seal-ring`` draws it.
 
 The HyperLynx ``.hyp`` is always staged into the output directory next to the
 ``.chiplet``, so a downstream tool can consume the exact netlist the layout was

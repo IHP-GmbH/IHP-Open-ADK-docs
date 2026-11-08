@@ -423,9 +423,13 @@ not converge or ends out of band is a warning (``Warning: metal fill density
 concern``), not a refusal.
 
 An unavailable fill engine fails the run, and so does an engine that stops,
-reported as ``ERROR: metal fill stopped:`` with the reason. A missing
-``klayout`` binary does not: the log says ``Metal fill skipped`` and the export
-succeeds with an unfilled GDS, so check the log when you asked for fill.
+reported as ``ERROR: metal fill stopped:`` with the reason.
+
+.. warning::
+   A missing ``klayout`` binary does not fail the run. The log says ``Metal
+   fill skipped``, the export succeeds with an unfilled interposer GDS, and
+   the fill entries in ``MANIFEST.md`` stay unticked. Check for both when you
+   asked for fill.
 
 To keep fill away from an area, draw it on a board user layer named
 ``NoMetFiller`` (every metal) or ``M4.nofill``, ``M5.nofill``, ``TM1.nofill``
