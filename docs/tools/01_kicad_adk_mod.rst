@@ -148,8 +148,8 @@ micrometre features.
 The first is decoration sizing, in ``pcbnew/pcb_painter.cpp``. The locked-item
 shadow margin defaults to four times the silkscreen line thickness, and the hole
 wall thickness to the plating thickness times an advanced-config multiplier.
-Both are absolute lengths. Against sub-micrometre geometry they swamp the object they
-decorate. The fork clamps each to a fraction of the item it is drawn on: the via
+Both are absolute lengths. Against sub-micrometre geometry they swamp the object
+they decorate. The fork clamps each to a fraction of the item it is drawn on: the via
 shadow to a quarter of the via width, the hole wall to a quarter of the drill
 size, the track shadow to the track width. At PCB scale the clamps never
 trigger, so standard boards look exactly as before.

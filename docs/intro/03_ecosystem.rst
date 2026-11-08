@@ -109,8 +109,9 @@ Two artefacts hold this together.
 The ``.chiplet`` file is the **pivot format**. It records where every component
 sits in one shared frame, how each die is mounted in z, its orientation, and
 which artwork it refers to. Every tool downstream of layout writes it, reads
-it or takes its flags from it, and it remains the authoritative placement source even when a derived view, such as a
-3Dblox assembly, is exported from it.
+it or takes its flags from it, and it remains the authoritative placement
+source even when a derived view, such as a 3Dblox assembly, is exported from
+it.
 
 The ``.lyp`` layer property files are the **shared layer source of truth**. The
 interposer PDK owns them, and the converter, the layout tool and the viewer all
