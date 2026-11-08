@@ -89,8 +89,8 @@ Method entries
 Every entry under ``methods`` must carry all four keys. The schema says so,
 and at run time ``adk_assembly.drc`` enforces it, raising by name on the first
 missing key rather than letting a ``nil`` reach a rule. The value constraints
-in the table below are the schema's; at run time only
-``IXN_pitch > IXN_pad_size`` is enforced (see `Version policy`_).
+in the table below are the schema's; of the numbers, only
+``IXN_pitch > IXN_pad_size`` is enforced at run time (see `Version policy`_).
 
 .. list-table::
    :header-rows: 1
@@ -260,9 +260,10 @@ Version policy
 same fail-loud policy as the boundary manifest, and for the same reason: the
 deck JSON-parses the file blind, so a stale or foreign sidecar has to be
 rejected by the runner or not at all. That is all the runner checks. The deck
-then checks that every method entry carries the four keys and that
-``IXN_pitch`` exceeds ``IXN_pad_size``, and converts each value with Ruby's
-``to_f`` without checking it further.
+then checks that every method entry carries the four keys, that every die in
+``dies`` is a boundary-manifest instance and that ``IXN_pitch`` exceeds
+``IXN_pad_size``, and converts each value with Ruby's ``to_f`` without checking
+it further.
 
 .. warning::
    Nothing at run time checks that ``IXN_spacing`` is greater than zero. A
