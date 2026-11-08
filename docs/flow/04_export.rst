@@ -411,12 +411,12 @@ Checking the export
 ``NOT RUN`` usually means the complete assembly GDS was not enabled, or the
 KLayout command line is unavailable.
 
-**Read ``MANIFEST.md``.** Every file the run can produce is listed, ticked
-``[x]`` when it is on disk. An unticked ``[ ]`` entry is either an output the
-run did not ask for, such as the fill files without fill, the pillar files
-without a Cu-pillar stack, or the complete GDS, its sidecars and the assembly
-DRC report with the complete GDS off, or a stage that failed quietly. Compare
-the unticked entries against the options you ran with.
+**Read ``MANIFEST.md``.** The ``.chiplet``, every ``layout/`` product and every
+report is listed, ticked ``[x]`` when it is on disk. An unticked ``[ ]`` entry
+is either an output the run did not ask for, such as the fill files without
+fill, the pillar files without a Cu-pillar stack, or the complete GDS, its
+sidecars and the assembly DRC report with the complete GDS off, or a stage that
+failed quietly. Compare the unticked entries against the options you ran with.
 
 **Check the ``.chiplet`` was finalised.** No ``_metadata`` block should remain.
 
@@ -462,10 +462,14 @@ Common failures
     footprint and the cause.
 
 ``Die outline layer refused: U1, U2: ...``
-    A die has no ``DIE_OUTLINE_LAYER``, or its value is not ``LAYER/DATATYPE``.
-    Set it in the dialog's *Outline layer* column or on the footprint
-    (``39/4`` for an SG13G2 die). The message lists every die at fault, so
-    one run reports them all.
+    The message names every footprint at fault and its cause, so one run
+    reports them all. A missing or malformed ``DIE_OUTLINE_LAYER`` is fixed in
+    the dialog's *Outline layer* column or on the footprint (``39/4`` for an
+    SG13G2 die). A part that is not a die, such as a resistor or a connector,
+    has no ``GDS_FILE`` and no dialog row: set *Exclude from bill of materials*
+    on its symbol, or give it a ``GDS_FILE`` if it is a die. A reference two
+    parts share is fixed by renaming one. :ref:`export_per_die_settings` has
+    the rules.
 
 ``Attach frame refused: ...``
     The worker could not read the mount plane from the interposer PDK, which
@@ -497,6 +501,11 @@ No Cu pillars in the rendered assembly
 A die exported with ``thickness: 0.0``
     ``DIE_THICKNESS_UM`` was never set on that die. The export names every die
     that ships a zero in its warnings.
+
+``Export report refused: export report ...``
+    The file given as the export report cannot be read, or is not a report
+    ``interposer-pnr export`` writes. Give the report written with this board;
+    see :ref:`chiplet_export_report`.
 
 ``IO pad carriers refused: carrier pad J1 is linked to a sheet symbol, ...``
     The board was drawn by ``interposer-pnr export`` against a sheet, or is a
