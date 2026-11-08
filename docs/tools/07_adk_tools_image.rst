@@ -233,9 +233,13 @@ include, in this order:
    tree reads back, the pin set the image is labelled with, the vendored
    ``.chiplet`` readers against the staged chiplet-spec, and the plane the
    dies mount on in every IntM4TM2 ``.chiplet`` the image carries.
+#. Three checks before the tool suites: the tracked-tree digest test
+   (``nix/test_tracked_tree.py``), KLayout's build-date stamp, and
+   interposer-pnr's live single-layer route cases on the image's OpenROAD,
+   where a skip counts as a failure.
 #. ADK suite: boundary manifest validation, DRC regressions through the KLayout
-   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs first
-   of the suites.
+   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs before
+   the other tool suites.
 #. gds2kicad suite: footprint and symbol writers, blackbox chiplets, and the
    GUI pieces under the offscreen Qt platform.
 #. The reference design's gds2kicad prior steps: its footprints and symbols are
@@ -258,6 +262,12 @@ include, in this order:
    ships the tracked tree, not the regeneration, so without this check a stale
    reference design could ship on a green build. It also guards determinism
    between the GUI and headless paths.
+#. Carrier foundry DRC: the interposer PDK's own DRC deck runs on the
+   regenerated carrier, and its findings are compared against a committed
+   baseline.
+#. chiplet-die-flow's die-view XOR tests under the image's KLayout, which also
+   check that the ``klayout`` binary is the version of the Python ``klayout``
+   module.
 #. Chiplet Studio full suite through ``ctest``, with the regenerated
    ``.chiplet`` handed to the gated tests.
 #. Plugin suite, with ``pcbnew`` present so the env-gated byte-exact writer
