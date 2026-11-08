@@ -240,23 +240,23 @@ include, in this order:
    GUI pieces under the offscreen Qt platform.
 #. The reference design's gds2kicad prior steps: its footprints and symbols are
    reproduced from the shipped die GDS and pin list and diffed against the
-   committed library, so an upstream change that silently alters the demo
+   committed library, so an upstream change that silently alters its
    artefacts fails before they reach the board.
 #. Interposer PDK suite (bump mirror PCell regressions) and interconnect PDK
    suite (manifest contract, schema, 3D body generator). ``jsonschema`` is in
    the verify venv, so the schema check actually executes.
-#. The tracked demo outputs are snapshotted and the output tree is then
-   cleared, so the regeneration writes into an empty directory. Without the
-   clear, a regeneration would overwrite in place and any tracked file the
+#. The reference design's tracked outputs are snapshotted and the output tree
+   is then cleared, so the regeneration writes into an empty directory. Without
+   the clear, a regeneration would overwrite in place and any tracked file the
    current pipeline no longer emits would survive unnoticed.
-#. The two-die interposer design is regenerated headless: ``pcbnew`` to the
+#. The reference design is regenerated headless: ``pcbnew`` to the
    writers to ``hyp_to_gds`` to the assembly DRC. The DRC is required by
    default, so a combination that breaks assembly DRC fails the image build.
 #. Reproducibility gate: the shipped deliverables must equal the fresh
    regeneration, compared on die geometry, pillar manifests, boundary geometry
-   and a timestamp-normalised geometry digest of the interposer GDS. The
-   clone ships the tracked tree, not the regeneration, so without this check
-   a stale demo could ship on a green build. It also guards determinism
+   and a timestamp-normalised geometry digest of the interposer GDS. The clone
+   ships the tracked tree, not the regeneration, so without this check a stale
+   reference design could ship on a green build. It also guards determinism
    between the GUI and headless paths.
 #. Chiplet Studio full suite through ``ctest``, with the regenerated
    ``.chiplet`` handed to the gated tests.
@@ -377,8 +377,8 @@ Depending on how old the clone is, one of these one-time cleanups may apply:
   rebuild once, because ``JOBS`` keys those layers. After that the cache
   behaves normally again.
 - A ``/work/example`` from an older image stays as it is. Older images seeded
-  it with the demo; the runtime image now carries no demo, and the worked
-  examples come from adk-examples.
+  it with the reference design; the runtime image now carries none, and the
+  worked examples come from adk-examples.
 
 Testing one tool at a different revision
 ----------------------------------------

@@ -38,7 +38,7 @@ assembly DRC passes.
 ------------------
 
 ``adk-smoke`` needs a board, and the runtime image carries none. Copy the
-two-die test design from the clone into your work directory once, then run the
+reference design from the clone into your work directory once, then run the
 test:
 
 .. code-block:: bash
@@ -74,9 +74,9 @@ The same design opens in the board tool with
 
     "$ADK_TOOLS_ROOT/run.sh" adk-new-project my_design
 
-This scaffolds ``/work/heterogenic-designs/my_design`` with the test design's
-directory layout, which is what the rest of the flow expects, and prints the
-next three steps with absolute paths.
+This scaffolds ``/work/heterogenic-designs/my_design`` with the reference
+design's directory layout, which is what the rest of the flow expects, and
+prints the next three steps with absolute paths.
 
 Where to go next
 ----------------
@@ -84,8 +84,8 @@ Where to go next
 - :doc:`/install/00_release`, then :doc:`/examples`, to run the worked
   examples of the release in the image you just built.
 - :doc:`/flow/01_overview` for what the pipeline you just ran actually does.
-- :doc:`/flow/08_reference_design` for a walk through the two-die design, file
-  by file.
+- :doc:`/flow/08_reference_design` for a walk through the reference design,
+  file by file.
 - :doc:`/intro/01_what_is_the_adk` if you want the problem before the tooling.
 - :doc:`/install/01_container` for build options, graphics, the shared folder
   and the bundled commands.

@@ -263,12 +263,12 @@ subdirectory are the usual layout:
     /work/<example>            an example copied in from /examples, as its page says
     /work/heterogenic-designs  your persistent designs (survives image rebuilds)
 
-The runtime image carries no examples and no demo design. The worked examples
-come from an adk-examples checkout that ``run.sh --examples`` mounts at
-``/examples``, and each example's first block copies it into ``/work``. Inside
-the container, ``adk-example`` prints the ``run.sh`` line that starts it that
-way. ``/work/heterogenic-designs`` is made by ``adk-new-project`` the first
-time you use it.
+The runtime image carries neither the examples nor the reference design. The
+worked examples come from an adk-examples checkout that ``run.sh --examples``
+mounts at ``/examples``, and each example's first block copies it into
+``/work``. Inside the container, ``adk-example`` prints the ``run.sh`` line
+that starts it that way. ``/work/heterogenic-designs`` is made by
+``adk-new-project`` the first time you use it.
 
 The entrypoint copies KiCad's global configuration templates into the runtime
 ``HOME`` when they are absent, so neither the library table dialog nor the
@@ -284,7 +284,7 @@ Scaffold a project
     adk-new-project my_design
 
 This creates ``/work/heterogenic-designs/my_design`` with the same layout as
-the two-die test design in the clone's ``examples/two_die_interposer``, which
+the reference design in the clone's ``examples/two_die_interposer``, which
 is what the rest of the flow expects. The three directories are created empty,
 with a ``.gitkeep`` each so they survive a commit; the annotations below say
 what you put in them:
@@ -412,7 +412,7 @@ Run the self test
 -----------------
 
 ``adk-smoke`` takes one board and has no default, because the runtime image
-carries no demo. The board it is written for is the two-die test design in the
+carries no board. The board it is written for is the reference design in the
 clone's ``examples/two_die_interposer``. Copy it into the work directory once,
 on the host, then run the test:
 
@@ -439,8 +439,8 @@ exits 1.
 
 If it fails, the failing stage names itself. A failure in the first step points
 at KLayout's search path; later failures are the pipeline itself, and since the
-test design is a known good input the fault is in the image or the environment
-rather than in a design.
+reference design is a known good input the fault is in the image or the
+environment rather than in a design.
 
 Calling the flow from the host
 ------------------------------
@@ -504,7 +504,7 @@ Where to go next
 
 - :doc:`/install/00_release` and :doc:`/examples` to run the worked examples.
 - :doc:`/flow/01_overview` for what the pipeline actually does.
-- :doc:`/flow/08_reference_design` for a walk through the two-die test design.
+- :doc:`/flow/08_reference_design` for a walk through the reference design.
 - :doc:`/install/03_environment` if you need to point a tool at a checkout of
   your own.
 - :doc:`/tools/07_adk_tools_image` for the pin, build and release model.
