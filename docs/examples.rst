@@ -12,9 +12,9 @@ example in a checkout runs in the one image its ``release-lock.json`` names;
 :doc:`/install/00_release` gets you that image, which carries every tool a run
 needs.
 
-Each README opens with a table that says what the example claims before you
-run it: the command, what holds when it passes, how long it takes, and what it
-does not claim. When a run disagrees with what a block expects, the block
+The README of ``two_die_echo_shifted_gf180`` opens with a table that says what
+the example claims before you run it: the command, what holds when it passes,
+how long it takes, and what it does not claim. When a run disagrees with what a block expects, the block
 prints STOP, and you go no further.
 
 .. note::
@@ -45,16 +45,17 @@ The examples in this release
         Co-simulation of the two dies comes in a later release.
     * - ``driver_from_rtl_echo_gf180``
       - The same link with the DRIVER built from its RTL in the run, on IHP
-        SG13G2, beside the same ECHO. Draft.
+        SG13G2, beside the same ECHO.
 
-Pages in each folder:
+Pages in an example folder:
 
 - ``README.md``: the run from the container shell, block by block, each block
   also shipped as a script under ``scripts/``.
 - ``AUTOMATION.md``: the same run from VS Code, one task per step, signed from
   the form the run's map opens.
-- ``INSPECTION.md``: a signed run, opened and followed net by net through the
-  schematic, the system and assembly files, the board and the interposer GDS.
+- ``INSPECTION.md``, in ``two_die_echo_shifted_gf180`` only: a signed run,
+  opened and followed net by net through the schematic, the system and
+  assembly files, the board and the interposer GDS.
 
 The pages of the three-day workshop built on these examples are in the
 ``workshop/`` folder of adk-examples, starting at its ``README.md``. They are a
