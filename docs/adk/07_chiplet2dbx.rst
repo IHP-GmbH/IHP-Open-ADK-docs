@@ -2,6 +2,7 @@ OpenROAD 3Dblox export
 ======================
 
 .. include:: /common.inc
+.. include:: /_frame_values.inc
 
 ``openroad/chiplet2dbx.py`` derives a 3Dblox view of a finalised ``.chiplet``
 assembly, so the assembly geometry can be loaded into OpenROAD and linted by
@@ -190,8 +191,9 @@ which readers honour as written.
 So the exporter recomputes it. For every die it takes the connection stack
 named by ``connection:``, sums the ``height`` of every layer in that stack, and
 compares that total against ``position.z`` minus the mount surface z. The
-tolerance is ``Z_TOLERANCE = 1e-6`` um, well below one database unit at any
-realistic precision, so float noise passes and a real mismatch fails:
+tolerance is ``Z_TOLERANCE``, |chiplet2dbx-z-tol| um, well below one database
+unit at any realistic precision, so float noise passes and a real mismatch
+fails:
 
 .. code-block:: text
 
@@ -204,11 +206,8 @@ layer without a ``height``, is likewise a hard error: there is no thickness
 source, and inventing one would produce a model that loads and lints against
 the wrong geometry.
 
-.. note::
-
-    Do not derive the die-to-substrate gap from outline maximum z: passivation
-    can rise above the attachment plane, so a gap taken from the outline
-    disagrees with the stack total and fails the exact-equality check.
+Take the gap from the attachment plane, never from the outline maximum z
+(:ref:`chiplet_passivation_trap`).
 
 Mounting on ``attachment_surface_z``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

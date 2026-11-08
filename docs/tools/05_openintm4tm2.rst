@@ -3,6 +3,7 @@ Interposer PDK (OpenIntM4TM2)
 
 .. include:: /common.inc
 .. include:: /_counts.inc
+.. include:: /_frame_values.inc
 
 OpenIntM4TM2 is the KLayout PDK for the IHP 130 nm **IntM4TM2** aluminium
 back-end interposer. It is the substrate the reference flow assembles onto, and
@@ -73,7 +74,7 @@ ship with the PDK, with z = 0 at the carrier top surface:
     * - TopMetal2
       - 134
       - 7.8103
-      - 10.8103
+      - |interposer-attachment-z|
       - 3.000
     * - TopVia2
       - 133

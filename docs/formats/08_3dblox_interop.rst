@@ -242,11 +242,9 @@ The attachment surface is not the maximum z
 ``mounting_surface`` resolves to the file's mounting plane
 (:ref:`chiplet_mounting_plane`), the pad top through the passivation opening,
 which is generally not the substrate's maximum z
-(:ref:`chiplet_passivation_trap`). A converter that derives the
-die-to-substrate gap from an outline maximum z instead disagrees with
-``total_height()`` by the passivation height, and fails the exact-equality
-check. Use the attachment-surface and stack semantics of the contract,
-always.
+(:ref:`chiplet_passivation_trap`). On export the error is not silent: a gap
+taken from the outline fails the linter's exact-equality check. Use the
+attachment-surface and stack semantics of the contract, always.
 
 Flip is a mounting intent, not a shared mirror convention
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
