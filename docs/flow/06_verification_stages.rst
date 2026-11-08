@@ -164,7 +164,7 @@ Stage 3: the KLayout assembly DRC
     python3 klayout/drc/run_drc.py \
         --path outputs/layout/two_die_interposer_complete.gds \
         --interposer-adapter intm4tm2 \
-        --interconnect-adapter ihp_cupillar \
+        --interconnect-adapter vendorx_microbump \
         --interconnect-methods outputs/layout/two_die_interposer_complete.ixn_methods.json \
         --run_dir /tmp/adk_drc
 

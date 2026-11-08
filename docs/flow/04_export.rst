@@ -405,14 +405,21 @@ visible immediately, and all of them trace back to a board field rather than to
 the export. :doc:`/flow/07_view_and_inspect` covers the inspection workflow.
 
 **Re-run the DRC on its own** when you want to change adapters or scoping
-without re-exporting:
+without re-exporting. To repeat what the export ran, pass the interconnect
+adapter the ``.chiplet`` declares under ``interconnect.adapter``
+(``vendorx_microbump`` in the reference design) and the per-method sidecar:
 
 .. code-block:: bash
 
     adk-drc --path outputs/layout/<board>_complete.gds \
             --interposer-adapter intm4tm2 \
+            --interconnect-adapter vendorx_microbump \
+            --interconnect-methods outputs/layout/<board>_complete.ixn_methods.json \
             --run_dir outputs/reports/assembly_drc
 
+Both interconnect flags are optional. Leave them out and the run checks the
+placement rules only: the interconnect checks are dropped without an error,
+and the report is clean of IXN violations because none were looked for.
 :doc:`/adk/05_run_drc` documents every flag.
 
 Common failures
