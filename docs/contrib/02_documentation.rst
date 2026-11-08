@@ -45,12 +45,17 @@ the generated files: they are overwritten on every build.
       - The image build recipe, copied from the ADK-Tools README with the
         pinned release tag, and the ``|release-tag|`` substitution.
     * - ``gen_frame_values.py``
-      - ``_frame_values.inc``: the interposer PDK's mount plane and the
-        dimensions and die z of the specification's worked example and of the
-        reference design, and the usage-class table. It fails when a file's
-        plane or a die z disagrees with the PDK key, and when the validation
-        rules on :doc:`/formats/01_chiplet` drift from the specification's
-        numbering.
+      - ``_frame_values.inc``: the interposer PDK's mount plane, each die's
+        method, stack, pitch and spacing, the dimensions and die z of the
+        specification's worked example and of the reference design, the
+        reference die's origin offset (read from its GDS with KLayout), the
+        positions Chiplet Studio's round-trip test asserts and the z
+        tolerance of ``chiplet2dbx``. Also the specification excerpts under
+        ``formats/_excerpts/`` and the usage-class table. It fails when a
+        file's plane or a die z disagrees with the PDK key.
+    * - ``check_validation_rules.py``
+      - Nothing. It fails when the validation rules on
+        :doc:`/formats/01_chiplet` drift from the specification's numbering.
 
 The generators fail the build when the source drifts from what is documented.
 Adding a rule to a deck without describing it, renaming a command line tool, or

@@ -2,37 +2,47 @@
 .. Regenerate with: make -C docs preprocess
 
 .. |interposer-attachment-z| replace:: 10.8103
+.. |contract-example-corner| replace:: ``(250, 250)``
+.. |contract-example-stack-height| replace:: 44
 .. |spec-u1-z| replace:: 54.8103
-.. |spec-u1-stack| replace:: 44
-.. |spec-u1-stack-layers| replace:: 28 um ``CuPillar`` plus 16 um ``SnAgCap``
 .. |spec-u1-connection| replace:: ``cupillar_opt1``
+.. |spec-u1-stack-layers| replace:: 28 um ``CuPillar`` plus 16 um ``SnAgCap``
+.. |spec-u1-stack-height| replace:: 44
 .. |spec-u2-z| replace:: 34.8103
-.. |spec-u2-stack| replace:: 24
-.. |spec-u2-stack-layers| replace:: 18 um ``VendorXBumpCu`` plus 6 um ``VendorXBumpCap``
 .. |spec-u2-connection| replace:: ``vendorx_microbump``
-.. |spec-u1-z-binary| replace:: ``54.810299999999998``
+.. |spec-u2-stack-layers| replace:: 18 um ``VendorXBumpCu`` plus 6 um ``VendorXBumpCap``
+.. |spec-u2-stack-height| replace:: 24
+.. |spec-u1-z-17-digits| replace:: ``54.810299999999998``
 .. |spec-u1-x| replace:: 1954.121
 .. |spec-u1-y| replace:: 2332.483
-.. |example-pad| replace:: ``(312.5, -845)``
-.. |example-pad-mirrored| replace:: ``(-312.5, -845)``
-.. |example-pad-x| replace:: 312.5
-.. |example-pad-y| replace:: -845
+.. |spec-u1-pad-local| replace:: ``(312.5, -845)``
+.. |spec-u1-pad-local-mirrored| replace:: ``(-312.5, -845)``
+.. |spec-u1-pad-local-x| replace:: 312.5
+.. |spec-u1-pad-local-y| replace:: -845
 .. |spec-u1-pad-flip| replace:: ``(1641.621, 1487.483)``
 .. |spec-u1-pad-face-up| replace:: ``(2266.621, 1487.483)``
 .. |spec-u1-pad-face-up-shift| replace:: 625
+.. |spec-u1-pad-face-up-pitches| replace:: 8
+.. |spec-u1-pitch| replace:: 75
 .. |spec-u1-pad-flip-r90| replace:: ``(2799.121, 2019.983)``
+.. |spec-next-option| replace:: ``cupillar_opt2``
+.. |spec-next-option-pitch| replace:: 80
 .. |refdesign-interposer-width| replace:: 6492.31
 .. |refdesign-interposer-height| replace:: 5602
 .. |refdesign-interposer-thickness| replace:: 300
-.. |refdesign-interposer-x-text| replace:: ``3246.154999999999``
+.. |refdesign-interposer-x| replace:: ``3246.154999999999``
 .. |refdesign-u1-z| replace:: 54.8103
-.. |refdesign-u1-stack| replace:: 44
+.. |refdesign-u1-connection| replace:: ``cupillar_opt1``
 .. |refdesign-u1-stack-layers| replace:: 28 um ``CuPillar`` plus 16 um ``SnAgCap``
 .. |refdesign-u1-stack-diameter| replace:: 44
+.. |refdesign-u1-pitch| replace:: 75
+.. |refdesign-u1-spacing| replace:: 40
 .. |refdesign-u2-z| replace:: 34.8103
-.. |refdesign-u2-stack| replace:: 24
+.. |refdesign-u2-connection| replace:: ``vendorx_microbump``
 .. |refdesign-u2-stack-layers| replace:: 18 um ``VendorXBumpCu`` plus 6 um ``VendorXBumpCap``
 .. |refdesign-u2-stack-diameter| replace:: 40
+.. |refdesign-u2-pitch| replace:: 50
+.. |refdesign-u2-spacing| replace:: 15
 .. |refdesign-die-width| replace:: 778
 .. |refdesign-die-height| replace:: 2660
 .. |refdesign-die-thickness| replace:: 750
@@ -46,4 +56,3 @@
 .. |studio-demo-interposer-z| replace:: 0
 .. |studio-demo-die-z-tol| replace:: 1e-9
 .. |chiplet2dbx-z-tol| replace:: 1e-6
-.. |spec-validation-rule-count| replace:: 16

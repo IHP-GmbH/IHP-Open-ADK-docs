@@ -135,7 +135,7 @@ and ``unplaced``, exist only in a source document (see `Source documents`_).
       - yes
       - string
       - Quoted ``"MAJOR.MINOR"``, stamped as described above. What a reader
-        accepts is `validation rule 1 <Validation rules_>`_.
+        accepts is :ref:`validation rule 1 <chiplet_validation_rules>`.
     * - ``assembly``
       - yes
       - object
@@ -558,6 +558,8 @@ The list below follows the numbering of the specification's
 ``docs/CHIPLET_FORMAT_SPEC.md`` (section *Validation Rules*), which is
 normative and carries the full text of each rule.
 
+.. validation-rules-begin
+
 Hard errors in the reference validator:
 
 1. ``format_version`` must be a quoted ``"MAJOR.MINOR"`` with major 1. A
@@ -618,6 +620,8 @@ Consumer-level expectations, not enforced by the reference library:
 14. Component ``type`` is one of the four canonical values.
 15. A ``technology`` reference names a defined technology id.
 16. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+
+.. validation-rules-end
 
 The top-level block grammar of the specification adds refusals of its own,
 which the merge tooling and both reference readers implement from one

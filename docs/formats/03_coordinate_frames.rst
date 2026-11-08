@@ -114,16 +114,14 @@ component's geometric centre. For ``anchor: gds_origin`` it is the component's
 own GDS ``(0, 0)``, wherever that origin sits in the artwork, so a die's
 ``position`` is its centre only if its layout author put the origin there.
 
-The contract's own example is a ``bbox_center`` die of width 1000 um and
-height 2000 um whose lower-left corner sits at (250, 250) inside the
-interposer, seated on the IntM4TM2 plane plus a 44 um stack (see
+The contract's own example is a ``bbox_center`` die whose lower-left corner
+sits at |contract-example-corner| inside the interposer, so its ``position``
+is that corner plus half its ``dimensions``. It is seated on the IntM4TM2
+plane plus a |contract-example-stack-height| um stack (see
 `The z-mounting rule`_):
 
-.. literalinclude:: ../../src/chiplet-spec/docs/coord_frame_contract.md
+.. literalinclude:: _excerpts/contract_position.yaml
     :language: yaml
-    :start-after: lower-left corner at (250, 250) inside the interposer:
-    :end-at: thickness: 50.0
-    :lines: 2-
 
 ``position.z`` is the seating plane: the bottom face of the placed body, the
 face that meets the mounting surface. For a die on a connection stack, that is
@@ -327,18 +325,15 @@ Worked case
 Take die ``U1`` from the specification's worked example,
 ``examples/interposer_demo_design.chiplet``:
 
-.. literalinclude:: ../../src/chiplet-spec/examples/interposer_demo_design.chiplet
+.. literalinclude:: _excerpts/spec_example_u1.yaml
     :language: yaml
-    :start-at: - id: U1
-    :end-at: rotation:
-    :dedent: 2
 
 Its ``anchor: gds_origin`` makes ``position`` the point where the die's GDS
 ``(0, 0)`` lands, which is also the origin of the die-local pad coordinates.
-Take a pad whose centre in the die's own GDS is |example-pad| um.
+Take a pad whose centre in the die's own GDS is |spec-u1-pad-local| um.
 
 **Step 1, mirror.** ``orientation: flip_chip`` means ``M = diag(-1, 1)``, so
-the local coordinate becomes |example-pad-mirrored|. Only x changes sign.
+the local coordinate becomes |spec-u1-pad-local-mirrored|. Only x changes sign.
 
 **Step 2, rotate.** ``rotation.z`` is 0, so ``cos a = 1`` and ``sin a = 0`` and
 the vector is unchanged.
@@ -347,26 +342,26 @@ the vector is unchanged.
 
 .. parsed-literal::
 
-    x = |spec-u1-x| + (-|example-pad-x|)
-    y = |spec-u1-y| + (|example-pad-y|)
+    x = |spec-u1-x| + (-|spec-u1-pad-local-x|)
+    y = |spec-u1-y| + (|spec-u1-pad-local-y|)
 
 The pad sits at |spec-u1-pad-flip| um in the canonical frame.
 
 Had the same die been ``face_up``, step 1 would have left x at
-|example-pad-x| and the pad would land at |spec-u1-pad-face-up|:
-|spec-u1-pad-face-up-shift| um away, many Cu-pillar pitches at
-``cupillar_opt1``'s 75 um minimum. This is the error mode that makes a
-flip-chip mistake look like a systematic pad-to-pillar offset rather than an
-obvious break.
+|spec-u1-pad-local-x| and the pad would land at |spec-u1-pad-face-up|:
+|spec-u1-pad-face-up-shift| um away, more than |spec-u1-pad-face-up-pitches|
+pitches at |spec-u1-connection|'s |spec-u1-pitch| um minimum. This is the
+error mode that makes a flip-chip mistake look like a systematic pad-to-pillar
+offset rather than an obvious break.
 
 Now rotate the same flip-chip die by 90 degrees, ``rotation: {z: 90.0}``. Then
 ``cos a = 0``, ``sin a = 1``, and the mirrored local vector
-|example-pad-mirrored| transforms as:
+|spec-u1-pad-local-mirrored| transforms as:
 
 .. parsed-literal::
 
-    x = |spec-u1-x| - (|example-pad-y|)
-    y = |spec-u1-y| + (-|example-pad-x|)
+    x = |spec-u1-x| - (|spec-u1-pad-local-y|)
+    y = |spec-u1-y| + (-|spec-u1-pad-local-x|)
 
 giving |spec-u1-pad-flip-r90| um. Note that ``position`` did not move: the
 die turns about its anchor reference point, here its GDS ``(0, 0)``, so that
@@ -475,10 +470,10 @@ whose technology stackup carries a plane.
 How the mounting surface resolves
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Taking ``cupillar_opt1`` on the IntM4TM2 interposer of the worked example,
+Taking |spec-u1-connection| on the IntM4TM2 interposer of the worked example,
 whose file declares ``attachment_surface_z`` as |interposer-attachment-z|:
 
-1. Take the die's connection id, ``cupillar_opt1``.
+1. Take the die's connection id, |spec-u1-connection|.
 2. Load the interposer stackup, ``intm4tm2``, and merge the interconnect
    fragment for that connection id. The fragment declares
    ``z_reference: attachment_surface``, so its ``CuPillar`` layer, at local z
@@ -486,8 +481,8 @@ whose file declares ``attachment_surface_z`` as |interposer-attachment-z|:
    ``CuPillar.z_bottom`` is |interposer-attachment-z|.
 3. The first layer name of the stack is ``CuPillar``. Look it up in the merged
    stackup. It is found, so ``mounting_surface`` is |interposer-attachment-z|.
-4. ``z_die = mounting_surface + total_height(cupillar_opt1)``, that is
-   |interposer-attachment-z| + |spec-u1-stack| = |spec-u1-z|.
+4. ``z_die = mounting_surface + total_height(connection)``, that is
+   |interposer-attachment-z| + |spec-u1-stack-height| = |spec-u1-z|.
 
 The merge happens per die and before the first-layer lookup, which is what
 makes the rule per-die: a die using any method seats on that method's body
@@ -513,20 +508,22 @@ The specification's worked example seats its two dies on different stacks:
     * - U1
       - |spec-u1-connection|
       - |spec-u1-stack-layers|
-      - |spec-u1-stack|
+      - |spec-u1-stack-height|
       - |spec-u1-z|
     * - U2
       - |spec-u2-connection|
       - |spec-u2-stack-layers|
-      - |spec-u2-stack|
+      - |spec-u2-stack-height|
       - |spec-u2-z|
 
 Both dies sit on the same plane, |interposer-attachment-z|, and end up at
-different heights because their interconnect differs. U1 selects Option 1
-rather than Option 2 because its pad ring contains a 79.93 um-pitch pair,
-which is legal at Option 1's 75 um minimum but below Option 2's 80 um. That
-selection lives in the die's footprint ``CONNECTION`` field in KiCad and rides
-through the export unchanged.
+different heights because their interconnect differs. In the specification's
+example, U1 selects |spec-u1-connection| rather than |spec-next-option|
+because its pad ring contains a 79.93 um-pitch pair, which is legal at
+|spec-u1-connection|'s |spec-u1-pitch| um minimum pitch but below
+|spec-next-option|'s |spec-next-option-pitch| um. That selection lives in the
+die's footprint ``CONNECTION`` field in KiCad and rides through the export
+unchanged.
 
 Edge cases
 ~~~~~~~~~~
@@ -576,9 +573,11 @@ Writing a derived z
 A z derived from the plane, a die's ``position.z`` or a wire's start or end z,
 is written as the exact decimal sum of the plane and the height as written,
 emitted as the shortest text that reads back as that sum:
-|interposer-attachment-z| + |spec-u1-stack| is written |spec-u1-z|, never
-|spec-u1-z-binary|. A writer sums in decimal, not in binary floating point, so
-a height with more decimals than the plane keeps all of them.
+|interposer-attachment-z| + |spec-u1-stack-height| is written |spec-u1-z|,
+never |spec-u1-z-17-digits|, which is the same binary value printed to 17
+significant digits instead of as its shortest text. A writer also sums in
+decimal, not in binary floating point, so a height with more decimals than the
+plane keeps all of them.
 
 .. _chiplet_plane_check:
 
@@ -597,10 +596,11 @@ In the reference toolchain the check is ``ci/check_attach_plane.py`` in
 |tools-repo|. It walks the KiCad plugin, Chiplet Studio and |tools-repo|
 example trees, and it runs in that repository's CI and while the image is
 built, the only place where the PDK sits beside every consumer. It accepts a
-plane written with a trailing ``.0``. The reference readers do not run it,
-since they hold no PDK; a viewer may report the same mismatch when it opens a
-file, but that report is not the check. Conformance fixtures are format data,
-not designs: they may hold other values, and the check does not read them.
+whole-number die z written with a trailing ``.0``. The reference readers do
+not run it, since they hold no PDK; a viewer may report the same mismatch when
+it opens a file, but that report is not the check. Conformance fixtures are
+format data, not designs: they may hold other values, and the check does not
+read them.
 
 
 io_pads

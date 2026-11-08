@@ -407,9 +407,8 @@ from the same per-die z-mounting rule. Its numbers mirror the coordinate-frame
 contract's worked example. The file is included here as the pinned
 specification ships it, without its header comment:
 
-.. literalinclude:: ../../src/chiplet-spec/examples/interposer_demo_design.chiplet
+.. literalinclude:: _excerpts/spec_example.yaml
     :language: yaml
-    :start-at: format_version:
 
 Read it in this order:
 
@@ -441,7 +440,7 @@ references so that the file survives being read from a different checkout.
 .. tip::
 
     Two things in a real exported file look like noise and are not.
-    Coordinates such as |refdesign-interposer-x-text|, the reference design's
+    Coordinates such as |refdesign-interposer-x|, the reference design's
     interposer ``position.x``, are the honest float result of a bbox halving,
     not sloppy rounding, and the component order is the exporter's
     traversal order, not a meaningful sequence: readers are key driven and order

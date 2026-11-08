@@ -1,54 +1,52 @@
 #!/usr/bin/env python3
 # Copyright 2026 IHP Open ADK Authors
 # SPDX-License-Identifier: Apache-2.0
-"""Generate the coordinate-frame values the format and flow pages quote.
+"""Generate the coordinate-frame values and excerpts the pages quote.
 
 Sources, each read at its pin:
 
 - the interposer PDK's mount plane, ``beol.attachment_surface_z_um`` in
   OpenIntM4TM2 ``libs.tech/intm4tm2_stack.json``;
+- the interconnect methods manifest of IHP-Interconnect-IntM4TM2, for each
+  method's pitch and spacing;
 - the specification's hand-written worked example,
-  chiplet-spec ``examples/interposer_demo_design.chiplet``, which the formats/
-  pages walk through and include;
+  chiplet-spec ``examples/interposer_demo_design.chiplet``, and the position
+  example of its ``docs/coord_frame_contract.md``;
 - the generated reference design, ADK-Tools
   ``examples/two_die_interposer/outputs/two_die_interposer.chiplet``, and the
-  die layout it places, which flow/08 walks through;
+  die layout it places (read with KLayout);
 - the values Chiplet Studio's wire-bond demo round trip asserts, in its
   ``tests/test_coord_frame_contract.cpp``;
 - the z tolerance of the ADK's ``openroad/chiplet2dbx.py`` (``Z_TOLERANCE``);
 - the usage-class table of the specification's Python reference reader
-  (``IO_CLASS_INTERFACE_TYPES``);
-- the specification's numbered validation rules.
+  (``IO_CLASS_INTERFACE_TYPES``).
 
 The two ``.chiplet`` files are different documents with different numbers, so
 each has its own prefix (``spec-`` and ``refdesign-``) and a page quotes only
-its own. Both must declare the PDK's plane, and every die z must be that plane
-plus the die's stack height as an exact decimal sum (contract sections 1.5 and
-3.5); a whole number written ``N.0`` counts as ``N``, as it does upstream.
-ADK-Tools' ``ci/check_attach_plane.py`` already holds the reference design to
-that, so the check here matters for the specification's example, which no
-upstream check reads. Decimal text is kept exact: YAML floats load as Decimal
-and the PDK key is parsed with ``parse_float=Decimal``.
+its own. Both must declare the PDK's plane, and every die z must be written as
+the plane plus the die's stack height the way contract section 1.5 states: the
+shortest text of the exact decimal sum, with ``N.0`` accepted for a whole N, as
+ADK-Tools' ``ci/check_attach_plane.py`` accepts it. The comparison is on the
+text as written, not on the value. That upstream check already holds the
+reference design to this, so the check here matters for the specification's
+example, which no upstream check reads. Decimal text is kept exact: YAML floats
+load as Decimal and the PDK key is parsed with ``parse_float=Decimal``.
 
 The die ids U1 and U2 are named here because the pages name them: flow/08 and
 formats/03 describe two dies with those ids, so a file that renamed them would
 make the prose wrong, and the build should stop.
 
-Pages also include parts of the specification's files by text markers. The
-markers are repeated below and checked, so a file that moves them fails here
-instead of silently including the wrong lines.
+The parts of the specification the pages show are written out as excerpts
+under ``docs/formats/_excerpts/`` and included from there, so the CI drift
+gate shows every upstream change to them.
 
-formats/01 summarises the specification's validation rules in the
-specification's numbering. The rule count and order are checked against the
-specification: each page item must name, in double backticks, the first
-identifier the specification's rule of the same number names.
-
-Writes ``docs/_frame_values.inc`` and
+Writes ``docs/_frame_values.inc``, ``docs/formats/_excerpts/*.yaml`` and
 ``docs/formats/tables/io_class_interface_types.csv``.
 """
 
 import ast
 import json
+import math
 import os
 import re
 from decimal import Decimal, InvalidOperation
@@ -59,12 +57,12 @@ from _common import (
     ADK,
     DOCS_DIR,
     GENERATED_BANNER,
+    INTERCONNECT,
     INTERPOSER,
     SPEC,
     SRC_DIR,
     TOOLS,
     fail,
-    format_number,
     read_text,
     require_submodule,
     write_csv,
@@ -75,19 +73,25 @@ STUDIO = os.path.join(SRC_DIR, "chiplet-studio")
 
 SPEC_EXAMPLE = os.path.join("examples", "interposer_demo_design.chiplet")
 SPEC_CONTRACT = os.path.join("docs", "coord_frame_contract.md")
-SPEC_FORMAT = os.path.join("docs", "CHIPLET_FORMAT_SPEC.md")
 SPEC_READER = os.path.join("reference", "python", "chiplet_format_io", "__init__.py")
 REF_DESIGN = os.path.join(
     "examples", "two_die_interposer", "outputs", "two_die_interposer.chiplet"
 )
+METHODS = os.path.join("manifest", "interconnect_methods.json")
 STUDIO_TEST = os.path.join("tests", "test_coord_frame_contract.cpp")
 CHIPLET2DBX = os.path.join("openroad", "chiplet2dbx.py")
-VALIDATION_PAGE = os.path.join(DOCS_DIR, "formats", "01_chiplet.rst")
+EXCERPTS = os.path.join(DOCS_DIR, "formats", "_excerpts")
 
 DIES = ("U1", "U2")
 
 # The pad formats/03 transforms in its worked case, in die-local GDS um.
 EXAMPLE_PAD = (Decimal("312.500"), Decimal("-845.000"))
+
+# formats/03 quotes the contract's reason U1 takes Option 1, a pad pair at
+# this pitch, as the specification's example. The contract must still say it,
+# and it must still fall between the two options' minimum pitches.
+SPEC_PAIR_PITCH = "79.93"
+NEXT_OPTION = "cupillar_opt2"
 
 
 class DecimalLoader(yaml.SafeLoader):
@@ -111,9 +115,14 @@ def number(value, where):
 
 
 def plain(value):
-    """A Decimal as plain text without an exponent: 54.8103, 44."""
-    text = format(value.normalize(), "f")
-    return text
+    """The shortest text of a Decimal, without an exponent: 54.8103, 44."""
+    return format(value.normalize(), "f")
+
+
+def written_as_sum(text, total):
+    """True when text is the exact sum written as contract section 1.5 states."""
+    want = plain(total)
+    return text == want or ("." not in want and text == want + ".0")
 
 
 def literal(text):
@@ -124,14 +133,19 @@ def point(x, y):
     return literal("({}, {})".format(plain(x), plain(y)))
 
 
+def load_yaml(text, label):
+    try:
+        return yaml.load(text, Loader=DecimalLoader)
+    except yaml.YAMLError as error:
+        fail("{} does not parse: {}".format(label, error))
+
+
 class Chiplet:
     def __init__(self, path, label):
         self.path = path
         self.label = label
-        try:
-            self.doc = yaml.load(read_text(path), Loader=DecimalLoader)
-        except yaml.YAMLError as error:
-            fail("{} does not parse: {}".format(label, error))
+        self.text = read_text(path)
+        self.doc = load_yaml(self.text, label)
         if not isinstance(self.doc, dict):
             fail("{} is not a mapping".format(label))
 
@@ -164,32 +178,17 @@ class Chiplet:
             fail("{}: connection stack {} has no layers".format(self.label, stack_id))
         return layers
 
-    def stack_height(self, stack_id):
-        where = "{}: {} height".format(self.label, stack_id)
-        return sum(number(self.get(layer, "height"), where) for layer in self.layers(stack_id))
+    def layer_values(self, stack_id, key):
+        where = "{}: {} {}".format(self.label, stack_id, key)
+        return [number(self.get(layer, key), where) for layer in self.layers(stack_id)]
 
     def stack_phrase(self, stack_id):
         """The stack's layers as prose, bottom first: 28 um ``CuPillar`` plus ..."""
+        heights = self.layer_values(stack_id, "height")
+        names = [self.get(layer, "name") for layer in self.layers(stack_id)]
         return " plus ".join(
-            "{} um ``{}``".format(
-                plain(number(self.get(layer, "height"), stack_id + " height")),
-                self.get(layer, "name"),
-            )
-            for layer in self.layers(stack_id)
+            "{} um ``{}``".format(plain(h), name) for h, name in zip(heights, names)
         )
-
-    def die_z(self, comp_id, plane):
-        """The die's z text, after checking it is the plane plus its stack."""
-        z = self.value(comp_id, "position", "z")
-        stack = str(self.get(self.component(comp_id), "connection"))
-        height = self.stack_height(stack)
-        if z != plane + height:
-            fail(
-                "{}: {} z {} is not the plane {} plus {} ({})".format(
-                    self.label, comp_id, plain(z), plain(plane), stack, plain(height)
-                )
-            )
-        return z, stack, height
 
     def check_plane(self, plane):
         declared = self.value("interposer", "attachment_surface_z")
@@ -200,82 +199,135 @@ class Chiplet:
                 )
             )
 
+    def dbu(self):
+        """The one database unit every technology of the file declares."""
+        units = {
+            number(tech.get("dbu", "0.001"), self.label + ": dbu")
+            for tech in self.get(self.doc, "technologies").values()
+        }
+        if len(units) != 1:
+            fail("{}: technologies disagree on dbu".format(self.label))
+        return units.pop()
 
-def require_marker(text, label, before, after=None):
-    """The first line holding ``before`` must start with it, as the include assumes."""
-    lines = text.splitlines()
-    hits = [n for n, line in enumerate(lines) if before in line]
-    if not hits or not lines[hits[0]].lstrip().startswith(before):
-        fail("{}: the include marker {!r} no longer opens its block".format(label, before))
-    return lines, hits[0]
+
+def read_plane():
+    path = os.path.join(INTERPOSER, "libs.tech", "intm4tm2_stack.json")
+    stack = json.loads(read_text(path), parse_float=Decimal)
+    try:
+        plane = number(stack["beol"]["attachment_surface_z_um"], "attachment_surface_z_um")
+        tops = [m["zmax_um"] for m in stack["beol"]["metals"] if m["name"] == "TopMetal2"]
+    except (KeyError, TypeError):
+        fail("intm4tm2_stack.json has no beol.attachment_surface_z_um or metals")
+    # formats/03 and tools/05 call the plane the top of TopMetal2.
+    if [number(top, "TopMetal2 zmax_um") for top in tops] != [plane]:
+        fail("intm4tm2_stack.json: the plane is no longer the top of TopMetal2")
+    return plane
 
 
-def check_include_markers():
-    example = read_text(os.path.join(SPEC, SPEC_EXAMPLE))
-    label = "chiplet-spec/" + SPEC_EXAMPLE
-    lines, start = require_marker(example, label, "format_version:")
-    if lines[start] != lines[start].lstrip():
-        fail("{}: format_version is not the root key the include starts at".format(label))
-    lines, start = require_marker(example, label, "- id: U1")
-    for line in lines[start + 1:]:
-        if "rotation:" in line:
-            break
-        if "- id:" in line:
-            fail("{}: U1 has no rotation line before the next component".format(label))
+def read_methods():
+    """Each interconnect method's pitch and spacing, from the manifest."""
+    doc = json.loads(read_text(os.path.join(INTERCONNECT, METHODS)), parse_float=Decimal)
+    methods = {}
+    for method_id, method in doc.get("methods", {}).items():
+        rules = method.get("pitch_rules", {})
+        try:
+            methods[method_id] = {
+                "pitch": number(rules["IXN_pitch"], method_id + " IXN_pitch"),
+                "spacing": number(rules["IXN_spacing"], method_id + " IXN_spacing"),
+            }
+        except KeyError:
+            fail("{}: {} has no IXN_pitch or IXN_spacing".format(METHODS, method_id))
+    if not methods:
+        fail("{}: no methods".format(METHODS))
+    return methods
+
+
+def die_values(prefix, chiplet, die, plane, methods, refdesign=False):
+    """One die's z, method and stack, after checking the z is written as the sum.
+
+    formats/03 quotes the specification's stack heights; flow/08 quotes the
+    reference design's stack diameter and the method's pitch and spacing
+    instead.
+    """
+    stack = str(chiplet.get(chiplet.component(die), "connection"))
+    height = sum(chiplet.layer_values(stack, "height"))
+    z_text = str(chiplet.get(chiplet.component(die), "position", "z"))
+    if not written_as_sum(z_text, plane + height):
+        fail(
+            "{}: {} z {} is not written as the plane {} plus {} ({})".format(
+                chiplet.label, die, z_text, plain(plane), stack, plain(height)
+            )
+        )
+    name = prefix + die.lower()
+    values = [
+        (name + "-z", plain(plane + height)),
+        (name + "-connection", literal(stack)),
+        (name + "-stack-layers", chiplet.stack_phrase(stack)),
+    ]
+    if not refdesign:
+        values.append((name + "-stack-height", plain(height)))
     else:
-        fail("{}: no rotation line after U1".format(label))
-
-    contract = read_text(os.path.join(SPEC, SPEC_CONTRACT)).splitlines()
-    label = "chiplet-spec/" + SPEC_CONTRACT
-    opener = "lower-left corner at (250, 250) inside the interposer:"
-    hits = [n for n, line in enumerate(contract) if opener in line]
-    if len(hits) != 1 or contract[hits[0] + 1].strip() != "```yaml":
-        fail("{}: the position example no longer follows {!r}".format(label, opener))
-    for line in contract[hits[0] + 2:]:
-        if "thickness: 50.0" in line:
-            break
-        if line.startswith("```"):
-            fail("{}: the position example has no thickness: 50.0 line".format(label))
+        diameters = set(chiplet.layer_values(stack, "diameter"))
+        if len(diameters) != 1:
+            fail("{}: {} layers differ in diameter".format(chiplet.label, stack))
+        if stack not in methods:
+            fail("{}: {} is not in the methods manifest".format(chiplet.label, stack))
+        values += [
+            (name + "-stack-diameter", plain(diameters.pop())),
+            (name + "-pitch", plain(methods[stack]["pitch"])),
+            (name + "-spacing", plain(methods[stack]["spacing"])),
+        ]
+    return values
 
 
-def reference_design_values(plane):
+def die_origin_offset(gds, cell_name, width, height, dbu):
+    """How far the die's GDS origin sits from its bbox centre, in um, to the dbu."""
+    if not os.path.isfile(gds):
+        fail("die layout not found: {}".format(gds))
+    import klayout.db as kdb
+
+    layout = kdb.Layout()
+    layout.read(gds)
+    cell = layout.cell(cell_name)
+    if cell is None:
+        fail("{}: top cell {} not found".format(gds, cell_name))
+    box = cell.dbbox()
+
+    def um(value):
+        return Decimal(repr(value)).quantize(dbu)
+
+    if (um(box.width()), um(box.height())) != (width.quantize(dbu), height.quantize(dbu)):
+        fail("{}: bbox {} x {} differs from the .chiplet dimensions".format(
+            gds, box.width(), box.height()))
+    centre = box.center()
+    return um(centre.x), um(centre.y)
+
+
+def reference_design_values(plane, methods):
     ref = Chiplet(os.path.join(TOOLS, REF_DESIGN), "ADK-Tools/" + REF_DESIGN)
     ref.check_plane(plane)
-    values = []
-    for key in ("width", "height", "thickness"):
-        values.append(
-            ("refdesign-interposer-" + key,
-             format_number(ref.value("interposer", "dimensions", key)))
-        )
+    dbu = ref.dbu()
+    values = [
+        ("refdesign-interposer-" + key,
+         plain(ref.value("interposer", "dimensions", key).quantize(dbu)))
+        for key in ("width", "height", "thickness")
+    ]
+    # Quoted as written: formats/02 explains the float a bbox halving leaves.
     values.append(
-        ("refdesign-interposer-x-text",
+        ("refdesign-interposer-x",
          literal(ref.get(ref.component("interposer"), "position", "x")))
     )
-    dims = {}
     for die in DIES:
-        dims[die] = tuple(
-            format_number(ref.value(die, "dimensions", key))
-            for key in ("width", "height", "thickness")
-        )
-        z, stack, height = ref.die_z(die, plane)
-        layers = ref.layers(stack)
-        diameters = {
-            number(ref.get(layer, "diameter"), stack + " diameter") for layer in layers
-        }
-        if len(diameters) != 1:
-            fail("{}: {} layers differ in diameter".format(ref.label, stack))
-        phrase = ref.stack_phrase(stack)
-        prefix = "refdesign-" + die.lower()
-        values += [
-            (prefix + "-z", plain(z)),
-            (prefix + "-stack", plain(height)),
-            (prefix + "-stack-layers", phrase),
-            (prefix + "-stack-diameter", plain(diameters.pop())),
-        ]
+        values += die_values("refdesign-", ref, die, plane, methods, refdesign=True)
+
+    keys = ("width", "height", "thickness")
+    dims = {die: tuple(ref.value(die, "dimensions", key) for key in keys) for die in DIES}
     if dims["U1"] != dims["U2"]:
         fail("{}: U1 and U2 no longer share dimensions".format(ref.label))
-    for key, value in zip(("width", "height", "thickness"), dims["U1"]):
-        values.append(("refdesign-die-" + key, value))
+    values += [
+        ("refdesign-die-" + key, plain(value.quantize(dbu)))
+        for key, value in zip(keys, dims["U1"])
+    ]
 
     # flow/08 states how far the shared die's GDS origin sits from its
     # outline centre, which is what chiplet2dbx shifts the outline by.
@@ -284,73 +336,129 @@ def reference_design_values(plane):
     if len(layouts) != 1 or len(cells) != 1:
         fail("{}: U1 and U2 no longer share one layout".format(ref.label))
     gds = os.path.normpath(os.path.join(os.path.dirname(ref.path), layouts.pop()))
-    if not os.path.isfile(gds):
-        fail("die layout not found: {}".format(gds))
-    import klayout.db as kdb
-
-    layout = kdb.Layout()
-    layout.read(gds)
-    cell = layout.cell(cells.pop())
-    if cell is None:
-        fail("{}: top cell not found".format(gds))
-    box = cell.dbbox()
-    if (format_number(box.width()), format_number(box.height())) != dims["U1"][:2]:
-        fail("{}: bbox {} x {} differs from the .chiplet dimensions".format(
-            gds, box.width(), box.height()))
-    centre = box.center()
-    if format_number(round(centre.x, 6)) != "0":
+    dx, dy = die_origin_offset(gds, cells.pop(), dims["U1"][0], dims["U1"][1], dbu)
+    if dx != 0:
         fail("{}: origin is off-centre in x too; flow/08 names y only".format(gds))
-    offset = format_number(round(centre.y, 6))
-    if offset == "0":
+    if dy == 0:
         fail("{}: origin is centred; flow/08 says it is not".format(gds))
-    values.append(("refdesign-die-origin-offset-y", offset.lstrip("-")))
+    values.append(("refdesign-die-origin-offset-y", plain(abs(dy))))
     return values
 
 
-def spec_example_values(plane):
+def spec_example_values(plane, methods):
     spec = Chiplet(os.path.join(SPEC, SPEC_EXAMPLE), "chiplet-spec/" + SPEC_EXAMPLE)
     spec.check_plane(plane)
     values = []
     for die in DIES:
-        z, stack, height = spec.die_z(die, plane)
-        values += [
-            ("spec-{}-z".format(die.lower()), plain(z)),
-            ("spec-{}-stack".format(die.lower()), plain(height)),
-            ("spec-{}-stack-layers".format(die.lower()), spec.stack_phrase(stack)),
-            ("spec-{}-connection".format(die.lower()), literal(stack)),
-        ]
-    # What a writer that sums in binary and prints 17 significant digits
-    # writes for U1 instead (contract 1.5), quoted as the counterexample.
-    _z, _stack, u1_height = spec.die_z("U1", plane)
-    binary = "%.17g" % (float(plane) + float(u1_height))
-    if Decimal(binary) == plane + u1_height:
-        fail("the plane plus U1's stack is exact in binary; formats/03 needs "
-             "another counterexample")
-    values.append(("spec-u1-z-binary", literal(binary)))
+        values += die_values("spec-", spec, die, plane, methods)
+
+    # Contract 1.5's counterexample: the same U1 z printed to 17 significant
+    # digits rather than as the shortest text that reads back as it.
+    u1 = spec.component("U1")
+    u1_stack = str(spec.get(u1, "connection"))
+    u1_z = plane + sum(spec.layer_values(u1_stack, "height"))
+    digits17 = "%.17g" % float(u1_z)
+    if digits17 == plain(u1_z):
+        fail("U1's z prints the same at 17 digits; formats/03 needs another "
+             "counterexample")
+    values.append(("spec-u1-z-17-digits", literal(digits17)))
 
     # The formats/03 worked case: one pad of U1 through mirror, rotation and
-    # translation.
-    # The page walks a flip-chip die with no rotation, then turns it by 90.
-    u1 = spec.component("U1")
+    # translation. The page walks a flip-chip die with no rotation, then turns
+    # it by 90.
     if spec.get(u1, "orientation") != "flip_chip" or spec.value("U1", "rotation", "z") != 0:
         fail("{}: U1 is no longer an unrotated flip_chip die; rewrite the "
              "formats/03 worked case".format(spec.label))
     x = spec.value("U1", "position", "x")
     y = spec.value("U1", "position", "y")
     px, py = EXAMPLE_PAD
+    shift = 2 * px
+    pitch = methods[u1_stack]["pitch"]
+    if shift % pitch == 0:
+        fail("the face-up shift is a whole number of pitches; formats/03 says "
+             "'more than'")
     values += [
         ("spec-u1-x", plain(x)),
         ("spec-u1-y", plain(y)),
-        ("example-pad", point(px, py)),
-        ("example-pad-mirrored", point(-px, py)),
-        ("example-pad-x", plain(px)),
-        ("example-pad-y", plain(py)),
+        ("spec-u1-pad-local", point(px, py)),
+        ("spec-u1-pad-local-mirrored", point(-px, py)),
+        ("spec-u1-pad-local-x", plain(px)),
+        ("spec-u1-pad-local-y", plain(py)),
         ("spec-u1-pad-flip", point(x - px, y + py)),
         ("spec-u1-pad-face-up", point(x + px, y + py)),
-        ("spec-u1-pad-face-up-shift", plain(2 * px)),
+        ("spec-u1-pad-face-up-shift", plain(shift)),
+        ("spec-u1-pad-face-up-pitches", str(math.floor(shift / pitch))),
+        ("spec-u1-pitch", plain(pitch)),
         ("spec-u1-pad-flip-r90", point(x - py, y - px)),
     ]
+
+    # The contract's reason for Option 1 over Option 2, quoted on formats/03.
+    if SPEC_PAIR_PITCH + " um-pitch" not in read_text(os.path.join(SPEC, SPEC_CONTRACT)):
+        fail("{} no longer gives the {} um pad pair".format(SPEC_CONTRACT, SPEC_PAIR_PITCH))
+    if NEXT_OPTION not in methods:
+        fail("{}: no {}".format(METHODS, NEXT_OPTION))
+    next_pitch = methods[NEXT_OPTION]["pitch"]
+    if not pitch <= Decimal(SPEC_PAIR_PITCH) < next_pitch:
+        fail("the {} um pair no longer falls between {} and {}".format(
+            SPEC_PAIR_PITCH, u1_stack, NEXT_OPTION))
+    values += [
+        ("spec-next-option", literal(NEXT_OPTION)),
+        ("spec-next-option-pitch", plain(next_pitch)),
+    ]
     return values
+
+
+def excerpt_from_root(lines, label):
+    """The document from its ``format_version`` root key on, without the header."""
+    start = [n for n, line in enumerate(lines) if line.startswith("format_version:")]
+    if len(start) != 1:
+        fail("{}: no single format_version root key".format(label))
+    return lines[start[0]:]
+
+
+def component_excerpt(lines, comp_id, label):
+    """The component's list item, dedented to its own column."""
+    head = [n for n, line in enumerate(lines) if line.strip() == "- id: " + comp_id]
+    if len(head) != 1:
+        fail("{}: no single component {}".format(label, comp_id))
+    indent = len(lines[head[0]]) - len(lines[head[0]].lstrip())
+    item = [lines[head[0]]]
+    for line in lines[head[0] + 1:]:
+        if not line.strip() or len(line) - len(line.lstrip()) <= indent:
+            break
+        item.append(line)
+    return [line[indent:] for line in item]
+
+
+def contract_position_block(plane):
+    """The contract's position example, the one YAML block of position and dimensions."""
+    lines = read_text(os.path.join(SPEC, SPEC_CONTRACT)).splitlines()
+    label = "chiplet-spec/" + SPEC_CONTRACT
+    blocks, block = [], None
+    for line in lines:
+        if block is None and line.strip() == "```yaml":
+            block = []
+        elif block is not None and line.strip() == "```":
+            blocks.append(block)
+            block = None
+        elif block is not None:
+            block.append(line)
+    found = []
+    for block in blocks:
+        doc = load_yaml("\n".join(block), label)
+        if isinstance(doc, dict) and set(doc) == {"position", "dimensions"}:
+            found.append((block, doc))
+    if len(found) != 1:
+        fail("{}: no single position example".format(label))
+    block, doc = found[0]
+    pos, dims = doc["position"], doc["dimensions"]
+    x, y, z = (number(pos[k], label) for k in ("x", "y", "z"))
+    w, h = (number(dims[k], label) for k in ("width", "height"))
+    values = [
+        ("contract-example-corner", point(x - w / 2, y - h / 2)),
+        ("contract-example-stack-height", plain(z - plane)),
+    ]
+    return block, values
 
 
 def studio_demo_values():
@@ -361,30 +469,26 @@ def studio_demo_values():
         r"EXPECT_NEAR\((\w+)->position\(\)\.([xyz]),\s*([-0-9.]+),\s*([-0-9.e]+)\)", text
     ):
         found[(obj, axis)] = (Decimal(value), tol)
-    values = []
-    tolerances = set()
-    xy_tolerances = {found[(obj, axis)][1] for obj in ("u1", "u2", "interposer") for axis in "xy"
-                     if (obj, axis) in found}
-    if len(xy_tolerances) != 1:
-        fail("{}: the x and y tolerances differ between components".format(STUDIO_TEST))
-    values.append(("studio-demo-xy-tol", xy_tolerances.pop()))
-    for obj in ("u1", "u2", "interposer"):
+    objects = ("u1", "u2", "interposer")
+    for obj in objects:
         for axis in "xyz":
             if (obj, axis) not in found:
                 fail("{}: no EXPECT_NEAR for {}.{}".format(STUDIO_TEST, obj, axis))
+    xy_tolerances = {found[(obj, axis)][1] for obj in objects for axis in "xy"}
+    z_tolerances = {found[(obj, "z")][1] for obj in ("u1", "u2")}
+    if len(xy_tolerances) != 1 or len(z_tolerances) != 1:
+        fail("{}: the tolerances differ between components".format(STUDIO_TEST))
+    values = [("studio-demo-xy-tol", xy_tolerances.pop())]
+    for obj in objects:
         xy = point(found[(obj, "x")][0], found[(obj, "y")][0])
         values.append(("studio-demo-{}-xy".format(obj), xy))
         values.append(("studio-demo-{}-z".format(obj), plain(found[(obj, "z")][0])))
-        if obj != "interposer":
-            tolerances.add(found[(obj, "z")][1])
-    if len(tolerances) != 1:
-        fail("{}: U1 and U2 z tolerances differ".format(STUDIO_TEST))
-    values.append(("studio-demo-die-z-tol", tolerances.pop()))
+    values.append(("studio-demo-die-z-tol", z_tolerances.pop()))
     return values
 
 
 def chiplet2dbx_values():
-    """The tolerance chiplet2dbx holds a die's z to, which flow/08 quotes."""
+    """The tolerance chiplet2dbx holds a die's z to."""
     text = read_text(os.path.join(ADK, CHIPLET2DBX))
     found = re.findall(r"^Z_TOLERANCE = ([0-9.e-]+)$", text, re.M)
     if len(found) != 1:
@@ -410,84 +514,40 @@ def io_class_rows():
     ]
 
 
-def numbered_items(lines):
-    """Map each top-level numbered item of a list to its text."""
-    items = []
-    for line in lines:
-        match = re.match(r"^(\d+)\. (.*)", line)
-        if match:
-            items.append([int(match.group(1)), match.group(2)])
-        elif items and line.startswith(" "):
-            items[-1][1] += " " + line.strip()
-    return items
-
-
-def check_validation_rules():
-    spec = read_text(os.path.join(SPEC, SPEC_FORMAT)).splitlines()
-    try:
-        start = spec.index("## Validation Rules")
-    except ValueError:
-        fail("{}: no Validation Rules section".format(SPEC_FORMAT))
-    end = next((n for n in range(start + 1, len(spec)) if spec[n].startswith("## ")), len(spec))
-    rules = numbered_items(spec[start + 1:end])
-
-    page = read_text(VALIDATION_PAGE).splitlines()
-    try:
-        start = page.index("Validation rules")
-        end = page.index("Reading and writing .chiplet files")
-    except ValueError:
-        fail("formats/01: the Validation rules section moved")
-    items = numbered_items(page[start + 1:end])
-
-    if [n for n, _ in rules] != list(range(1, len(rules) + 1)):
-        fail("{}: validation rules are not numbered 1..{}".format(SPEC_FORMAT, len(rules)))
-    if [n for n, _ in items] != [n for n, _ in rules]:
-        fail(
-            "formats/01 lists validation rules {} but the specification has 1..{}".format(
-                [n for n, _ in items], len(rules)
-            )
-        )
-    for (n, rule), (_, item) in zip(rules, items):
-        token = re.search(r"`([^`]+)`", rule)
-        if not token:
-            continue
-        name = token.group(1).rstrip(":")
-        if "``{}``".format(name) not in item:
-            fail(
-                "formats/01 validation rule {} does not name ``{}``, which the "
-                "specification's rule {} starts from".format(n, name, n)
-            )
-    return len(rules)
+def write_excerpt(name, lines):
+    write_text(os.path.join(EXCERPTS, name), "\n".join(lines) + "\n")
 
 
 def main():
     require_submodule(INTERPOSER, "OpenIntM4TM2")
+    require_submodule(INTERCONNECT, "IHP-Interconnect-IntM4TM2")
     require_submodule(SPEC, "chiplet-spec")
     require_submodule(TOOLS, "ADK-Tools")
     require_submodule(STUDIO, "chiplet-studio")
     require_submodule(ADK, "IHP-Open-ADK")
 
-    stack_path = os.path.join(INTERPOSER, "libs.tech", "intm4tm2_stack.json")
-    stack = json.loads(read_text(stack_path), parse_float=Decimal)
-    try:
-        plane = number(stack["beol"]["attachment_surface_z_um"], "attachment_surface_z_um")
-    except (KeyError, TypeError):
-        fail("intm4tm2_stack.json has no beol.attachment_surface_z_um")
-
-    check_include_markers()
-    rule_count = check_validation_rules()
+    plane = read_plane()
+    methods = read_methods()
+    block, contract_values = contract_position_block(plane)
 
     values = [("interposer-attachment-z", plain(plane))]
-    values += spec_example_values(plane)
-    values += reference_design_values(plane)
+    values += contract_values
+    values += spec_example_values(plane, methods)
+    values += reference_design_values(plane, methods)
     values += studio_demo_values()
     values += chiplet2dbx_values()
-    values.append(("spec-validation-rule-count", str(rule_count)))
 
     text = GENERATED_BANNER.format(script=os.path.basename(__file__)) + "\n"
     for name, value in values:
         text += ".. |{}| replace:: {}\n".format(name, value)
     write_text(os.path.join(DOCS_DIR, "_frame_values.inc"), text)
+
+    label = "chiplet-spec/" + SPEC_EXAMPLE
+    example = read_text(os.path.join(SPEC, SPEC_EXAMPLE)).splitlines()
+    write_excerpt("spec_example.yaml", excerpt_from_root(example, label))
+    write_excerpt("spec_example_u1.yaml", component_excerpt(example, "U1", label))
+    write_excerpt("contract_position.yaml", block)
+
     write_csv(
         os.path.join(DOCS_DIR, "formats", "tables", "io_class_interface_types.csv"),
         io_class_rows(),

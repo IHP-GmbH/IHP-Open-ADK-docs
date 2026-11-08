@@ -1,0 +1,8 @@
+position:
+  x: 750.0      # 250 + 1000/2
+  y: 1250.0     # 250 + 2000/2
+  z: 54.8103    # seating plane; see section 3 for Z mounting
+dimensions:
+  width: 1000.0
+  height: 2000.0
+  thickness: 50.0   # body spans z 54.8103 to 104.8103

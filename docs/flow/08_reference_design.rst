@@ -51,13 +51,14 @@ What the reference design assembles
       - ``sg13g2``
       - |refdesign-die-width| x |refdesign-die-height| um,
         |refdesign-die-thickness| um thick, ``orientation: flip_chip``,
-        attached with ``cupillar_opt1`` (|refdesign-u1-stack-diameter| um
-        body, 75 um pitch, 40 um spacing).
+        attached with |refdesign-u1-connection|
+        (|refdesign-u1-stack-diameter| um body, |refdesign-u1-pitch| um
+        pitch, |refdesign-u1-spacing| um spacing).
     * - ``U2``
       - ``sg13g2``
-      - The same die layout, attached with ``vendorx_microbump``
-        (|refdesign-u2-stack-diameter| um body,
-        50 um pitch, 15 um spacing). A demo, non-IHP method.
+      - The same die layout, attached with |refdesign-u2-connection|
+        (|refdesign-u2-stack-diameter| um body, |refdesign-u2-pitch| um
+        pitch, |refdesign-u2-spacing| um spacing). A demo, non-IHP method.
 
 Both dies are instances of the same ``Metal_Test`` layout, an SG13G2 test die
 whose 58 external I/O pads sit on ``TopMetal2`` (134/0) with their names on the
@@ -71,9 +72,9 @@ The two connection stacks are what make the reference design interesting,
 because they are what forces every per-method mechanism in the flow to actually
 do something. The die z values follow from them directly. The interposer's
 attachment surface is at |interposer-attachment-z| um
-(:ref:`chiplet_mounting_plane`); ``cupillar_opt1`` is
+(:ref:`chiplet_mounting_plane`); |refdesign-u1-connection| is
 |refdesign-u1-stack-layers|, so ``U1`` sits at |refdesign-u1-z| um;
-``vendorx_microbump`` is |refdesign-u2-stack-layers|, so ``U2`` sits at
+|refdesign-u2-connection| is |refdesign-u2-stack-layers|, so ``U2`` sits at
 |refdesign-u2-z| um (:ref:`chiplet_z_worked_case` walks the same sums). That
 arithmetic is not decoration: the 3Dblox exporter checks each die's z against
 the plane plus its stack to within |chiplet2dbx-z-tol| um and refuses an
