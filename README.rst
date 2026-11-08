@@ -47,9 +47,9 @@ repositories pinned as submodules under ``src/``:
 - `ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__, the container that pins and builds them all
 
 The KiCad fork, `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__,
-is not a submodule here: ADK-Tools pins it. Neither are the flow engines
-(packaging-flow, interposer-pnr, chiplet-flow, assembly-lvs and chiplet-cosim),
-which ADK-Tools stages from pinned commits and which are not public yet.
+is not a submodule here: ADK-Tools pins it. Nor are the flow engines, such as
+packaging-flow and assembly-lvs: ADK-Tools stages them from pinned commits, and
+they are not public yet.
 
 
 Building locally

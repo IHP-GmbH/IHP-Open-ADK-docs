@@ -79,12 +79,12 @@ The repositories
         reference design. It also stages the reference reader of the
         ``.chiplet`` specification that the flow tools read with.
 
-Five rows carry no link because those repositories are not public yet:
-packaging-flow, interposer-pnr, chiplet-flow, assembly-lvs and chiplet-cosim.
-ADK-Tools stages each one into the image from the commit its ``staging.pin``
-names, and the image carries that source under ``/opt/adk-tools/staging/``.
+The rows without a link are the flow engines, whose repositories are not
+public yet. ADK-Tools stages them into the image at the commits that
+``staging.pin`` in ADK-Tools names, as "Staged sources and Nix packages" on
+:doc:`/tools/07_adk_tools_image` describes.
 
-For those five the license column gives the tree's primary license. A staged
+For those rows the license column gives the tree's primary license. A staged
 tree can also carry files under another license, such as Apache-2.0 format
 schemas, vendored upstream copies and test fixtures, and ``NOTICE.md`` in
 ADK-Tools names each one.
