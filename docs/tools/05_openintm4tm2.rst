@@ -598,18 +598,25 @@ report.
 
 Auto-resolve is on by default: when the placement produces a DRC collision, the
 generator conservatively shifts pillars within a per-pillar budget
-(``--max-displacement``, default 10 um) rather than failing. ``--no-auto-resolve``
-turns that off and fails on any violation instead;
+(``--max-displacement``, default 10 um) instead of dropping the device.
+``--no-auto-resolve`` turns that off, so any device with a violation is dropped.
 ``--auto-resolve-best-effort`` only silences the ``auto-resolve FAILED`` line
-when auto-resolve does not converge: a device with collisions left still fails
-DRC and is left out of the GDS.
+when auto-resolve does not converge; a device with collisions left still fails
+DRC and is dropped, although the ``--help`` text says the flag generates GDS
+anyway.
+
+A device that fails DRC is left out of the GDS, and a generate run still writes
+the GDS of the devices that passed. The ``Failed devices:`` line on stdout and the
+``failed_devices`` list in the ``--report`` JSON name the dropped devices.
+
+.. Remove this warning when the OpenIntM4TM2 pin includes the upstream commit
+   "Exit 1 from bump_mirror when a device fails DRC".
 
 .. warning::
-    At this release the exit code does not report a failed device.
-    ``--validate-only`` exits 0 whatever the result, and a generate run exits 1
-    only when no device passed; otherwise it writes the GDS of the devices that
-    passed and exits 0. Read the ``Failed devices:`` line on stdout or the
-    ``failed_devices`` list in the ``--report`` JSON before you use the GDS.
+   At the pinned interposer release (v2026.11) the exit code does not report a
+   dropped device: a run that drops a device still exits 0, as long as one
+   device passed or the run was ``--validate-only``. Check the report before you
+   use the GDS.
 
 Two properties of this generator are worth understanding.
 
