@@ -36,7 +36,7 @@ The repositories
         with their parameters and 3D bodies.
     * - |kicad-repo|
       - GPL-3.0-or-later
-      - The KiCad fork hardened for nanometre-scale layout and carrying the
+      - The KiCad fork hardened for sub-micrometre layout and carrying the
         semiconductor exports.
     * - |plugin-repo|
       - GPL-3.0-or-later

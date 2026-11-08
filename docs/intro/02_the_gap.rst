@@ -123,7 +123,7 @@ connectivity axis, closes the rest of the chain.
       - A GDS to KiCad converter for footprints, symbols and pin lists.
         :doc:`/tools/03_gds2kicad`
     * - Board tool at semiconductor scale
-      - A KiCad fork hardened for nanometre-scale work.
+      - A KiCad fork hardened for sub-micrometre work.
         :doc:`/tools/01_kicad_adk_mod`
     * - Assembly interchange
       - The ``.chiplet`` format, published as an open specification.
