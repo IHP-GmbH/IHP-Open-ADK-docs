@@ -90,8 +90,9 @@ A contract is read by a strict reader, ``chiplet_format_io`` from the
 reference readers of |spec-repo|, which versions its own boundary as a reader
 revision. The image stages reader revision 4, the one packaging-flow 0.1.0
 requires; the die flow accepts revisions 3 and 4. Revision 4 admits a 1.2
-contract and its ``supply_domains``; revision 3 reads one and ignores them. A
-reader the die flow cannot use stops it with exit 11 before anything is read.
+contract and its ``supply_domains``; revision 3 reads one and ignores them,
+and the die flow then will not package it. A reader the die flow cannot use
+stops it with exit 11 before anything is read.
 
 Building a die
 --------------
