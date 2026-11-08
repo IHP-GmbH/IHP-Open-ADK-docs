@@ -234,7 +234,10 @@ Shipped interconnect adapters
 
 ``ihp_cupillar`` and ``ihp_sbump`` mirror the corresponding interposer-stage
 rules, so the interposer stage and the assembly stage of the two-stage DRC
-check the same numbers.
+check the same numbers. Pitch is the exception: the interposer stage does not
+emit its pitch rules (``Padc.e``, ``Padb.e``), because with these numbers they
+would duplicate the space rules, so only the assembly stage checks pitch. See
+:doc:`/adk/04_ixn_rules`.
 ``vendorx_microbump`` is a demonstration adapter for a fictional non-IHP vendor:
 it exists to show that swapping the interconnect axis retightens the checks on
 the *same* interposer geometry without touching the interposer adapter.
