@@ -10,8 +10,8 @@ leaves as a ``.chiplet`` file and a HyperLynx netlist.
 Why a fork
 ----------
 
-Pcbnew already counts every coordinate in integer nanometres, so a 10 nm feature
-is representable without any change. What is not representable is the set of
+Pcbnew already counts every coordinate in integer nanometres, so a 5 nm grid
+step is representable without any change. What is not representable is the set of
 assumptions built on top of that number.
 
 Upstream KiCad is a PCB tool, and a PCB is a millimetre-scale object. Constants,
@@ -45,7 +45,7 @@ shows up as a concrete failure:
     sits in the band on the left. The fork moves each constant down, or
     replaces it with a value proportional to the design.
 
-Most of this is not a bug in KiCad so much as a tool being used three to four
+Most of this is not a bug in KiCad so much as a tool being used nearly three
 orders of magnitude outside the range it was designed for. The 32-bit squared
 distance is the exception: a plain upstream overflow that nothing about
 interposer work causes, fixed here because a flow that depends on picking the
