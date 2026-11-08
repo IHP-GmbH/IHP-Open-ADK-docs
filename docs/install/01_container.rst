@@ -23,12 +23,12 @@ This page takes you from a clone to a green end-to-end self test. If you cannot
 use Docker, :doc:`/install/02_host` derives a host installation from the same
 recipe, but it is a best-effort route.
 
-.. note::
-    No image is published, to a registry or otherwise: you build the image you
-    run, locally, from the pinned sources with ``build.sh``. What that pins,
-    and why the build gates itself on a full regeneration of a reference
-    design, is described in :doc:`/tools/07_adk_tools_image`. To run the
-    examples of the preview release, :doc:`/install/00_release` gives the order.
+.. note:: No image is published, to a registry or otherwise: you build the
+    image you run, locally, from the pinned sources with ``build.sh``. What
+    that pins, and why the build gates itself on a full regeneration of a
+    reference design, is described in :doc:`/tools/07_adk_tools_image`. To run
+    the examples of the preview release, :doc:`/install/00_release` gives the
+    order.
 
 Prerequisites
 -------------
@@ -412,9 +412,9 @@ Run the self test
 -----------------
 
 ``adk-smoke`` takes one board and has no default, because the runtime image
-carries no board. The board it is written for is the reference design in the
-clone's ``examples/two_die_interposer``. Copy it into the work directory once,
-on the host, then run the test:
+carries no copy of the reference design. The board it is written for is the
+reference design in the clone's ``examples/two_die_interposer``. Copy it into
+the work directory once, on the host, then run the test:
 
 .. code-block:: bash
 

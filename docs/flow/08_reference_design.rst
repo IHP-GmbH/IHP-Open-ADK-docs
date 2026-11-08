@@ -342,13 +342,13 @@ Step 6: the one-command self test
     adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
 
 ``adk-smoke`` takes one board and has no default, because the runtime image
-carries no board; without one it exits 2 and says where to copy this design
-from. It verifies that the ``intm4tm2`` KLayout technology is registered and
-its layer properties resolve, then exports the board end to end into a
-throwaway directory and fails unless the assembly DRC passed. It is the
-fastest way to tell whether a container is wired correctly. On success it ends
-with the line ``adk-smoke: PASS (export + assembly DRC green)``; any failure
-exits non-zero before that.
+carries no copy of the reference design; without a board it exits 2 and says
+where to copy this design from. It verifies that the ``intm4tm2`` KLayout
+technology is registered and its layer properties resolve, then exports the
+board end to end into a throwaway directory and fails unless the assembly DRC
+passed. It is the fastest way to tell whether a container is wired correctly.
+On success it ends with the line ``adk-smoke: PASS (export + assembly DRC
+green)``; any failure exits non-zero before that.
 
 What the committed reports say
 ------------------------------

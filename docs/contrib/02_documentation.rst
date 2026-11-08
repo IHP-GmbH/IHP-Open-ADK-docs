@@ -31,8 +31,8 @@ What is generated
 -----------------
 
 ``docs/scripts/`` reads the submodules and writes the rule tables, the adapter
-tables, the version matrices and the command line transcripts. Never edit the
-generated files: they are overwritten on every build.
+tables, the version matrices, the command line transcripts and the image build
+recipe. Never edit the generated files: they are overwritten on every build.
 
 .. list-table::
     :header-rows: 1
@@ -48,6 +48,9 @@ generated files: they are overwritten on every build.
       - The pinned component matrix and the format and schema version matrix.
     * - ``gen_cli_usage.py``
       - The ``--help`` transcript of each ADK command line tool.
+    * - ``gen_build_recipe.py``
+      - The image build recipe, copied from the ADK-Tools README with the
+        pinned release tag, and the ``|release-tag|`` substitution.
 
 The generators fail the build when the source drifts from what is documented.
 Adding a rule to a deck without describing it, renaming a command line tool, or

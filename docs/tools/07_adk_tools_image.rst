@@ -240,8 +240,8 @@ include, in this order:
    GUI pieces under the offscreen Qt platform.
 #. The reference design's gds2kicad prior steps: its footprints and symbols are
    reproduced from the shipped die GDS and pin list and diffed against the
-   committed library, so an upstream change that silently alters its
-   artefacts fails before they reach the board.
+   committed library, so an upstream change that silently alters its artefacts
+   fails before they reach the board.
 #. Interposer PDK suite (bump mirror PCell regressions) and interconnect PDK
    suite (manifest contract, schema, 3D body generator). ``jsonschema`` is in
    the verify venv, so the schema check actually executes.
@@ -249,9 +249,9 @@ include, in this order:
    is then cleared, so the regeneration writes into an empty directory. Without
    the clear, a regeneration would overwrite in place and any tracked file the
    current pipeline no longer emits would survive unnoticed.
-#. The reference design is regenerated headless: ``pcbnew`` to the
-   writers to ``hyp_to_gds`` to the assembly DRC. The DRC is required by
-   default, so a combination that breaks assembly DRC fails the image build.
+#. The reference design is regenerated headless: ``pcbnew`` to the writers to
+   ``hyp_to_gds`` to the assembly DRC. The DRC is required by default, so a
+   combination that breaks assembly DRC fails the image build.
 #. Reproducibility gate: the shipped deliverables must equal the fresh
    regeneration, compared on die geometry, pillar manifests, boundary geometry
    and a timestamp-normalised geometry digest of the interposer GDS. The clone
