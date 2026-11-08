@@ -364,10 +364,10 @@ in the deck, so adapters that do not declare it still run. This is the pattern
 ``8_2_interconnect.drc`` uses for ``interconnect_region`` and ``layers_def.drc``
 uses for the injected boundary manifest.
 
-**Versioning.** The interconnect axis is additive: a run without an
-interconnect adapter or a per-method file is identical to an interposer-only
-run, and interposer adapters written before that axis existed still load
-unchanged. ``CHANGELOG.md`` in the ADK is the authoritative
+**Versioning.** The interconnect axis is additive: without an interconnect
+adapter or a per-method file none of its parts enter the eval chain (see
+:ref:`adk_ixn_additive`), and interposer adapters written before that axis
+existed still load unchanged. ``CHANGELOG.md`` in the ADK is the authoritative
 per-release record of the contract; the ``VERSION`` file and the ``version`` keys
 in every ``config/*.json`` track its latest released entry, and a test enforces
 that they agree.

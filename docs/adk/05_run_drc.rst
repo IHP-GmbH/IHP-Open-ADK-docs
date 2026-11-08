@@ -117,8 +117,8 @@ Flags in detail
 
 ``--interconnect-adapter``
     Optional. Enables the IXN axis. Omit it, and pass no
-    ``--interconnect-methods``, and the evaluated deck is identical to an
-    interposer-only run.
+    ``--interconnect-methods``, and none of the axis's parts enter the
+    evaluated deck; see :ref:`adk_ixn_additive`.
 
 ``--interconnect-methods``
     Optional. Per-method IXN scoping. Requires the boundary manifest, and is

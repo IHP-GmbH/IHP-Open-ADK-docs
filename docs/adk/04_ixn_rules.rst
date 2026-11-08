@@ -14,6 +14,8 @@ The IXN rules implement the second axis. They live in
 ``klayout/drc/rule_decks/8_2_interconnect.drc`` and, like the ASM rules,
 reference no layer number and no PDK name.
 
+.. _adk_ixn_additive:
+
 The axis is optional and additive
 ---------------------------------
 
@@ -25,9 +27,9 @@ evaluates the concatenation once, so that every local variable is shared across
 decks. :ref:`adk_architecture_eval_chain` lists the interposer-only chain and
 every optional part.
 
-Nothing of this axis is added to that list unless the axis is switched on, and
-the two additions have different conditions. The interconnect adapter and its
-required-key validation are appended **only** when an interconnect adapter is
+Nothing of this axis is added to the eval chain unless the axis is switched on,
+and the two additions have different conditions. The interconnect adapter and
+its required-key validation are appended **only** when an interconnect adapter is
 supplied. ``8_2_interconnect.drc`` is appended when an interconnect adapter
 **or** a per-method file is present, which is what lets a methods file activate
 the axis on its own:
@@ -37,10 +39,12 @@ the axis on its own:
     parts << File.read(File.join(rule_decks_dir, '8_1_assembly.drc'))
     parts << File.read(File.join(rule_decks_dir, '8_2_interconnect.drc')) if interconnect_adapter || ixn_methods
 
-With neither supplied, the evaluated source, the executed checks and the emitted
-report are identical to an interposer-only run.
-Adding the axis cannot change an ASM verdict, and a project that does not use it
-pays nothing for its existence.
+With neither supplied, none of the axis's parts enter the eval chain: no
+interconnect adapter, no key validation and no ``8_2_interconnect.drc``. The
+evaluated source, the executed checks and the report are then exactly those of
+the interposer-only chain in :ref:`adk_architecture_eval_chain`. Adding the
+axis cannot change an ASM verdict, and a project that does not use it pays
+nothing for its existence.
 
 .. note::
 
