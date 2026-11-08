@@ -247,7 +247,9 @@ The parameter pack
 
 An interconnect adapter is a **parameter pack**, nothing more. It MUST set these
 three keys on the ``interconnect_rules`` dictionary, whose defaults the deck
-loads from ``config/interconnect.json`` before the adapter runs.
+loads from ``config/interconnect.json`` before the adapter runs. Set all three
+explicitly: as the next paragraphs explain, a key the adapter leaves out is not
+reported.
 
 .. list-table::
     :header-rows: 1
@@ -271,8 +273,10 @@ The whole of ``pdk_adapters/interconnect/ihp_cupillar.drc``, comments aside, is:
     interconnect_rules['IXN_pitch']    = 75.0   # centre-to-centre pitch
     interconnect_rules['IXN_pad_size'] = 35.0   # passivation opening
 
-The deck validates the three keys after the adapter is evaluated, and aborts
-naming the missing key. It also enforces ``IXN_pitch > IXN_pad_size`` at rule
+The wrapper appends a presence check per key after the adapter, but
+``config/interconnect.json`` has already seeded all three, so an adapter that
+omits a key inherits the registry default rather than aborting. The check fires
+only when that registry is absent. The deck also enforces ``IXN_pitch > IXN_pad_size`` at rule
 time, because the pitch check is implemented as a spacing of
 ``pitch - pad_size``: KLayout has no native pitch check, so a pitch that does not
 exceed the pad size would produce a non-positive spacing and a meaningless rule.

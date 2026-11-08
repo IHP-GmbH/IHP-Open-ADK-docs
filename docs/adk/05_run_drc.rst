@@ -445,7 +445,10 @@ to their identifying phrase.
 ``Interconnect adapter (<path>) must set interconnect_rules['IXN_pitch'].``
     An interconnect adapter is a parameter pack and must set all three of
     ``IXN_spacing``, ``IXN_pitch`` and ``IXN_pad_size``. The message names the
-    one that is missing.
+    one that is missing. It appears only when ``config/interconnect.json`` is
+    absent: that registry seeds all three keys before the adapter runs, so in a
+    normal checkout a key the adapter omits takes the registry default and
+    nothing is reported.
 
 ``Interconnect methods entry '<id>' missing '<key>'``
     A method in the sidecar lacks one of ``IXN_spacing``, ``IXN_pitch``,

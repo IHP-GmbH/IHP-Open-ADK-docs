@@ -273,8 +273,11 @@ Fail-loud validation
 --------------------
 
 The IXN axis reads numbers and die names from files that other tools wrote.
-Every way that input can be wrong is turned into an abort, never into a quiet
-under-check. There are four layers of it.
+Almost every way that input can be wrong is turned into an abort rather than a
+quiet under-check. Two cases are not: an interconnect adapter that omits a key,
+described below, and a zero or negative ``IXN_spacing``, which nothing rejects
+at run time and which therefore flags nothing (see
+:doc:`/formats/06_ixn_methods`). There are four layers of checking.
 
 The runner, before KLayout starts
     ``resolve_ixn_methods_path`` requires the file to exist, to parse as a JSON

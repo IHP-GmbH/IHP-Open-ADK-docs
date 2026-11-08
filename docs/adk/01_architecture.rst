@@ -283,7 +283,10 @@ The required list is a single line in the wrapper:
 
 The interconnect validation is built the same way from
 ``['IXN_spacing', 'IXN_pitch', 'IXN_pad_size']``, and checks presence in the
-``interconnect_rules`` dictionary rather than definedness of a local.
+``interconnect_rules`` dictionary rather than definedness of a local. Because
+``config/interconnect.json`` seeds all three keys before the adapter runs, that
+check fires only when the registry is absent: an adapter that omits a key
+inherits the registry default.
 
 Cross-tool consistency
 ----------------------
