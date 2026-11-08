@@ -100,9 +100,9 @@ the pcbnew half and the plugin's worker handoff stops making sense.
 The versions above are the ones the image pins. They are exact rather than
 minimum because the loose alternative let behaviour-defining packages drift
 against live PyPI and silently change test outcomes. The declared minimums in
-the individual repositories are looser (``klayout>=0.28`` and ``PyYAML>=6.0``
-for the plugin worker, ``PyQt6>=6.6.0`` for gds2kicad), but the pinned set is
-the combination that is actually verified together.
+the individual repositories can be looser (``PyQt6>=6.6.0`` for gds2kicad; the
+plugin worker's floors equal the image pins), but the pinned set is the
+combination that is actually verified together.
 
 Then export the interpreter so the KiCad plugin uses it:
 
@@ -189,12 +189,15 @@ The chiplet export plugin
 -------------------------
 
 Make the plugin directory visible to pcbnew, then give it a worker interpreter.
+The repository holds its plugins under ``plugins/``; link the
+``plugins/chiplet_export`` directory, not the repository root, which is not a
+Python package.
 
 .. code-block:: bash
 
     git clone https://github.com/IHP-GmbH/Chiplets-KiCad-Plugin.git
-    ln -s "$PWD/Chiplets-KiCad-Plugin" \
-          ~/.config/kicad/9.0/scripting/plugins/chiplet_kicad_plugin
+    ln -s "$PWD/Chiplets-KiCad-Plugin/plugins/chiplet_export" \
+          ~/.config/kicad/9.0/scripting/plugins/chiplet_export
 
 Adjust the version directory to your KiCad installation. Restart pcbnew and the
 action appears under ``Tools > External Plugins > Chiplet Export``.
@@ -206,9 +209,9 @@ inside the plugin directory:
 
 .. code-block:: bash
 
-    python3 -m venv Chiplets-KiCad-Plugin/.venv
-    Chiplets-KiCad-Plugin/.venv/bin/pip install -r \
-        Chiplets-KiCad-Plugin/requirements.txt
+    cd Chiplets-KiCad-Plugin/plugins/chiplet_export
+    python3 -m venv .venv
+    .venv/bin/pip install -r requirements.txt
 
 If you would rather use the shared venv from above, set
 ``KICAD_CHIPLET_PYTHON`` to its interpreter before launching KiCad, or define
@@ -216,8 +219,8 @@ it as a KiCad project text variable. The full resolution order, including the
 fact that a plugin-local ``.venv`` outranks the project text variable, is in
 :doc:`/install/03_environment`.
 
-``hyp_to_gds.py`` is also a standalone command. Run it from the plugin checkout
-with the worker interpreter directly when you want the conversion without the
+``hyp_to_gds.py`` is also a standalone command. Run
+``plugins/chiplet_export/hyp_to_gds.py`` with the worker interpreter directly when you want the conversion without the
 GUI.
 
 gds2kicad
@@ -311,7 +314,9 @@ GDS files open with named, coloured layers:
 
 The first component of ``KLAYOUT_PATH`` must be a writable configuration home,
 because KLayout writes its own configuration into it. The interposer tree is
-safe to put on that path: its only macro does not autorun.
+safe to put on that path: its one autorun macro,
+``tech/pymacros/autorun.lym``, only registers the IntM4TM2 PCell library, and
+batch runs with ``-b`` skip it.
 
 The base SG13G2 PDK slice
 -------------------------
@@ -345,12 +350,14 @@ that slice, a few megabytes rather than the full PDK.
 OpenROAD
 --------
 
-OpenROAD is **not** part of the image and is not needed for the main flow. The
-ADK's ``chiplet2dbx`` exporter derives a geometric 3Dblox view from a finalised
-``.chiplet`` file, and writing that view has no OpenROAD dependency. You only
-need an OpenROAD installation if you want to run its ``check_3dblox`` command
-on the result. Install it from its own upstream instructions and keep it
-outside this environment. See :doc:`/adk/07_chiplet2dbx`.
+The image carries OpenROAD (``$OPENROAD`` points at it) because the
+interposer router drives it (:doc:`/tools/11_interposer_pnr`). On a host, the
+main flow does not need it: the ADK's ``chiplet2dbx`` exporter derives a 3Dblox
+view from a finalised ``.chiplet`` file without OpenROAD. You need a host
+OpenROAD installation only to route with ``interposer-pnr`` outside the image or
+to run OpenROAD's ``check_3dblox`` command on the exported view. Install it from
+its own upstream instructions and keep it outside this environment. See
+:doc:`/adk/07_chiplet2dbx`.
 
 Wiring it together
 ------------------

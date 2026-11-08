@@ -79,13 +79,14 @@ image's venv, pre-set as ``KICAD_CHIPLET_PYTHON``. Open pcbnew and go to
 
 On a host install there are two steps.
 
-**Make it discoverable.** Symlink or copy the plugin directory into KiCad's
-scripting plugins folder:
+**Make it discoverable.** Symlink or copy the ``plugins/chiplet_export``
+directory of the repository, not the repository root, into KiCad's scripting
+plugins folder:
 
 .. code-block:: bash
 
-    ln -s /path/to/chiplet_kicad_plugin \
-          ~/.config/kicad/9.0/scripting/plugins/chiplet_kicad_plugin
+    ln -s /path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export \
+          ~/.config/kicad/9.0/scripting/plugins/chiplet_export
 
 The version segment is the KiCad version whose configuration you are extending,
 ``9.0`` for a stock KiCad 9 and ``9.99`` for the ADK fork
@@ -97,9 +98,9 @@ therefore runs as a subprocess under a different interpreter:
 
 .. code-block:: bash
 
-    python3 -m venv /path/to/chiplet_kicad_plugin/.venv
-    /path/to/chiplet_kicad_plugin/.venv/bin/pip install -r \
-        /path/to/chiplet_kicad_plugin/requirements.txt
+    cd /path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export
+    python3 -m venv .venv
+    .venv/bin/pip install -r requirements.txt
 
 Then restart pcbnew. If the plugin does not appear, use
 *Tools > External Plugins > Refresh Plugins*; a registration failure prints its
@@ -581,12 +582,17 @@ carrier names another technology is refused with
 only carrier the export models. The plugin's command reference, linked at the
 foot of this page, lists every flag.
 
-``run_export`` is the Python API the dialog itself calls:
+``run_export`` is the Python API the dialog itself calls. The package is
+``chiplet_export``, so the repository's ``plugins/`` directory has to be on
+``sys.path``:
 
 .. code-block:: python
 
+    import sys
+    sys.path.insert(0, "/path/to/Chiplets-KiCad-Plugin/plugins")
+
     import pcbnew
-    from chiplet_kicad_plugin.pipeline.orchestrator import (
+    from chiplet_export.pipeline.orchestrator import (
         ExportOptions, run_export, describe_assembly_drc,
     )
 
@@ -597,13 +603,14 @@ foot of this page, lists every flag.
         top_cell="INTERPOSER",
     )
     result = run_export(board, options,
-                        plugin_dir="/path/to/chiplet_kicad_plugin",
+                        plugin_dir="/path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export",
                         on_log=print)
     assert result.exit_code == 0 and not result.error
     print(describe_assembly_drc(result))
 
 .. tip::
-   ``tests/regenerate_wirebond_demo.py`` in the plugin repository is a complete
+   ``plugins/chiplet_export/tests/regenerate_wirebond_demo.py`` in the plugin
+   repository is a complete
    worked example, and it is what the container's verify stage runs to
    regenerate the reference design headless on every image build. See
    :doc:`/flow/08_reference_design`.

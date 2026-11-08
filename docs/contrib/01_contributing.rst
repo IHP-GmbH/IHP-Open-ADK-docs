@@ -107,14 +107,20 @@ layer, and every GDS fixture is synthesised at test time together with its
 boundary manifest sidecar. Nothing depends on a committed binary layout or on a
 PDK installation.
 
-Run it from the ADK checkout:
+Run it from the ADK checkout, in a venv that has the Python packages the suite
+imports (``klayout``, ``jinja2``, ``jsonschema`` and ``PyYAML``, declared in the
+ADK's ``pyproject.toml``):
 
 .. code-block:: bash
 
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -e ".[test]"
     pytest tests/
 
-Modules that shell out to KLayout skip cleanly when the ``klayout`` command is
-not on ``PATH``, so a bare checkout still exercises the pure-Python parts. A
+Modules that shell out to the KLayout command skip cleanly when ``klayout`` is
+not on ``PATH``, so a checkout without a KLayout installation still exercises
+the pure-Python parts. The suite prints the reason for every skip. A
 contribution that adds a rule should add a fixture that triggers it and one that
 does not.
 
