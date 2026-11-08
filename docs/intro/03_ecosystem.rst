@@ -68,12 +68,22 @@ The repositories
       - GPL-3.0-or-later
       - Connectivity of a placed assembly against its declared nets. See
         :doc:`/tools/09_assembly_lvs`.
+    * - chiplet-cosim
+      - GPL-3.0-or-later; a few files Apache-2.0
+      - Co-simulation of the dies as the system file connects them, under
+        cocotb with Icarus Verilog and, for mixed-signal blocks, ngspice, with
+        one verdict record per run. This site does not document it yet.
     * - |tools-repo|
       - GPL-3.0-or-later; the record schemas under ``formats/`` and most CI
         and Nix helpers Apache-2.0
       - The container that pins and builds the tools above, plus the
         reference design. It also stages the reference reader of the
         ``.chiplet`` specification that the flow tools read with.
+
+Five rows carry no link because those repositories are not public yet:
+packaging-flow, interposer-pnr, chiplet-flow, assembly-lvs and chiplet-cosim.
+ADK-Tools stages each one into the image from the commit its ``staging.pin``
+names, and the image carries that source under ``/opt/adk-tools/staging/``.
 
 The base process PDK, |pdk-repo|, sits underneath all of this and is documented
 separately at https://ihp-open-pdk-docs.readthedocs.io.
