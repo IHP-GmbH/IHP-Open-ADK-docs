@@ -372,26 +372,10 @@ Writing an adapter for a new interposer
 
 The shipped ``intm4tm2`` adapter is the whole worked example, because a
 conforming adapter really is this small. Here it is in full, comment header
-included:
+included, as the pinned ADK ships it:
 
-.. code-block:: ruby
-
-    # SPDX-License-Identifier: Apache-2.0
-    #
-    # IHP 130-nm IntM4TM2 aluminum BEOL interposer adapter.
-    #
-    # Declares ADK abstract inputs in terms of IHP-specific layers. IntM4TM2
-    # supports two chiplet-attachment mechanisms: the Cu pillar, formed where the
-    # passivation opening (9/35) and the final Cu pad (41/35) overlap, and the
-    # solder bump, formed where the passivation opening (9/36) and the final Cu
-    # pad (41/36) overlap. Both feed the abstract attachment input.
-
-    passiv_pillar = polygons(9, 35)
-    dfpad_pillar  = polygons(41, 35)
-    passiv_sbump  = polygons(9, 36)
-    dfpad_sbump   = polygons(41, 36)
-
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interposer/intm4tm2.drc
+    :language: ruby
 
 Line by line:
 
@@ -400,9 +384,10 @@ Line by line:
 
 The comment block
     States the substrate the adapter is for and, more usefully, *what physical
-    mechanism the attachment region models* and which layers encode it. This is
-    the only documentation a reader of the assembly report has for why the
-    region is what it is. Write it.
+    mechanism the attachment region models* and which layers encode it, and
+    which layers make up the wire-bond pads. This is the only documentation a
+    reader of the assembly report has for why the regions are what they are.
+    Write it.
 
 ``passiv_pillar = polygons(9, 35)``
     A KLayout layer expression for the passivation opening, in the interposer's
@@ -423,10 +408,19 @@ The comment block
     rather than the pad layer is the modelling decision: it makes ``ASM.f`` and
     the ``IXN`` rules operate on the geometry that actually forms a joint.
 
+``wire_bond_pad_input = lambda do |src| ... end``
+    The optional abstract input. The PDK derives a wire-bond pad from the
+    passivation opening (9/0), dfpad (41/0) and TopMetal2 (134/0) together, so
+    the lambda returns that intersection. It reads every layer through
+    ``src``, the carrier source the deck passes in, so a die in the assembly
+    that draws its own pads on the same layers is never read. Leave it out and
+    ASM.g is reported not applicable; see `Optional abstract input`_.
+
 Note what is *absent*: no rule, no ``output`` call, no include of another file
 and no parameter override. The four intermediate locals are a readability choice;
 the contract cares only that ``chiplet_attachment_input`` ends up defined and
-non-nil.
+non-nil, and that ``wire_bond_pad_input``, when present, is a lambda that
+returns a layer.
 
 To support a new interposer, a vendor must produce exactly this:
 
@@ -438,6 +432,10 @@ To support a new interposer, a vendor must produce exactly this:
    interposer's own layers, modelling the region where attachment can physically
    land. If the mechanism is not a Cu pillar, say so in the header comment and
    build the region from whatever layers do encode it.
+#. **Optionally, a** ``wire_bond_pad_input`` **lambda** that returns the
+   interposer's wire-bond pads from the source it is given, if the substrate
+   has any. Without it ASM.g is not applicable on that substrate. See
+   `Optional abstract input`_.
 #. **Optionally, numeric overrides** of ``drc_rules`` keys where the substrate
    genuinely demands different assembly numbers than the registry defaults.
    Write them as plain literals so the KiCad generator sees them too.

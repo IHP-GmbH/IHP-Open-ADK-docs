@@ -50,7 +50,7 @@ Rules under ``klayout/drc/rule_decks/`` and templates under
 from an abstract name to a PDK-specific fabrication layer lives in the adapters
 under ``pdk_adapters/``, and nowhere else.
 
-Three abstract inputs exist today.
+Four abstract inputs exist today.
 
 .. list-table::
     :header-rows: 1
@@ -72,6 +72,13 @@ Three abstract inputs exist today.
       - The mechanical outline of each placed chiplet, built from the
         manifest's ``polygon_dbu``. Not a fabrication layer, and not something
         an adapter may declare.
+    * - ``wire_bond_pad_input``
+      - optional, adapter-declared
+      - interposer adapter
+      - A lambda that takes a layout source and returns the interposer's
+        wire-bond pads. The deck calls it on the carrier with every die cell
+        pruned, so a die's own pads are never read. Without it, ASM.g is
+        reported not applicable.
     * - ``interconnect_region``
       - optional
       - interconnect adapter
@@ -92,9 +99,10 @@ final Cu pad overlap:
 
     chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
 
-That is the entire executable content of
-``pdk_adapters/interposer/intm4tm2.drc``; the rest of the file is its SPDX
-header and a comment saying which mechanisms the region models. On a
+Together with the optional ``wire_bond_pad_input`` lambda, that is the
+entire executable content of ``pdk_adapters/interposer/intm4tm2.drc``; the
+rest of the file is its SPDX header and a comment saying which mechanisms the
+two inputs model. :doc:`/adk/02_adapter_contract` shows the file in full. On a
 different substrate the same abstract input might be built from a
 hybrid-bonding pad array. The rule never cares which, which
 is what lets one rule deck check assemblies built on substrates the deck has

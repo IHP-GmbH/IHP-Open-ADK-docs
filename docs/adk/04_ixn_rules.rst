@@ -22,12 +22,11 @@ rather than by convention.
 
 ``adk_assembly.drc`` builds the rule source as a list of file contents and
 evaluates the concatenation once, so that every local variable is shared across
-decks. The interposer-only chain is::
+decks. :ref:`adk_architecture_eval_chain` lists the interposer-only chain and
+every optional part.
 
-    [ layers_def.drc, <interposer adapter>, <input validation>, 8_1_assembly.drc ]
-
-Nothing is appended to that list unless the axis is switched on, and the two
-appends have different conditions. The interconnect adapter and its
+Nothing of this axis is added to that list unless the axis is switched on, and
+the two additions have different conditions. The interconnect adapter and its
 required-key validation are appended **only** when an interconnect adapter is
 supplied. ``8_2_interconnect.drc`` is appended when an interconnect adapter
 **or** a per-method file is present, which is what lets a methods file activate
