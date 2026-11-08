@@ -280,7 +280,7 @@ Exit codes are never renumbered:
     * - 5
       - ``resume`` found no recorded halt.
     * - 6
-      - More than one run folder matches.
+      - A die build could not be bound to one result folder.
     * - 7
       - Internal error.
     * - 8, 9
