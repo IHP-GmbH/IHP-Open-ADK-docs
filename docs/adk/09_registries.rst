@@ -12,7 +12,7 @@ normative is hardcoded in a rule deck or in a generator. This page describes eac
 registry, who reads it, and what its values are worth.
 
 Alongside the registries, ``config/schema/`` holds the JSON Schemas: three that
-describe the registries themselves, and three that describe the per-assembly
+describe the registries themselves, and four that describe the per-assembly
 sidecar files the toolchain exchanges.
 
 Version discipline
@@ -26,9 +26,10 @@ between them fails CI.
 
 The sidecar schemas version independently, because they describe a data contract
 between separate tools rather than the ADK release, and their readers pin them
-**exactly**: a boundary manifest or a per-method interconnect file whose
-``version`` is not ``1.0.0``, or a pillar manifest whose ``version`` is neither
-``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed. See
+**exactly**: a boundary manifest, a per-method interconnect file or a
+resolved-v2 attachment sidecar whose ``version`` is not ``1.0.0``, or a pillar
+manifest whose ``version`` is neither ``1.0.0`` nor ``1.1.0``, is rejected
+rather than best-effort parsed. See
 :doc:`/tools/07_adk_tools_image` for the full version matrix.
 
 .. note::
@@ -233,10 +234,11 @@ against the same constraints without requiring a ``jsonschema`` dependency.
 Sidecar schemas
 ---------------
 
-Three further schemas describe per-assembly files that travel next to an
-assembly GDS rather than living in ``config/``. They are data contracts between
-separate tools, so their readers pin the schema string and the version exactly.
-Each is listed on the page that owns it:
+Four further schemas describe per-assembly files rather than anything in
+``config/``. The first three travel next to an assembly GDS; the fourth sits
+beside an assembly-lvs resolved v2 document, for the ADK's resolved-v2 entry.
+They are data contracts between separate tools, so their readers pin the
+schema string and the version exactly:
 
 .. list-table::
     :header-rows: 1
@@ -254,6 +256,10 @@ Each is listed on the page that owns it:
     * - ``ixn_methods.schema.json``
       - ``adk-ixn-methods``
       - :doc:`/formats/06_ixn_methods`
+    * - ``resolved_attachment.schema.json``
+      - ``adk-resolved-attachment``
+      - ``docs/resolved_v2_entry.md`` in |adk-repo|; this site has no page
+        for the resolved-v2 entry yet
 
 Changing a registry
 -------------------
