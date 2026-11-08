@@ -115,8 +115,9 @@ Flags in detail
     A registry id, as described above.
 
 ``--interconnect-adapter``
-    Optional. Enables the IXN axis. Omit it and the evaluated deck is identical
-    to a run from before the axis existed.
+    Optional. Enables the IXN axis. Omit it, and pass no
+    ``--interconnect-methods``, and the evaluated deck is identical to an
+    interposer-only run.
 
 ``--interconnect-methods``
     Optional. Per-method IXN scoping. Requires the boundary manifest, and is

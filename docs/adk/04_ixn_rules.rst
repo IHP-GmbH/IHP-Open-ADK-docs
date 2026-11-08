@@ -38,7 +38,7 @@ the axis on its own:
     parts << File.read(File.join(rule_decks_dir, '8_2_interconnect.drc')) if interconnect_adapter || ixn_methods
 
 With neither supplied, the evaluated source, the executed checks and the emitted
-report are identical to a run of the deck as it stood before this axis existed.
+report are identical to an interposer-only run.
 Adding the axis cannot change an ASM verdict, and a project that does not use it
 pays nothing for its existence.
 
