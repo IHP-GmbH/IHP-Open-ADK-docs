@@ -150,9 +150,9 @@ separately because they consume and produce different artefacts, and because
 The pivot artefact: ``.chiplet``
 --------------------------------
 
-The ``.chiplet`` file is the one artefact every tool writes, reads or takes its
-flags from, and it is what makes the pipeline a pipeline rather than a chain of
-one-off converters. It is YAML, human-readable and diffable, and carries four
+The ``.chiplet`` file is the one artefact every tool downstream of layout
+writes, reads or takes its flags from, and it is what makes the pipeline a
+pipeline rather than a chain of one-off converters. It is YAML, human-readable and diffable, and carries four
 groups of information:
 
 ``assembly`` and ``interposer``
