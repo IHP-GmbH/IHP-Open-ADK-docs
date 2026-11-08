@@ -419,7 +419,12 @@ record in the same run are exported as black boxes, as described above.
       - The kinds read and the unqualified files, described below
 
 The def names the record's files in place, by paths relative to the
-``.3dbv``. The
+``.3dbv``. Each path, like the ``--top-verilog`` path, must be expressible
+relative to the output directory using only letters, digits and
+``_ . / + -``, so a record file whose path from the output directory has a
+space in it is refused.
+A Liberty file shared by several record dies is listed once, on the first such
+def in name order, because the target does not deduplicate Liberty. The
 ``.bmap`` row of a pad gives the DEF component and its master, the pad centre
 in the DEF frame, and the die's own port and net (``-`` in both columns for a
 power or ground pad).
@@ -430,7 +435,8 @@ error until you name one. ``--corner`` or ``--top-verilog`` without any
 ``--views`` is an error too.
 
 ``--top-verilog FILE`` names a system top Verilog as the ``.3dbx``
-``Design``'s ``verilog_file``. It is checked first: it must be one module
+``Design``'s ``verilog_file``. It is checked before anything is written: it
+must be one module
 named after the design, instantiate only dies that have a record, each once,
 by instance name and top cell, and connect only signal ports of their pins
 views. The target would skip a missing file and drop unknown instances and
@@ -467,7 +473,8 @@ the DEF frame.
 After the written paths, the exporter prints one line per die, either
 ``<ref>: eda views: def, tech_lef, pins, lef, liberty; unqualified: <files>``
 or ``<ref>: eda views: absent`` for a die exported without a record.
-``unqualified`` lists the files the record itself marks unqualified. The
+``unqualified`` lists the files the record itself marks unqualified, or
+``none`` when it marks none. The
 records are read, never qualified: the export says nothing about the timing of
 the assembly.
 
@@ -524,6 +531,14 @@ The three renderers take their options keyword-only; ``export_3dblox`` takes
 them as ordinary keyword arguments. The renderers take ``die_views`` values as
 ``load_views`` results, while ``export_3dblox`` takes each as a
 ``(record, contract_dir)`` pair and loads it at ``corner``.
+
+The renderers run the same model checks as the export, but two things only
+``export_3dblox`` (and so the CLI) does. It checks the ``top_verilog`` file
+against the records, whereas ``render_3dbx`` writes the name it is given,
+unchecked. And it names record files relative to the output directory, whereas
+``render_3dbv`` names them by absolute path unless you pass ``base_dir``, the
+directory the ``.3dbv`` will be written to. Call ``export_3dblox`` unless you
+need the text alone.
 
 ``export_3dblox`` accepts ``die_pins`` values as either a path to a
 ``*.pins.json`` or an already-parsed pin list. As everywhere in the ADK, new
