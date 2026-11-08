@@ -72,7 +72,7 @@ The method registry
 
 ``manifest/interconnect_methods.json`` is the single source of truth. Its schema
 is at ``manifest/schema/interconnect_methods.schema.json`` (JSON Schema
-draft-07), and the top-level key is ``schema_version``, currently ``1.0``. The
+draft-07), and the top-level key is ``schema_version``, currently ``1.1``. The
 manifest lives at the repository root rather than under ``libs.tech/<tool>/``
 because it is the cross-tool contract of the whole PDK, not the data of one
 tool.
