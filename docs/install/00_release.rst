@@ -1,5 +1,5 @@
-The alpha release
-=================
+The preview release
+===================
 
 .. include:: /common.inc
 .. include:: /install/_generated/release_tag.inc
@@ -11,7 +11,7 @@ The alpha release
     the examples, so a public reader cannot build the full image until
     they are.
 
-The alpha release is three things that move together: an ADK-Tools release
+The preview release is three things that move together: an ADK-Tools release
 tag, the image you build from it, and an adk-examples checkout at the same tag.
 No image is published: you build the one you run, and it gets an ID of its
 own. The checkout's ``release-lock.json`` names the reference image the
@@ -25,7 +25,7 @@ example's README then starts from its first block, which calls ``run.sh``.
 :doc:`/examples` lists the examples.
 
 .. note::
-    The release is alpha. :doc:`/examples` says what is not verified.
+    The release is a preview. :doc:`/examples` says what is not verified.
 
 What you need
 -------------

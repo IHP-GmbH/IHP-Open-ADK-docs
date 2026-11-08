@@ -77,7 +77,7 @@ Where to start
       - :doc:`intro/01_what_is_the_adk` and :doc:`intro/02_the_gap`
     * - Get a working toolchain
       - :doc:`install/01_container`
-    * - Run the examples of the alpha release
+    * - Run the examples of the preview release
       - :doc:`install/00_release`, then :doc:`examples`
     * - Follow the flow end to end
       - :doc:`flow/01_overview`, then :doc:`flow/08_reference_design`

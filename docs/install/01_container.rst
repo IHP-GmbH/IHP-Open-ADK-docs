@@ -28,7 +28,7 @@ recipe, but it is a best-effort route.
     run, locally, from the pinned sources with ``build.sh``. What that pins,
     and why the build gates itself on a full regeneration of a reference
     design, is described in :doc:`/tools/07_adk_tools_image`. To run the
-    examples of the alpha release, :doc:`/install/00_release` gives the order.
+    examples of the preview release, :doc:`/install/00_release` gives the order.
 
 Prerequisites
 -------------
