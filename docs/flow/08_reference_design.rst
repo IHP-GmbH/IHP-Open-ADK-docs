@@ -2,6 +2,7 @@ Reference design
 ================
 
 .. include:: /common.inc
+.. include:: /_reference_values.inc
 
 ``two_die_interposer`` is the reference design of the |tools-repo| image: the
 design the image build regenerates and checks itself against. Its assembly DRC
@@ -42,12 +43,14 @@ What the reference design assembles
       - Description
     * - ``interposer``
       - ``intm4tm2``
-      - 6492.312 x 5602.001 um, 300 um thick. Four routed metals, Cu-pillar
+      - |ref-interposer-width| x |ref-interposer-height| um,
+        |ref-interposer-thickness| um thick. Four routed metals, Cu-pillar
         landing pads under each die, 35 wire-bond I/O pads of 100 x 100 um on
         ``TopMetal2`` around the edge.
     * - ``U1``
       - ``sg13g2``
-      - 770 x 2606.339 um, 750 um thick, ``orientation: flip_chip``, attached
+      - |ref-die-width| x |ref-die-height| um, |ref-die-thickness| um thick,
+        ``orientation: flip_chip``, attached
         with ``cupillar_opt1`` (44 um body, 75 um pitch, 40 um spacing).
     * - ``U2``
       - ``sg13g2``
@@ -61,9 +64,10 @@ text layer 134/25.
 The two connection stacks are what make the reference design interesting,
 because they are what forces every per-method mechanism in the flow to actually
 do something. The die z values follow from them directly. The interposer's
-attachment surface is at 13.83 um; ``cupillar_opt1`` is a 28 um Cu pillar plus
-a 16 um SnAg cap, so ``U1`` sits at 57.83 um; ``vendorx_microbump`` is 18 um
-plus 6 um, so ``U2`` sits at 37.83 um. That arithmetic is not decoration: the
+attachment surface is at |attach-z| um, the top of TopMetal2 as the interposer
+PDK states it; ``cupillar_opt1`` is a 28 um Cu pillar plus a 16 um SnAg cap,
+so ``U1`` sits at |ref-u1-z| um; ``vendorx_microbump`` is 18 um plus 6 um, so
+``U2`` sits at |ref-u2-z| um. That arithmetic is not decoration: the
 3Dblox exporter verifies it exactly and refuses assemblies that do not satisfy
 it.
 

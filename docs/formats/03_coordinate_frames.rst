@@ -2,6 +2,7 @@ Coordinate frames
 =================
 
 .. include:: /common.inc
+.. include:: /_reference_values.inc
 
 A ``.chiplet`` file carries XY positions that originate in several different
 coordinate frames: KiCad's PCB frame, the HyperLynx file's absolute frame, and
@@ -34,9 +35,11 @@ The rules in brief
 1. All ``position`` x and y values in a ``.chiplet`` file are expressed in the
    **GDS-bbox-corner frame of the interposer top cell**, y-up cartesian,
    micrometres.
-2. ``position`` is the component's **geometric centre** in x and y, not its
-   corner. In z it is the **seating plane**, the bottom face of the placed
-   body.
+2. ``position`` places the component's **anchor reference point** in x and
+   y: the centre of its GDS bounding box for ``anchor: bbox_center``, its own
+   GDS ``(0, 0)`` for ``anchor: gds_origin``. It is the geometric centre only
+   in the ``bbox_center`` case. In z it is the **seating plane**, the bottom
+   face of the placed body.
 3. Each component declares an explicit ``anchor``: ``gds_origin`` for a mesh
    built around the component's own GDS ``(0, 0)``, ``bbox_center`` for a mesh
    centred on its own GDS bounding box.
@@ -105,20 +108,25 @@ The choice is not arbitrary, and the alternative was tried.
 Position semantics
 ------------------
 
-``position`` x and y are the component's geometric centre. For a die of width
-1000 um and height 2000 um whose lower-left corner sits at (250, 250) inside
-the interposer:
+``position`` x and y place the component's anchor reference point, which
+the component's ``anchor`` names. For ``anchor: bbox_center`` that is the
+component's geometric centre. For ``anchor: gds_origin`` it is the component's
+own GDS ``(0, 0)``, wherever that origin sits in the artwork, so a die's
+``position`` is its centre only if its layout author put the origin there.
+
+For a ``bbox_center`` die of width 1000 um and height 2000 um whose lower-left
+corner sits at (250, 250) inside the interposer:
 
 .. code-block:: yaml
 
     position:
       x: 750.0      # 250 + 1000/2
       y: 1250.0     # 250 + 2000/2
-      z: 57.83      # seating plane, see the z-mounting rule below
+      z: 54.8103    # seating plane, see the z-mounting rule below
     dimensions:
       width: 1000.0
       height: 2000.0
-      thickness: 50.0   # body spans z 57.83 to 107.83
+      thickness: 50.0   # body spans z 54.8103 to 104.8103
 
 ``position.z`` is the seating plane: the bottom face of the placed body, the
 face that meets the mounting surface. For a die on a connection stack, that is
@@ -161,11 +169,12 @@ from different sources and answer different questions.
         without ``attachment_surface_z`` overload this field as the mount
         reference.
     * - ``attachment_surface_z``
-      - Interposer stackup ``attachment_surface_z``: 13.83 for IntM4TM2, that
-        is the TopMetal2 bottom at 10.83 plus its 3.00 thickness
+      - The interposer PDK's key ``beol.attachment_surface_z_um`` in
+        ``libs.tech/intm4tm2_stack.json``: |attach-z| for IntM4TM2, the top of
+        TopMetal2
       - The die-attachment surface in the interposer-local frame, the plane
-        dies mount on. Optional; consumers fall back to
-        ``dimensions.thickness`` when it is absent.
+        dies mount on. Optional; when it is absent, consumers take the
+        interposer technology stackup's value, then ``dimensions.thickness``.
     * - ``position.x`` / ``y``
       - Half of the **full** GDS bbox, all layers including the outline
       - Where the mesh bbox centre sits in the canonical frame, consistent with
@@ -319,19 +328,18 @@ for every angle that is not a multiple of 180 degrees.
 Worked case
 ~~~~~~~~~~~
 
-Take die ``U1`` from the reference assembly:
+Take die ``U1`` from the specification's worked example,
+``examples/interposer_demo_design.chiplet``:
 
-.. code-block:: yaml
+.. literalinclude:: ../../src/chiplet-spec/examples/interposer_demo_design.chiplet
+    :language: yaml
+    :start-at: - id: U1
+    :end-at: rotation:
+    :dedent: 2
 
-    - id: U1
-      type: die
-      anchor: gds_origin
-      orientation: flip_chip
-      connection: cupillar_opt1
-      position: {x: 1954.121, y: 2332.483, z: 57.83}
-      rotation: {z: 0.0}
-
-and a pad whose centre in the die's own GDS is ``(312.500, -845.000)`` um.
+Its ``anchor: gds_origin`` makes ``position`` the point where the die's GDS
+``(0, 0)`` lands, which is also the origin of the die-local pad coordinates.
+Take a pad whose centre in the die's own GDS is ``(312.500, -845.000)`` um.
 
 **Step 1, mirror.** ``orientation: flip_chip`` means ``M = diag(-1, 1)``, so
 the local coordinate becomes ``(-312.500, -845.000)``. Only x changes sign.
@@ -364,8 +372,9 @@ Now rotate the same flip-chip die by 90 degrees, ``rotation: {z: 90.0}``. Then
     y = 2332.483 + (-312.500)*1 + (-845.000)*0 = 2332.483 - 312.500 = 2019.983
 
 giving ``(2799.121, 2019.983)`` um. Note that ``position`` did not move: the
-die's geometric centre is rotation invariant, which is precisely why the
-contract puts ``position`` at the centre rather than at a corner.
+die turns about its anchor reference point, here its GDS ``(0, 0)``, so that
+point is rotation invariant and every pad moves around it. For a
+``bbox_center`` component the same holds for its bbox centre.
 
 .. tip::
 
@@ -410,6 +419,12 @@ interconnect-PDK fragment for this die's ``connection`` has been merged in, and
 ``connection.total_height()`` is the sum of ``height`` over every layer in the
 stack.
 
+The mounting plane of a file is its interposer's ``attachment_surface_z`` when
+the file declares one, and the interconnect fragment is rebased on that value,
+not on the technology stackup's. The technology stackup's
+``attachment_surface_z`` applies only when the file declares none, and
+``dimensions.thickness`` only when neither exists.
+
 .. figure:: /_figures/zstack.*
     :align: center
     :alt: Cross-section of two dies on one interposer, one on a Cu-pillar stack and one on a microbump stack, seated at different heights above the same attachment surface.
@@ -422,17 +437,21 @@ stack.
 How the mounting surface resolves
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Taking ``cupillar_opt1`` on the IntM4TM2 interposer:
+Taking ``cupillar_opt1`` on the IntM4TM2 interposer of the worked example,
+whose file declares ``attachment_surface_z`` as |attach-z|, the interposer
+PDK's key (the technology stackup carries the same value, but the file's is
+the one used):
 
 1. Take the die's connection id, ``cupillar_opt1``.
 2. Load the interposer stackup, ``intm4tm2``, and merge the interconnect
    fragment for that connection id. The fragment declares
    ``z_reference: attachment_surface``, so its ``CuPillar`` layer, at local z
-   0.00, is offset by the stackup's ``attachment_surface_z`` of 13.83. After
-   the merge, ``CuPillar.z_bottom = 13.83``.
+   0.00, is offset by the file's ``attachment_surface_z`` of |attach-z|. After
+   the merge, ``CuPillar.z_bottom`` is |attach-z|.
 3. The first layer name of the stack is ``CuPillar``. Look it up in the merged
-   stackup. It is found, so ``mounting_surface = 13.83``.
-4. ``z_die = 13.83 + total_height(cupillar_opt1)``.
+   stackup. It is found, so ``mounting_surface`` is |attach-z|.
+4. ``z_die = mounting_surface + total_height(cupillar_opt1)``, that is
+   |attach-z| + |spec-u1-stack| = |spec-u1-z|.
 
 The merge happens per die and before the first-layer lookup, which is what
 makes the rule per-die: a die using any method seats on that method's body
@@ -454,17 +473,17 @@ Worked case, two dies and two methods
     * - U1
       - ``cupillar_opt1`` (IHP Cu pillar)
       - CuPillar 28 + SnAgCap 16
-      - 44
-      - 57.83
+      - |spec-u1-stack|
+      - |spec-u1-z|
     * - U2
       - ``vendorx_microbump`` (non-IHP)
       - VendorXBumpCu 18 + VendorXBumpCap 6
-      - 24
-      - 37.83
+      - |spec-u2-stack|
+      - |spec-u2-z|
 
-Both dies sit on the same interposer, whose attachment surface is at 13.83, and
-they end up 20 um apart in z because their interconnect differs. U1 selects
-Option 1 rather than Option 2 because its pad ring contains a 79.93 um-pitch
+Both dies sit on the same interposer, whose attachment surface is at
+|attach-z|, and they end up 20 um apart in z because their interconnect
+differs. U1 selects Option 1 rather than Option 2 because its pad ring contains a 79.93 um-pitch
 pair, which is legal at Option 1's 75 um minimum but below Option 2's 80 um.
 That selection lives in the die's footprint ``CONNECTION`` field in KiCad and
 rides through the export unchanged.
@@ -480,17 +499,18 @@ Edge cases
     * - Case
       - Behaviour
     * - Die has no ``connection`` field
-      - Mount on ``interposer.attachment_surface_z`` with
+      - Mount on the file's mounting plane, as resolved above, with
         ``connection_height = 0``.
     * - ``connection`` id is not a defined connection stack
       - Same as above.
     * - The connection's first layer is not in the interposer stackup, even
         after the fragment merge
-      - Mount on ``interposer.attachment_surface_z``.
+      - Mount on the file's mounting plane.
     * - ``interposer.attachment_surface_z`` is absent (legacy file)
-      - Use ``interposer.dimensions.thickness`` as the mount reference, which
-        is the pre-split behaviour when thickness doubled as the attachment
-        surface.
+      - Use the interposer technology stackup's ``attachment_surface_z``, and
+        when that is absent too, ``interposer.dimensions.thickness`` as the
+        mount reference, which is the pre-split behaviour when thickness
+        doubled as the attachment surface.
     * - Die has ``position.z`` explicitly set to a non-zero value
       - Use the explicit value. Do not auto-calculate.
 
@@ -500,15 +520,47 @@ the fallback chain came to be written down. Reading the physical ``thickness``
 of an interposer that declares ``attachment_surface_z`` would be the opposite
 error, seating dies on the substrate bottom.
 
+Writing a derived z
+~~~~~~~~~~~~~~~~~~~
+
+A z derived from the plane, a die's ``position.z`` or a wire's start or end z,
+is written as the exact decimal sum of the plane and the height as written,
+emitted as the shortest text that reads back as that sum:
+|attach-z| + |spec-u1-stack| is written |spec-u1-z|, never
+|spec-u1-z-binary|. A writer sums in decimal, not in binary floating point, so a height with more decimals than the plane keeps
+all of them.
+
+.. _chiplet_plane_check:
+
+The plane check
+~~~~~~~~~~~~~~~
+
+For ``technology: intm4tm2`` the declared ``attachment_surface_z`` must equal
+the interposer PDK's ``beol.attachment_surface_z_um``. A check reads that key
+and every committed ``.chiplet`` whose interposer declares
+``technology: intm4tm2``, and fails, naming the file and line, when the file's
+``attachment_surface_z`` differs from the key, or when a die with a
+``connection`` has a non-zero ``position.z`` other than the plane plus that
+connection's total height, written as above.
+
+In the reference toolchain the check is ``ci/check_attach_plane.py`` in
+|tools-repo|. It runs in that repository's CI and while the image is built,
+the only place where the PDK sits beside every consumer. The reference readers
+do not run it, since they hold no PDK; a viewer may report the same mismatch
+when it opens a file, but that report is not the check. Conformance fixtures
+are format data, not designs: they may hold other values, and the check does
+not read them.
+
 .. note::
 
     The attachment surface is generally **not** the substrate's maximum z.
-    Passivation can rise above it: on the reference interposer stackup the
-    attachment surface is at 13.83 um while the passivation top lies above
-    that. Anything that derives the die-to-substrate gap from an outline
-    maximum z instead of the attachment surface disagrees with
-    ``total_height()`` by the passivation height. :doc:`/formats/08_3dblox_interop`
-    describes the same trap on the export side.
+    Passivation can rise above it: on the IntM4TM2 interposer the attachment
+    surface is the top of TopMetal2, at |attach-z| um, and the passivation
+    films lie above that plane. Anything that derives the die-to-substrate
+    gap from an outline maximum z instead of the attachment surface disagrees
+    with ``total_height()`` by the passivation height.
+    :doc:`/formats/08_3dblox_interop` describes the same trap on the export
+    side.
 
 
 io_pads
@@ -565,10 +617,14 @@ The writer contract
 Every tool that writes a ``.chiplet`` file must:
 
 1. Express all ``position`` x and y in the canonical frame.
-2. Use geometric-centre semantics.
+2. Place each component's anchor reference point at ``position``: the bbox
+   centre for ``bbox_center``, the component's GDS ``(0, 0)`` for
+   ``gds_origin``.
 3. Declare ``anchor`` explicitly per component.
 4. Set ``z`` to the explicit user value, to 0 to defer to auto-calculation, or
    to the auto-calculated value.
+5. Write a z derived from the plane as the exact decimal sum described in
+   `Writing a derived z`_.
 
 Any new writer, whether a manual editor, a plugin or a script, must cite the
 contract by path in a comment next to the writer code, and reviewers are
@@ -622,6 +678,10 @@ Every tool that reads a ``.chiplet`` file must:
 1. Parse ``anchor`` and store it on the component.
 2. Use ``anchor``, not the component type, to drive mesh centring.
 3. Range-check positions and warn loudly past the 1e5 um threshold.
+4. Apply the tolerant ``format_version`` policy rather than exact-string
+   equality: accept a same-major minor at or below the supported one, accept a
+   same-major higher minor with a warning, and reject a different major or a
+   malformed value.
 
 .. note::
 
@@ -647,7 +707,8 @@ that the 3D world mapping is exact with no tolerance.
 
 **A demo round-trip** regenerates the wire-bond demo end to end through the
 KiCad export and the finalizer, then reloads it and checks the real numbers:
-U1 near ``(1954.12, 2332.48, 57.83)``, U2 near ``(5170.23, 2420.27, 37.83)``,
+U1 near ``(1954.12, 2332.48)`` at z |spec-u1-z| and U2 near
+``(5170.23, 2420.27)`` at z |spec-u2-z|, both z values to within 1e-9 um,
 which locks the mixed-method case; the interposer near
 ``(3246.16, 2801.00, 0.0)``; every io_pad inside the interposer extent, which
 is the regression net for the HYP-absolute leak; and, implicitly, that the file
