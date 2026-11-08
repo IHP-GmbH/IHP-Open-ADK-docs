@@ -50,11 +50,7 @@ The minimal invocation
         --interposer-adapter intm4tm2 \
         --run_dir /tmp/adk_drc
 
-In the tools image the runner is the ``adk-drc`` command, which takes the same
-arguments: ``adk-drc --path design.gds --interposer-adapter intm4tm2``. It runs
-this script with ``/opt/adk-tools/venv/bin/python3``, which carries the modules
-it imports (KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_drc.inc
 
 That runs the |asm-rule-count| ASM rules and nothing else. The boundary manifest
 is discovered next to ``design.gds``, the top cell is auto-detected, and the

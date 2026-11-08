@@ -207,10 +207,7 @@ Running the check
         --json build/pads_vs_pillars.json \
         --strict
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 .. literalinclude:: /adk/_usage/pads_vs_pillars.txt
    :language: text

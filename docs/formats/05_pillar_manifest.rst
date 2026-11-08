@@ -331,10 +331,7 @@ The manifest is consumed by the pad-to-pillar alignment check:
         --pins U1=chiplets/die_a.pins.json \
         --gds-pads U2
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 .. tip::
    Point ``--pillars`` at the sidecar of the GDS whose bumps you want to check.

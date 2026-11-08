@@ -76,10 +76,7 @@ a rules file without one without saying so:
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 **What it proves.** That no two die footprints are closer than the assembly
 spacing rule, enforced as a ``courtyard_clearance`` constraint, plus overlap,
@@ -171,8 +168,7 @@ Stage 3: the KLayout assembly DRC
         --interconnect-methods outputs/layout/two_die_interposer_complete.ixn_methods.json \
         --run_dir /tmp/adk_drc
 
-In the tools image, ``adk-drc`` takes the place of ``python3
-klayout/drc/run_drc.py`` with the same arguments.
+.. include:: /_image_adk_drc.inc
 
 This is the full rule set: the |asm-rule-count| placement rules on one axis and
 the |ixn-rule-count| interconnect rule forms on the other. The placement axis is
