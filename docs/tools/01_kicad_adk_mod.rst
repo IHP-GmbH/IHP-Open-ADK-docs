@@ -37,7 +37,7 @@ shows up as a concrete failure:
 
 .. figure:: /_figures/tikz_nm_scale_ladder.*
     :align: center
-    :alt: A logarithmic length axis from 1 nanometre to 1 millimetre. The hardcoded constants of upstream KiCad cluster between 1 micrometre and 0.15 millimetre, the smallest interposer features sit between 0.2 and 2 micrometres on a 5 nanometre grid, and the fork moves the four floors to 10 nanometres and adds grid presets down to 1 nanometre.
+    :alt: A logarithmic length axis from 1 nanometre to 1 millimetre. The hardcoded constants of upstream KiCad cluster between 1 micrometre and 0.15 millimetre, the smallest interposer features sit between about 0.2 and 2 micrometres on a 5 nanometre grid, and the fork moves the four floors to 10 nanometres and adds grid presets down to 1 nanometre.
     :width: 95%
 
     The same failures on a logarithmic length axis. Every upstream

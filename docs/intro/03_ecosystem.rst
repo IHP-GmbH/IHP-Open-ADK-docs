@@ -98,7 +98,7 @@ The same set in data-flow terms, following the files rather than the tools:
 
 .. figure:: /_figures/tikz_ecosystem_dataflow.*
     :align: center
-    :alt: Data-flow graph running from the base PDK and the chiplet GDS files, through the interposer PDK and gds2kicad, into the KiCad ADK fork, and on to hyp_to_gds, the ADK assembly DRC and Chiplet Studio.
+    :alt: Data-flow graph running from the base PDK and the chiplet GDS files, through the interposer PDK and gds2kicad, into the KiCad ADK fork, and on to hyp_to_gds, the ADK assembly DRC and Chiplet Studio, with the .chiplet export finalised by hyp_to_gds, giving the assembly DRC its adapter flags and read by Chiplet Studio.
     :width: 90%
 
     The ecosystem in data-flow terms. Each repository owns one contract
