@@ -382,13 +382,24 @@ The division of labour is strict:
   byte-identical to each other under the parity gate.
 - **Readers expand on read**, using the discovery chain: environment variable
   first, then an upward walk for a conventional sibling checkout, then loud
-  failure naming the variable. A set-but-invalid environment value (the marker
-  subdirectory is missing) falls through to the walk rather than winning.
+  failure naming the variable. In the ADK readers and in Chiplet Studio, a
+  set-but-invalid environment value (the marker subdirectory is missing)
+  falls through to the walk rather than winning. The KiCad export plugin makes
+  one exception: a set ``INTERPOSER_PDK_ROOT`` without
+  ``libs.tech/intm4tm2_stack.json`` is refused with
+  ``CARRIER_UNSUPPORTED_ROOT`` and never falls back to a sibling checkout,
+  because another KLayout PDK tree, the SG13G2 die PDK included, would
+  otherwise pass for the interposer.
 
-Expansion is restricted to five known ecosystem roots: ``ADK_ROOT``,
-``INTERPOSER_PDK_ROOT``, ``INTERCONNECT_PDK_ROOT``, ``GDS_TO_KICAD_ROOT`` and
-``PDK_ROOT``. An unknown ``${NAME}`` is treated as a typo and fails, rather
-than as licence to read arbitrary environment variables. A path that silently
+Expansion is restricted to a fixed set of ecosystem roots. The ADK readers and
+the KiCad export plugin expand five: ``ADK_ROOT``, ``INTERPOSER_PDK_ROOT``,
+``INTERCONNECT_PDK_ROOT``, ``GDS_TO_KICAD_ROOT`` and ``PDK_ROOT``. Chiplet
+Studio expands those five and three more: ``GF180MCU_PDK_ROOT``,
+``CHIPLET_STUDIO_ROOT`` and ``CHIPLET_FLOW_TECH``, the last one from the
+environment only. An unknown ``${NAME}`` is treated as a typo and fails,
+rather than as licence to read arbitrary environment variables, so a file that
+uses one of Studio's extra roots opens in Studio and fails in any ADK tool
+that has to expand that path. A path that silently
 kept a literal ``${VAR}`` component would simply "not exist" downstream and
 mask the real problem, so unresolvable references abort with the variable name
 in the message.
@@ -517,6 +528,8 @@ this release models, and the KiCad export plugin refuses a system on another
 carrier with the same id.
 
 
+.. _chiplet_validation_rules:
+
 Validation rules
 ----------------
 
@@ -524,7 +537,12 @@ The reference libraries enforce a small set of structural invariants across the
 whole file, including the component fields defined on
 :doc:`/formats/02_chiplet_components`. Everything that needs the filesystem or
 cross-reference resolution is left to the consuming tool, because the libraries
-never touch the filesystem.
+never touch the filesystem. The shape of the document itself is checked
+separately by the machine-readable schema, ``schemas/chiplet.schema.json``.
+
+The list below follows the numbering of the specification's
+``docs/CHIPLET_FORMAT_SPEC.md`` (section *Validation Rules*), which is
+normative and carries the full text of each rule.
 
 Hard errors in the reference validator:
 
@@ -547,25 +565,51 @@ Hard errors in the reference validator:
    intermediate files are explicitly allowed. A source document, one with a
    ``system`` block, is refused by every assembly read path whatever the
    caller allows.
-7. ``assembly.units``, when present, must be ``um``.
+7. Quoting is document semantics. A writer quotes every scalar the format
+   defines as a string (``format_version``, ids, names, dates, technology
+   keys, ``top_cell``, paths, adapter ids) unconditionally, whatever the
+   value, and keeps keys bare. A source document is the one exception for its
+   string values, which go bare by a closed allowlist.
+8. A pad's ``io_class`` must allow the ``type`` of every interface it takes
+   part in, per the usage-class table on
+   :doc:`/formats/02_chiplet_components`. A violation is refused, naming the
+   interface, the pad, the class and the type.
+
+Checked at the assembly stage, by the hosts that hold the interconnect
+manifest; the reference validators state this rule and do not run it:
+
+9. A component's interconnect method, resolved through the interconnect
+   method registry, must declare an ``interface_type`` equal to the ``type``
+   of every interface the component takes part in. The rule spans two
+   artifacts, the ``.chiplet`` and the registry, so a green result from a
+   reference reader says nothing about it. No ADK tool at the documented
+   revision runs it.
 
 Reader behaviour that warns or falls back rather than failing:
 
-8. New files should declare ``anchor`` on every component. A reader defaults an
-   absent ``anchor`` to ``bbox_center`` and warns.
-9. An absent or unresolved ``connection`` falls back to the interposer's
-   ``attachment_surface_z``, or to ``dimensions.thickness`` when that field is
-   absent.
-10. A reader must warn, or reject, when any ``position.x`` or ``position.y``
+10. New files should declare ``anchor`` on every component. A reader defaults
+    an absent ``anchor`` to ``bbox_center`` and warns.
+11. An absent or unresolved ``connection`` falls back to the interposer's
+    mounting plane: its ``attachment_surface_z``, else the technology
+    stackup's, else ``dimensions.thickness`` (see
+    :doc:`/formats/03_coordinate_frames`).
+12. A reader must warn, or reject, when any ``position.x`` or ``position.y``
     exceeds 1e5 um in magnitude. This is the leak guard for un-converted
     absolute coordinates.
 
 Consumer-level expectations, not enforced by the reference library:
 
-11. Component ``id`` values are unique.
-12. Component ``type`` is one of the four canonical values.
-13. A ``technology`` reference names a defined technology id.
-14. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+13. Component ``id`` values are unique.
+14. Component ``type`` is one of the four canonical values.
+15. A ``technology`` reference names a defined technology id.
+16. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+
+The top-level block grammar of the specification adds refusals of its own,
+which the merge tooling and both reference readers implement from one
+definition: a reader refuses a document that repeats a top-level key or
+carries a line break other than LF or CRLF, and a writer refuses to emit a
+top-level key it cannot write as a bare key line at column zero, naming the
+key.
 
 
 Reading and writing .chiplet files
