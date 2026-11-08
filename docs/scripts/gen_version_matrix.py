@@ -106,7 +106,9 @@ def main():
         version = declared_version(path, name in PYPROJECT_VERSIONED)
         if name == "chiplet-system-spec":
             version = "reader " + constant(SPEC_READER, "__version__")
-        described = git(path, "describe", "--tags", "--always")
+        # Release tags only: a local save-point or review tag must never end
+        # up in a published Version cell.
+        described = git(path, "describe", "--tags", "--always", "--match", "v[0-9]*")
         commit = git(path, "rev-parse", "--short", "HEAD")
         # A repo without a VERSION file versions by tag or by commit; say which
         # rather than leaving the cell blank.

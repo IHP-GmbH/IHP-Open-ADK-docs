@@ -54,13 +54,67 @@ def git(repo, *args):
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
+def pinned_commit(path):
+    """The commit this repository pins the submodule at, from the index.
+
+    The index rather than HEAD, so that a pin move can be regenerated before
+    it is committed: check out the new commit, ``git add`` the submodule, then
+    run the generators.
+    """
+    relative = os.path.relpath(path, REPO_ROOT)
+    entry = git(REPO_ROOT, "ls-files", "--stage", "--", relative).split()
+    # "<mode> <sha> <stage>\t<path>"; a submodule's mode is 160000.
+    if len(entry) < 2 or entry[0] != "160000":
+        return ""
+    return entry[1]
+
+
 def require_submodule(path, name):
+    """Fail unless the submodule is checked out exactly at its pin.
+
+    A checkout that has drifted from the pin would write tables for code the
+    site does not pin, and the drift gate would then compare against the
+    wrong source. Uncommitted edits to tracked files inside the submodule are
+    refused for the same reason.
+    """
     if not os.path.isdir(path):
         fail(
             "submodule {} is not checked out at {}. "
             "Run: git submodule update --init".format(name, path)
         )
+    pinned = pinned_commit(path)
+    if not pinned:
+        fail("{} is not a submodule pinned by this repository".format(name))
+    # An empty or uninitialised submodule directory makes git answer for the
+    # enclosing repository instead, so check whose HEAD this is first.
+    toplevel = git(path, "rev-parse", "--show-toplevel")
+    if not toplevel or os.path.realpath(toplevel) != os.path.realpath(path):
+        fail(
+            "submodule {} is not initialised at {}. "
+            "Run: git submodule update --init".format(name, path)
+        )
+    checked_out = git(path, "rev-parse", "HEAD")
+    if checked_out != pinned:
+        fail(
+            "submodule {} is checked out at {} but pinned at {}. "
+            "Run: git submodule update --init {}, or, when moving the pin, "
+            "git add {} first".format(
+                name, checked_out[:12] or "an unknown commit", pinned[:12], name, name
+            )
+        )
+    if git(path, "status", "--porcelain", "--untracked-files=no", "--ignore-submodules=all"):
+        fail("submodule {} has uncommitted changes to tracked files".format(name))
     return path
+
+
+def release_tags(repo):
+    """The published release tags pointing at HEAD of repo.
+
+    Clones in this ecosystem carry local tags (save points, review marks,
+    archives) that are never published. Only tags starting with ``v`` and a
+    digit are releases.
+    """
+    return git(repo, "tag", "--points-at", "HEAD", "--list", "v[0-9]*").split()
 
 
 def read_json(path):
