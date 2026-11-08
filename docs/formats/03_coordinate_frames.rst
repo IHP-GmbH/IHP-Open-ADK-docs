@@ -78,7 +78,7 @@ The canonical frame
 
 .. figure:: /_figures/canonical_frame.*
     :align: center
-    :alt: Plan view of the interposer GDS bounding box with the origin at its lower-left corner, x rightward, y upward, and a die whose position is measured to its geometric centre.
+    :alt: Plan view of the interposer GDS bounding box with the origin at its lower-left corner, x rightward, y upward, and a die whose position marks its anchor point, drawn for anchor: bbox_center, where the anchor point is the die's bbox centre.
     :width: 90%
 
     The canonical frame. Positions are measured from the lower-left
