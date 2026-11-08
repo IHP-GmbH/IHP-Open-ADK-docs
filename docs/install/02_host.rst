@@ -357,12 +357,12 @@ OpenROAD
 --------
 
 The image carries OpenROAD (``$OPENROAD`` points at it) for the die build,
-which LibreLane and chiplet-flow drive (:doc:`/tools/12_chiplet_flow`), and for
+which LibreLane and chiplet-die-flow drive (:doc:`/tools/12_chiplet_flow`), and for
 the interposer router (:doc:`/tools/11_interposer_pnr`). The assembly flow on a
 host does not need it: the ADK's ``chiplet2dbx`` exporter derives a 3Dblox view
 from a finalised ``.chiplet`` file without OpenROAD. You need a host OpenROAD
-installation only to build dies or route with ``interposer-pnr`` outside the
-image, or to run OpenROAD's ``check_3dblox`` command on the exported view. Install it from
+installation only to run OpenROAD's ``check_3dblox`` command on the exported
+view, since the die build and the router have no host route. Install it from
 its own upstream instructions and keep it outside this environment. See
 :doc:`/adk/07_chiplet2dbx`.
 
