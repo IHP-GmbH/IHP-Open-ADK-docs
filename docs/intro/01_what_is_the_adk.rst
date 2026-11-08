@@ -46,9 +46,10 @@ The abstraction boundary
 Rules reference **abstract input names only**. The mapping from an abstract name
 to a PDK-specific fabrication layer lives in a small adapter file, and nowhere
 else. The central one is ``chiplet_attachment_input``, the region an interposer
-offers for chiplet attachment: on IntM4TM2 the adapter derives it from the
-Cu-pillar and solder-bump openings, on another substrate it might be a
-hybrid-bonding pad array, and the rule never asks which. That is what lets one
+offers for chiplet attachment: on IntM4TM2 the adapter derives it from where
+the Cu-pillar and solder-bump openings overlap their final Cu pads, on another
+substrate it might be a hybrid-bonding pad array, and the rule never asks
+which. That is what lets one
 rule deck check assemblies built on substrates the deck has never heard of.
 
 :doc:`/adk/01_architecture` lists the abstract inputs and gives the reasoning;
