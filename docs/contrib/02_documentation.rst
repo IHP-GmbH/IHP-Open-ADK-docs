@@ -23,8 +23,9 @@ What is generated
 -----------------
 
 ``docs/scripts/`` reads the submodules and writes the rule tables, the adapter
-tables, the version matrices, the command line transcripts and the image build
-recipe. Never edit the generated files: they are overwritten on every build.
+tables, the version matrices, the command line transcripts, the image build
+recipe and the coordinate values the format and flow pages quote. Never edit
+the generated files: they are overwritten on every build.
 
 .. list-table::
     :header-rows: 1
@@ -43,6 +44,11 @@ recipe. Never edit the generated files: they are overwritten on every build.
     * - ``gen_build_recipe.py``
       - The image build recipe, copied from the ADK-Tools README with the
         pinned release tag, and the ``|release-tag|`` substitution.
+    * - ``gen_reference_values.py``
+      - ``_reference_values.inc``: the interposer PDK's mount plane and the
+        dimensions and die heights of the specification's worked example and
+        of the reference design. It fails when a file's plane or a die height
+        disagrees with the PDK key.
 
 The generators fail the build when the source drifts from what is documented.
 Adding a rule to a deck without describing it, renaming a command line tool, or
