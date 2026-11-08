@@ -228,12 +228,15 @@ micrometres.
       height: 0.49
 
 .. note::
-   The shipped stackups render the silicon bulk at 50 um and say so in a comment,
-   although the real SG13G2 wafer is 750 um. A true-scale substrate dwarfs a
-   14 um back end and a 48 um pillar stack and makes the assembly view unusable.
-   Restore ``height: 750.0`` in the ``Substrate`` entry if you need the physical
-   proportion, for example when preparing geometry for a thermal or mechanical
-   study.
+   The ``ihp-sg13g2`` and ``ihp-sg13cmos5l`` stackups render the silicon bulk
+   at 50 um and say so in a comment, although the real SG13 wafer is 750 um. A
+   true-scale substrate dwarfs a 14 um back end and a 48 um pillar stack and
+   makes the assembly view unusable. Restore ``height: 750.0`` in their
+   ``Substrate`` entry if you need the physical proportion, for example when
+   preparing geometry for a thermal or mechanical study. The ``intm4tm2``
+   stackup renders the interposer carrier at 250 um, the thickness the
+   interposer PDK's stack key gives it. The ``sky130`` and ``gf180mcu``
+   stackups have no ``Substrate`` entry.
 
 Attachment bodies
 ~~~~~~~~~~~~~~~~~
