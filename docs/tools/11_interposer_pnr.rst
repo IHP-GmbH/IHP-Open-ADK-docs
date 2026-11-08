@@ -185,8 +185,10 @@ The engine states these limits in its own documentation:
   very different sizes sit further apart than they need to, and a carrier the
   dies fit by hand can still be refused. It never flips a die and does not
   read the carrier's pad rows. Minimum area is detected, never fixed.
-- The OpenROAD in the image is not the build the engine's routing tests ran
-  on, so a route made there is not backed by those tests.
+- The image's verify stage runs three of the engine's live single-layer
+  route cases on the image's OpenROAD. The multi-layer backend's live tests do
+  not run there, so a multi-layer route made in the image is not backed by
+  them.
 - An acknowledgment binds the board bytes; it does not read the die layouts
   the footprints name again.
 
