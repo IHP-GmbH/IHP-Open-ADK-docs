@@ -26,9 +26,9 @@ shows up as a concrete failure:
   hardcoded 0.01 mm minimum rejects it.
 - The nearest grid a user can snap to is 10 um, which is coarser than the
   feature being drawn.
-- A locked-item shadow sized from the silkscreen line width (about 0.15 mm,
-  that is 150 um) drawn around a 0.19 um via is about 790 times larger than the
-  via.
+- A locked-item shadow is four times the silkscreen line width, 0.4 mm with
+  KiCad's default, so the ring drawn around a 0.19 um via is about 2000 times
+  wider than the via.
 - A squared distance accumulated in 32-bit arithmetic overflows once the two
   points are more than about 46 um apart, after which a "nearest item" search
   compares wrapped negative values and picks the wrong item.
