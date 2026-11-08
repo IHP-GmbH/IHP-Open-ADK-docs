@@ -3,6 +3,13 @@ Quickstart
 
 .. include:: /common.inc
 
+.. warning::
+    packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
+    chiplet-cosim and the worked examples (adk-examples) are not public
+    yet. The image build stages the first five and reads die records from
+    the examples, so a public reader cannot build the full image until
+    they are.
+
 The shortest path from nothing to a checked assembly, in four steps. The first
 builds the image and takes about an hour.
 

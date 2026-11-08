@@ -3,6 +3,13 @@ The ADK-Tools image
 
 .. include:: /common.inc
 
+.. warning::
+    packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
+    chiplet-cosim and the worked examples (adk-examples) are not public
+    yet. The image build stages the first five and reads die records from
+    the examples, so a public reader cannot build the full image until
+    they are.
+
 ADK-Tools is the distribution channel of the ecosystem: one Docker image that
 carries every tool of the heterogeneous integration flow, compiled and
 pre-wired, callable by name. It is not a codebase. It is a version lockfile

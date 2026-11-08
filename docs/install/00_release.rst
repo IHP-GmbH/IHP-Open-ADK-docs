@@ -3,6 +3,13 @@ The alpha release
 
 .. include:: /common.inc
 
+.. warning::
+    packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
+    chiplet-cosim and the worked examples (adk-examples) are not public
+    yet. The image build stages the first five and reads die records from
+    the examples, so a public reader cannot build the full image until
+    they are.
+
 The alpha release is three things that move together: an ADK-Tools release
 tag, the image you build from it, and an adk-examples checkout at the same tag.
 No image is published: you build the one you run, and it gets an ID of its

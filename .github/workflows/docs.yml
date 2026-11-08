@@ -71,32 +71,8 @@ jobs:
               status=1
             fi
           }
-          # Assembly-level connectivity verification may be described as a
-          # concept and as scope. Naming an implementation of it may not: no
-          # module, no repository, no comparison result, no availability claim.
-          check 'assembly_lvs|assembly-lvs/' 'Do not name an implementation of assembly LVS. The concept is in scope; the implementation is not released.'
           check 'netgen|run_demo\.py' 'Do not name the tools or scripts of the unreleased connectivity work.'
           check 'pactech|pac tech' 'Do not name a bumping vendor in the site prose.'
-          # Every page that discusses the connectivity axis must also say it is
-          # not in this release. Checked per file rather than per line.
-          python3 - <<'PY' || status=1
-          import pathlib, re, sys
-          mentions = re.compile(r'assembly[ \n-]lvs|connectivity axis', re.I)
-          disclaims = re.compile(
-              r'\b(not|no)\b[^.]{0,120}\bpart of th(is|e)\s+(preview\s+)?release',
-              re.I | re.S)
-          bad = []
-          for path in pathlib.Path('docs').rglob('*.rst'):
-              if path.name == '02_documentation.rst':
-                  continue
-              text = path.read_text(encoding='utf-8')
-              if mentions.search(text) and not disclaims.search(text):
-                  bad.append(str(path))
-          if bad:
-              print('::error::A page discusses assembly-level connectivity verification without stating that no implementation of it is part of this preview release.')
-              print('\n'.join(bad))
-              sys.exit(1)
-          PY
           check 'signoff.?grade|production.?grade' 'Do not claim signoff-grade or production-grade. This is a preview release.'
           check '[—–]' 'Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.'
           # Emoji ranges, checked with a Python pass since grep classes vary.

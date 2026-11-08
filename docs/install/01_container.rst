@@ -3,6 +3,13 @@ The ADK-Tools image
 
 .. include:: /common.inc
 
+.. warning::
+    packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
+    chiplet-cosim and the worked examples (adk-examples) are not public
+    yet. The image build stages the first five and reads die records from
+    the examples, so a public reader cannot build the full image until
+    they are.
+
 The supported way to run the flow is the ADK-Tools container. It carries every
 tool of the ecosystem, compiled against each other and pre-wired: the KiCad
 fork with the chiplet export plugin preloaded, Chiplet Studio, gds2kicad, the
