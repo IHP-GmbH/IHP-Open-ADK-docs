@@ -78,10 +78,13 @@ The base process PDK, |pdk-repo|, sits underneath all of this and is documented
 separately at https://ihp-open-pdk-docs.readthedocs.io.
 
 .. note::
-   The pinned revision of each repository, as documented by this site, is in the
-   version matrix on :doc:`/tools/07_adk_tools_image`. That table is generated
-   from the submodules this documentation is built against, so it always
-   describes the code these pages actually describe.
+   The pinned revision of each submodule repository, as documented by this
+   site, is in the version matrix on :doc:`/tools/07_adk_tools_image`. That
+   table is generated from the submodules this documentation is built against,
+   so it always describes the code these pages actually describe. The staged
+   flow tools are not submodules: ADK-Tools pins each of them by commit in its
+   ``staging.pin``, described under "Staged sources and Nix packages" on the
+   same page.
 
 How they connect
 ----------------
