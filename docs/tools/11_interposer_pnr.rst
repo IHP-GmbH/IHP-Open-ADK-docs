@@ -172,7 +172,8 @@ board.
 What it does not verify
 -----------------------
 
-The engine states these limits in its own documentation:
+The engine states these limits in its own documentation, except the one on
+the image's verify stage, which ADK-Tools sets:
 
 - Routed traces are idealized centrelines. ``rdl_route`` has no DRC of its
   own, and on one layer a design can stay partly open: on the ADK-Tools
