@@ -88,11 +88,11 @@ How they connect
 
 .. figure:: /_figures/ecosystem.*
     :align: center
-    :alt: The tools of the ecosystem arranged around the assembly flow.
+    :alt: Six cards around one hub: the KiCad ADK fork and plugin, gds2kicad, hyp_to_gds, Chiplet Studio, the interposer PDK and the ADK assembly DRC.
     :width: 80%
 
-    The design tools of the ecosystem around the KiCad path. The flow tools
-    in the table above are not drawn.
+    The design tools, the interposer PDK and the assembly rule decks of the
+    ecosystem around one hub. The flow tools in the table above are not drawn.
 
 The same set in data-flow terms, following the files rather than the tools:
 
