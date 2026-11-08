@@ -333,8 +333,7 @@ button, and the captured output of whichever step you select.
 .. note::
    The dock has no menu entry on purpose. It reveals itself when the loaded
    assembly defines a ``flow:`` and stays hidden otherwise, so it never presents
-   an empty panel. The project ``README.md`` still lists it under
-   ``View > Flow Pipeline``; the code is the accurate description.
+   an empty panel.
 
 A step is one subprocess invocation:
 

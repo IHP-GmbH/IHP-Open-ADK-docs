@@ -103,10 +103,11 @@ dock returns you to the 3D view alone.
 Other panels
 ~~~~~~~~~~~~
 
-*View > Net Graph* inspects the assembly connectivity. *View > Flow Pipeline*
+*View > Net Graph* inspects the assembly connectivity. The Flow Pipeline dock
 runs the build steps declared in the ``.chiplet``'s ``flow:`` block against the
 assembly, which is how the 3Dblox export and its linter can be driven from the
-GUI. *View > Python Console*, or ``Ctrl`` and the backtick key, opens an
+GUI. It has no menu entry: it opens by itself when the loaded assembly defines
+a ``flow:`` block, and stays hidden otherwise. *View > Python Console*, or ``Ctrl`` and the backtick key, opens an
 embedded interpreter with a ``chiplet_studio`` module for scripting the
 assembly. *File > Export PNG* renders the current 3D view.
 
