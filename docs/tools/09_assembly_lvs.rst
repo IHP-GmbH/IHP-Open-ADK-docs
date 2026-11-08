@@ -298,7 +298,10 @@ reads the nine states as four words:
 Only a FAIL can be waived; a run whose every FAIL is covered exits 16
 (:doc:`/tools/10_packaging_flow`). The flow passes a placement bound of zero for every
 component, so its verdict is at the nominal placement, and it does not claim die
-LVS. ``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
+LVS. The flow also maps only dies at rotation 0: a die at another right angle,
+which the engine itself accepts, is an assembly the flow cannot express, and
+the check reads INCONCLUSIVE with the cause ``unsupported_orientation``.
+``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it
 again from those copies and runs assembly-lvs on it.
 
