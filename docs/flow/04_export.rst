@@ -101,13 +101,14 @@ Step 0 checks, in this order: that a selected interconnect PDK root holds its
 other die declares a usable ``DIE_OUTLINE_LAYER``; and that the I/O pad
 carriers can be named, which refuses a carrier on two nets, a missing or
 repeated ``IO_PAD_ID`` on a board export drew, or a missing or wrong export
-report. Each refusal is listed under `Common failures`_. Steps 2 and 3 are Python ports of the KiCad C++ exporters, and
-they are held byte-exact against them by the plugin's regression tests. Step 5
-is where the geometry is actually built. Step 6 is a check, not a gate: a DRC
-failure does not invalidate the exported artefacts, the dialog's run still
-succeeds, and the verdict is reported separately as
-``assembly DRC: PASSED / FAILED / NOT RUN`` with the report path. The headless
-command, below, exits 3 in that case unless you pass ``--allow-drc-fail``.
+report. Each refusal is listed under `Common failures`_. Steps 2 and 3 are
+Python ports of the KiCad C++ exporters, and they are held byte-exact against
+them by the plugin's regression tests. Step 5 is where the geometry is actually
+built. Step 6 is a check, not a gate: a DRC failure does not invalidate the
+exported artefacts, the dialog's run still succeeds, and the verdict is
+reported separately as ``assembly DRC: PASSED / FAILED / NOT RUN`` with the
+report path. The headless command, below, exits 3 in that case unless you pass
+``--allow-drc-fail``.
 
 Headless
 --------
@@ -133,10 +134,11 @@ It always writes the complete assembly GDS and always runs the assembly DRC.
 Exit 0 means the files were written and the DRC passed, exit 1 that nothing
 trustworthy was written, exit 2 that the board is missing or KiCad cannot read
 it (or a usage error), and exit 3 that the files were written but the DRC did
-not pass: ``FAILED``, ``REFUSED`` or ``NOT RUN``. ``--allow-drc-fail`` turns that 3 into 0 when you want the
-geometry regardless; the last line still says how the DRC ended. Add
-``--export-report PATH`` for a board drawn against a sheet.
-:doc:`/tools/02_chiplet_export_plugin` lists the exit codes and the flags.
+not pass: ``FAILED``, ``REFUSED`` or ``NOT RUN``. ``--allow-drc-fail`` turns
+that 3 into 0 when you want the geometry regardless; the last line still says
+how the DRC ended. Add ``--export-report PATH`` for a board drawn against a
+sheet. :doc:`/tools/02_chiplet_export_plugin` lists the exit codes and the
+flags.
 
 .. note::
    Anything headless must run under a Python that can ``import pcbnew``, which
@@ -412,9 +414,9 @@ KLayout command line is unavailable.
 **Read ``MANIFEST.md``.** Every file the run can produce is listed, ticked
 ``[x]`` when it is on disk. An unticked ``[ ]`` entry is either an output the
 run did not ask for, such as the fill files without fill, the pillar files
-without a Cu-pillar stack, or the complete GDS and the DRC reports with the
-complete GDS off, or a stage that failed quietly. Compare the unticked entries
-against the options you ran with.
+without a Cu-pillar stack, or the complete GDS, its sidecars and the assembly
+DRC report with the complete GDS off, or a stage that failed quietly. Compare
+the unticked entries against the options you ran with.
 
 **Check the ``.chiplet`` was finalised.** No ``_metadata`` block should remain.
 

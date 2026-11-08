@@ -408,12 +408,12 @@ The fill runs on the written interposer GDS in place, and the boundary and
 pillar sidecars are written after it, so the digest in the boundary manifest is
 that of the filled file. The complete GDS is left unfilled, because the dies it
 embeds draw on the same metal layers and are not interposer metal. The run
-writes two read-back files beside the interposer GDS, ``<stem>.fill_density.json``
-(per-metal coverage and deck state) and ``<stem>.fill_coverage.json`` (a coarse
-coverage map); the export moves the density report to
-``reports/<board>_fill_density.json``. A density that does not converge or
-ends out of band is a warning (``Warning: metal fill density concern``), not a
-refusal.
+writes two read-back files beside the interposer GDS,
+``<stem>.fill_density.json`` (per-metal coverage and deck state) and
+``<stem>.fill_coverage.json`` (a coarse coverage map); the export moves the
+density report to ``reports/<board>_fill_density.json``. A density that does
+not converge or ends out of band is a warning (``Warning: metal fill density
+concern``), not a refusal.
 
 An unavailable fill engine fails the run, and so does an engine that stops,
 reported as ``ERROR: metal fill stopped:`` with the reason. A missing

@@ -107,9 +107,10 @@ Other panels
 runs the build steps declared in the ``.chiplet``'s ``flow:`` block against the
 assembly, which is how the 3Dblox export and its linter can be driven from the
 GUI. It has no menu entry: it opens by itself when the loaded assembly defines
-a ``flow:`` block, and stays hidden otherwise. *View > Python Console*, or ``Ctrl`` and the backtick key, opens an
-embedded interpreter with a ``chiplet_studio`` module for scripting the
-assembly. *File > Export PNG* renders the current 3D view.
+a ``flow:`` block, and stays hidden otherwise. *View > Python Console*, or
+``Ctrl`` and the backtick key, opens an embedded interpreter with a
+``chiplet_studio`` module for scripting the assembly. *File > Export PNG*
+renders the current 3D view.
 
 Opening the GDS in KLayout with named layers
 ---------------------------------------------

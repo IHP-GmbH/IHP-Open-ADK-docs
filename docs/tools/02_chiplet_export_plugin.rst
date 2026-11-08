@@ -71,8 +71,8 @@ the eight ``layout/`` products and the three reports, each with a checkbox
 ticked according to what actually appeared on disk, so a partial run is visible
 without comparing directory listings. Optional products, the fill files for
 example, stay unticked when the run did not ask for them. The manifest also
-reports what the previous-export content guard found. Writing it is best effort: a manifest that
-cannot be written never fails the export.
+reports what the previous-export content guard found. Writing it is best
+effort: a manifest that cannot be written never fails the export.
 
 .. tip::
    ``adk-new-project`` in the container scaffolds exactly this layout, with a
@@ -268,11 +268,11 @@ in the complete GDS, from the one rectangle it finds. It never sizes a die from
 the footprint courtyard. The layer must merge to exactly one axis-aligned
 rectangle under the file's one top cell; anything else is refused.
 
-The field has no default. A die whose field is empty, or is not two integers from 0
-to 65535 separated by ``/``, refuses the run before any output exists, with
-``Die outline layer refused:`` followed by every die at fault and the cause.
-Two kinds of footprint need no value, and their row shows a note instead of a
-text box: a die marked with ``CHIPLET_PAD_DOMAINS``, which keeps the size
+The field has no default. A die whose field is empty, or is not two integers
+from 0 to 65535 separated by ``/``, refuses the run before any output exists,
+with ``Die outline layer refused:`` followed by every die at fault and the
+cause. Two kinds of footprint need no value, and their row shows a note instead
+of a text box: a die marked with ``CHIPLET_PAD_DOMAINS``, which keeps the size
 archived with its pin list and is passed to the worker as exempt, and a
 footprint the ``.chiplet`` does not export as a die (excluded from the bill of
 materials, an ``IO_CLASS`` pad, or a ``cap_cmim`` capacitor). Every other
