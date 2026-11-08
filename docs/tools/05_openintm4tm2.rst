@@ -342,7 +342,7 @@ clean slit ring does not read as a deck that never ran.
    report a violation on every one of them. Its ``DEN.BND.*`` boundary sanity
    rules are separately gated behind ``--density_sanity``.
 
-.. warning::
+.. important::
    Do not read these rule values as a statement of what IHP will accept for a
    tapeout. They are derived from the SG13G2 layout rules revision the JSON
    records, adapted to a stack that has no front end, and some adaptations are

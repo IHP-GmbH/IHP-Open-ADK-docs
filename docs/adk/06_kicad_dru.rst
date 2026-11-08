@@ -15,7 +15,7 @@ parameter registry the KLayout deck reads, optionally merges the numeric
 overrides an interposer adapter declares, and renders a block of KiCad design
 rules to stdout or to a file.
 
-.. warning::
+.. important::
 
     The KiCad side is a **partial** mirror of the ADK deck, by construction.
     Of the |asm-rule-count| assembly rules exactly one is emitted, and none of

@@ -9,7 +9,7 @@ truth for pin names in the human-in-the-loop symbol and footprint workflow, and
 two ADK tools consume it: the 3Dblox exporter uses it to emit bump maps, and the
 pad-to-pillar alignment check uses it as a pad source.
 
-.. warning::
+.. important::
    The ADK does not specify the pin list formally. There is no JSON Schema for
    it in the ADK's ``config/schema/``, no version check in either ADK reader,
    and no validator beyond the handful of keys each consumer happens to need.
