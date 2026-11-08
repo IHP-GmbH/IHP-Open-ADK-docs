@@ -83,8 +83,8 @@ separately at https://ihp-open-pdk-docs.readthedocs.io.
    table is generated from the submodules this documentation is built against,
    so it always describes the code these pages actually describe. The staged
    flow tools are not submodules: ADK-Tools pins each of them by commit in its
-   ``staging.pin``, described under "Staged sources and Nix packages" on the
-   same page.
+   ``staging.pin``, described under
+   :ref:`tools/07_adk_tools_image:Staged sources and Nix packages`.
 
 How they connect
 ----------------
