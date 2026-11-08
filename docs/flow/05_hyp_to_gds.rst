@@ -110,6 +110,10 @@ What it produces
     * - ``<gds-stem>.pillars.json``
       - The as-drawn Cu-pillar and bump centres. Written whenever the bump
         generation path ran. See :doc:`/formats/05_pillar_manifest`.
+    * - ``<gds-stem>.fill_density.json``, ``<gds-stem>.fill_coverage.json``
+      - The metal fill read-back, per-metal density and a coarse coverage map.
+        Written only with ``--insert-metal-fill``; see
+        `Metal fill and the seal ring`_.
     * - ``<stem>_cupillar_drc.json``
       - The per-die Cu-pillar DRC report from the interposer PDK's bump
         validator, aggregated across dies.
@@ -378,6 +382,69 @@ token that is neither ``face_up`` nor ``flip_chip`` is a hard error: the frame
 contract defines only those two, and silently treating a typo (or the plausible
 looking ``face_down``) as face up would flip a die the wrong way with no
 diagnostic.
+
+.. _hyp_to_gds_fill_seal_ring:
+
+Metal fill and the seal ring
+----------------------------
+
+Both are off by default, both act on the interposer GDS, and the assembly DRC
+checks neither: metal density and the seal ring are the interposer PDK's own
+rules (:doc:`/tools/05_openintm4tm2`). Turn them on when you prepare the
+interposer layout for fabrication. The reference design runs with both off.
+
+Metal fill
+~~~~~~~~~~
+
+``--insert-metal-fill`` stamps floating dummy metal on Metal4, Metal5,
+TopMetal1 and TopMetal2 to meet the IntM4TM2 CMP density rules. The converter
+does not compute the fill itself: it calls the interposer PDK's engine,
+``libs.tech/klayout/python/fill_closure.py``, which needs the ``klayout``
+binary on ``PATH``, as the assembly DRC does. ``--fill-mode single-pass``, the
+default, stamps each metal once. ``--fill-mode closure`` iterates Metal4 and
+Metal5 against the density deck until they are in band, which is slower.
+
+The fill runs on the written interposer GDS in place, and the boundary and
+pillar sidecars are written after it, so the digest in the boundary manifest is
+that of the filled file. The complete GDS is left unfilled, because the dies it
+embeds draw on the same metal layers and are not interposer metal. The run
+writes two read-back files beside the interposer GDS, ``<stem>.fill_density.json``
+(per-metal coverage and deck state) and ``<stem>.fill_coverage.json`` (a coarse
+coverage map); the export moves the density report to
+``reports/<board>_fill_density.json``. A density that does not converge or
+ends out of band is a warning (``Warning: metal fill density concern``), not a
+refusal.
+
+An unavailable fill engine fails the run, and so does an engine that stops,
+reported as ``ERROR: metal fill stopped:`` with the reason. A missing
+``klayout`` binary does not: the log says ``Metal fill skipped`` and the export
+succeeds with an unfilled GDS, so check the log when you asked for fill.
+
+To keep fill away from an area, draw it on a board user layer named
+``NoMetFiller`` (every metal) or ``M4.nofill``, ``M5.nofill``, ``TM1.nofill``
+or ``TM2.nofill`` (one metal). The template board does not define these layers;
+rename a user layer. The export extracts the shapes into a sidecar it passes as
+``--nofill-regions``, and the converter paints them onto the PDK keep-out
+datatypes (160/0, and ``<metal>/23`` per metal) that the fill engine
+subtracts. A keep-out sidecar that is given but cannot be read refuses the run,
+because fill over a probe pad or the seal ring is worse than no output.
+
+In the export dialog the fill is the *Insert metal density fill (interposer
+GDS)* checkbox with its *Fill mode* choice; headless it is
+``chiplet-export --insert-metal-fill --fill-mode closure``.
+
+The seal ring
+~~~~~~~~~~~~~
+
+``--seal-ring`` draws the interposer PDK's seal ring, the IntM4TM2
+``sealring`` PCell, on the board outline, which must be one axis-aligned
+rectangle. The converter refuses, with nothing written, when the outline is
+missing, is not a rectangle or is smaller than the PCell's minimum, or when
+fabricated geometry sits in the ring band or closer to the ring than its space
+rule. The complete GDS carries the ring too. The dialog has no seal ring
+option; headless it is ``chiplet-export --seal-ring``.
+:doc:`/tools/05_openintm4tm2` describes the ring itself and the checks the
+interposer deck runs on it.
 
 Sidecars written alongside the GDS
 ----------------------------------
