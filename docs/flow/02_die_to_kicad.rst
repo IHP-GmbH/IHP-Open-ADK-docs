@@ -191,10 +191,10 @@ Add ``--die-outline-layer N/D`` when the GDS you convert carries the die
 outline, ``39/4`` on an SG13G2 die. The courtyard then follows the die outline
 instead of the pads, and the footprint records the layer as its
 ``DIE_OUTLINE_LAYER`` property, the field the export sizes the die from (see
-`Traceability properties`_). A curated pad-review GDS keeps the outline when it
-was generated with the flag. The export reads the outline from the GDS that
-``GDS_FILE`` names. In the reference design the stripped GDS carries only the
-pad and text layers, so its footprint is converted without the flag; its
+:ref:`export_per_die_settings`). A curated pad-review GDS keeps the outline
+when it was generated with the flag. The export reads the outline from the GDS
+that ``GDS_FILE`` names. In the reference design the stripped GDS carries only
+the pad and text layers, so its footprint is converted without the flag; its
 ``GDS_FILE`` names the full ``Metal_Test.gds``, which does carry ``39/4``, and
 the board sets the field to that.
 

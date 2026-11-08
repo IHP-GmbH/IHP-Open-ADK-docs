@@ -18,8 +18,8 @@ The flow takes three kinds of input:
    the layer that carries the die outline, which sizes the die. Nothing else is
    interpreted, so a die stripped down to those layers, or a black-boxed one,
    works as well as a full one; the complete assembly GDS places whatever the
-   die GDS contains. The dies
-   keep their own PDKs, and the flow never checks their internals.
+   die GDS contains. The dies keep their own PDKs, and the flow never checks
+   their internals.
 
 **An interposer technology.**
    A KLayout technology describing the substrate the dies are mounted on:

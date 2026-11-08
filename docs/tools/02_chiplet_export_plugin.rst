@@ -52,7 +52,9 @@ drift apart.
   Its ``.exportcontent.sha256`` sidecar sits beside it: the digest of the
   exporter-owned content recorded after each successful export. The next
   export refuses to replace a ``.chiplet`` whose exporter-owned content was
-  edited by hand since, unless a headless caller sets ``ExportOptions.force``.
+  edited by hand since. Only a Python caller of ``run_export`` can override
+  that, with ``ExportOptions.force``; neither the dialog nor ``chiplet-export``
+  exposes it.
   Blocks the exporter does not own, such as ``flow:``, are carried over and
   never trip it.
 - The GDS layouts go under ``layout/`` **with their sidecars**. Each manifest is
@@ -420,6 +422,9 @@ Turning a design into runner flags
 
 ``build_cli_args`` is a pure function from ``ExportOptions`` to the argv handed
 to ``hyp_to_gds.py``. The mapping is direct:
+
+.. Hand-typed from build_cli_args in plugins/chiplet_export/pipeline/
+   orchestrator.py, in its order. Nothing re-checks it: update it with the pin.
 
 .. list-table::
     :header-rows: 1
