@@ -69,7 +69,8 @@ The repositories
       - Connectivity of a placed assembly against its declared nets. See
         :doc:`/tools/09_assembly_lvs`.
     * - |tools-repo|
-      - GPL-3.0-or-later
+      - GPL-3.0-or-later; the record schemas under ``formats/`` and most CI
+        and Nix helpers Apache-2.0
       - The container that pins and builds the tools above, plus the
         reference design. It also stages the reference reader of the
         ``.chiplet`` specification that the flow tools read with.
@@ -154,7 +155,8 @@ Licensing in practice
 The ADK, the format specification and both PDKs are Apache-2.0, so a rule deck,
 an adapter or a reader can be reused with minimal obligation. The tools built on
 KiCad and KLayout are GPL, as their upstreams require, and so are the flow
-tools (packaging-flow, interposer-pnr, chiplet-flow and assembly-lvs).
+tools (packaging-flow, interposer-pnr, chiplet-flow, chiplet-cosim and
+assembly-lvs).
 
 The container image is a mere aggregation of independently licensed components.
 Each keeps its own license, and ``NOTICE.md`` in the ADK-Tools repository
