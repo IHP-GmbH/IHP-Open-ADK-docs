@@ -79,7 +79,9 @@ What happens when you press Run
 
 .. code-block:: text
 
-    0. check the I/O pad carriers and export report      (refuses, nothing written)
+    0. preflight the board                               (refuses, nothing written)
+         interconnect PDK manifest, carrier pad domains,
+         die outline layers, I/O pad carriers, export report
     1. resolve the worker Python and hyp_to_gds.py       (fails early if absent)
     2. write <board>.hyp                                 (HyperLynx writer)
     3. write the intermediate <board>.chiplet            (chiplet writer)
@@ -93,9 +95,13 @@ What happens when you press Run
     6. run the ADK assembly DRC over the complete GDS    (when enabled)
          -> reports/<board>_assembly_drc.lyrdb
 
-Step 0 refuses a board whose carriers cannot be named: a carrier on two nets, a
-missing or repeated ``IO_PAD_ID`` on a board export drew, or a missing or wrong
-export report. Steps 2 and 3 are Python ports of the KiCad C++ exporters, and
+Step 0 checks, in this order: that a selected interconnect PDK root holds its
+``manifest/interconnect_methods.json``; that every die footprint marked with
+``CHIPLET_PAD_DOMAINS`` carries pad metadata the export can use; that every
+other die declares a usable ``DIE_OUTLINE_LAYER``; and that the I/O pad
+carriers can be named, which refuses a carrier on two nets, a missing or
+repeated ``IO_PAD_ID`` on a board export drew, or a missing or wrong export
+report. Each refusal is listed under `Common failures`_. Steps 2 and 3 are Python ports of the KiCad C++ exporters, and
 they are held byte-exact against them by the plugin's regression tests. Step 5
 is where the geometry is actually built. Step 6 is a check, not a gate: a DRC
 failure does not invalidate the exported artefacts, the dialog's run still
@@ -411,6 +417,28 @@ without re-exporting:
 
 Common failures
 ---------------
+
+``Interconnect PDK source refused: the resolved interconnect PDK root at ... does not contain manifest/interconnect_methods.json``
+    The interconnect PDK root in the dialog, or ``INTERCONNECT_PDK_ROOT``,
+    points at a directory that is not a complete interconnect PDK checkout.
+    Point it at one.
+
+``Carrier pad domains refused: ...``
+    A die footprint marked with ``CHIPLET_PAD_DOMAINS`` carries pad metadata
+    the export cannot render as carrier copper. The message names the
+    footprint and the cause.
+
+``Die outline layer refused: U1, U2: ...``
+    A die has no ``DIE_OUTLINE_LAYER``, or its value is not ``LAYER/DATATYPE``.
+    Set it in the dialog's *Outline layer* column or on the footprint
+    (``39/4`` for an SG13G2 die). The message lists every die at fault, so
+    one run reports them all.
+
+``Die outline refused: U1: ...``
+    The worker found the declared layer in the die GDS empty, or not one
+    axis-aligned rectangle, or the GDS has more than one top cell. Nothing is
+    written. Check the layer in KLayout against the ``GDS_FILE`` the footprint
+    names.
 
 ``Hyperlynx writer aborted``
     Most commonly the board has no closed ``Edge.Cuts`` outline. The writer

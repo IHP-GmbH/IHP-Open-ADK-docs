@@ -358,9 +358,13 @@ The sequence
 
 ``run_export`` runs this, in order:
 
-1. Read the export report, when one is given, and check the board's carriers
-   against it (:ref:`chiplet_export_report`). A refusal here returns before
-   anything exists on disk.
+1. Preflight the board, before anything exists on disk: a selected
+   interconnect PDK root must hold its manifest, the die footprints marked
+   with ``CHIPLET_PAD_DOMAINS`` must carry usable pad metadata, every other die
+   must declare its ``DIE_OUTLINE_LAYER`` (`Per-die settings`_), and the
+   board's carriers are checked against the export report, when one is given
+   (:ref:`chiplet_export_report`). A refusal here returns with nothing
+   written.
 2. Create the output directory and its ``layout/`` subdirectory. The worker does
    not create parent directories, so this has to happen first.
 3. Resolve the worker Python and ``hyp_to_gds.py``, failing immediately if
