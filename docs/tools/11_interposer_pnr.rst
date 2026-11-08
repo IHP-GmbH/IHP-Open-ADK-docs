@@ -41,6 +41,10 @@ The steps
   ``interposer_pnr.placement`` 1.0 document, or the refusals ``not_legal`` and
   ``kept_overlap`` in place of the dies. It reads only the provisional source
   that ``packaging-flow place`` writes, so you call it through that command.
+  For a source whose ``external`` block names a profile, that command passes
+  ``--rotations 0`` and refuses a placement that turns a die, so every die
+  stays at rotation 0. The flow's assembly-LVS input maps no other rotation in
+  any case (:doc:`/tools/09_assembly_lvs`).
 - ``bumps`` puts one bump on each die pad, from each die's pin list, and
   binds pads to nets by name and by position. It lists the pads no net claims,
   so "every net routed" is never read as "every pad accounted for".
