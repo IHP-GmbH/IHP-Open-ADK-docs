@@ -176,11 +176,9 @@ carries the matching field.
         spacing numbers the interconnect rules will check. Left unset, the die
         follows the assembly-wide default chosen in the export dialog.
     * - ``DIE_OUTLINE_LAYER``
-      - The ``LAYER/DATATYPE`` on which the die's own GDS draws its outline:
-        ``39/4`` for an SG13G2 die, ``206/0`` for a black-box die from
-        ``blackbox_chiplet.py``. The export sizes the die from the one
-        rectangle on that layer. It is required and has no default: a die
-        without it refuses the export.
+      - The ``LAYER/DATATYPE`` on which the die's own GDS draws its outline,
+        ``39/4`` for an SG13G2 die. The export sizes the die from it and
+        refuses a die without it.
     * - ``DIE_THICKNESS_UM``
       - The physical z extent of the silicon die body, in micrometres. It lands
         in the ``.chiplet`` as ``components[].dimensions.thickness``.
