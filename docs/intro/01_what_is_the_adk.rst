@@ -71,8 +71,9 @@ checks it with ``assembly-lvs``, an engine in the ADK-Tools image that
 packaging-flow runs as one stage of a flow run.
 
 Neither question subsumes the other. Legal geometry can implement the wrong
-netlist, and correct connectivity can be drawn illegally. An assembly is signed
-off only when both answers are yes.
+netlist, and correct connectivity can be drawn illegally, so an assembly needs a
+yes on both. In this preview release a yes on both is evidence for review, not
+a sign-off.
 
 The geometric axis: assembly DRC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

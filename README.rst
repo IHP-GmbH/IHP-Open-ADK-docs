@@ -6,7 +6,7 @@ IHP Open Assembly Design Kit documentation
    :target: https://github.com/IHP-GmbH/IHP-Open-ADK
 
 Documentation source for the IHP Open Assembly Design Kit (ADK) and the open
-flow for 2.5D/3D heterogeneous chiplet integration built around it.
+flow for 2.5D heterogeneous chiplet integration built around it.
 
 .. image:: docs/_static/IHP_logo.png
    :align: center

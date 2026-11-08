@@ -97,8 +97,8 @@ The ecosystem in one line
 
 Die GDS becomes KiCad symbols and footprints, the interposer is authored in a
 nanometre-capable KiCad fork, the board is exported as a ``.chiplet`` assembly
-plus a HyperLynx netlist, the netlist becomes a fabrication-ready GDS, the
-assembly is checked by the ADK rule decks, and the result is inspected in 3D.
+plus a HyperLynx netlist, the netlist becomes the assembly GDS, the assembly
+is checked by the ADK rule decks, and the result is inspected in 3D.
 In a packaging-flow run, assembly LVS also checks the placed assembly's
 connectivity against its declared nets.
 :doc:`intro/03_ecosystem` names every repository and what it owns.
@@ -106,10 +106,10 @@ connectivity against its declared nets.
 Scope of this documentation
 ===========================
 
-This site documents the published preview: the ADK itself, the tools bundled in
-the ADK-Tools image, the interchange formats, and the reference design. Work in
-progress that is not part of the release is stated as a direction with no
-interface commitment, and :doc:`roadmap` collects it.
+This site documents the preview release: the ADK itself, the tools the
+ADK-Tools image bundles, the interchange formats, and the reference design.
+Work in progress that is not part of the release is stated as a direction with
+no interface commitment, and :doc:`roadmap` collects it.
 
 Other open work is active in the same space and is complementary rather than
 competing. :doc:`intro/02_the_gap` sets out where the ADK fits alongside it.
