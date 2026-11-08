@@ -18,6 +18,12 @@ independent programs that find each other through the environment described in
 :doc:`/install/03_environment`, so a host installation of only the ADK and
 KLayout is a perfectly reasonable thing to have.
 
+This page covers the board, export, DRC and viewing tools. The staged flow
+engines (packaging-flow, interposer-pnr, chiplet-die-flow, assembly-lvs and
+chiplet-cosim) have no host route: their pinned commits cannot yet be fetched
+from a public remote, and they ship only inside the image. The worked
+examples therefore run only in the container.
+
 The reference platform
 ----------------------
 
