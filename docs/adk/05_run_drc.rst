@@ -16,9 +16,10 @@ Prerequisites
 -------------
 
 **KLayout 0.29.11 or newer, on ``PATH``.**
-    The runner shells out to ``klayout -b`` and checks the version first. An
-    older KLayout, or none at all, aborts before anything else happens. The
-    container image ships a suitable build; see :doc:`/install/01_container`.
+    The runner shells out to ``klayout -b`` and checks the KLayout version
+    before it touches the layout; only argument and adapter-id validation run
+    earlier. An older KLayout, or none at all, aborts the run. The container
+    image ships a suitable build; see :doc:`/install/01_container`.
 
 **The ``klayout`` Python module.**
     Imported at module load to read the layout's top cells. It is a separate
@@ -256,12 +257,15 @@ What lands in the run directory
         design_TOP_assembly.lyrdb
 
 The log
-    Named for the UTC timestamp of the run. It carries the full DEBUG-level
-    record: the resolved adapter paths, the manifest path and the number of
-    boundaries loaded, one line per rule as the deck reaches it
-    (``ADK: ASM.a``, ``ADK: IXN.b.<method>``, and so on), the pass or fail
-    banner, the sorted list of violated rules and the elapsed time. The same
-    stream goes to the console.
+    Named for the UTC timestamp of the run. It holds the runner's own
+    DEBUG-level record: the KLayout version, the resolved adapter paths, the
+    KLayout command line (which carries the manifest path), the pass or fail
+    banner, the sorted list of violated rules, the rules not checked and the
+    elapsed time. The same record goes to the console. The deck's own progress
+    lines, such as the number of boundaries loaded and one line per rule as the
+    deck reaches it (``ADK: ASM.a``, ``ADK: IXN.b.<method>``, and so on), are
+    printed by KLayout to the console only and are not in the file; redirect
+    the runner's output to keep them.
 
 The report
     A KLayout results database. The default name is
@@ -467,6 +471,11 @@ to their identifying phrase.
     that is, a check that can never fail. Fix the numbers in the methods file or
     the adapter.
 
-``Result database not generated: <path>``
-    KLayout exited zero but wrote no report. Check the log for what the deck did
-    before it stopped.
+``ADK DRC engine failure: the deck exited <n> before a verdict``
+    KLayout exited non-zero, usually because the deck raised one of the errors
+    above. The run exits ``2``. The deck's own message is on the console just
+    before this line.
+
+``ADK DRC engine failure: result database not generated at <path>``
+    KLayout exited zero but wrote no report. The run exits ``2``. Check the
+    console output for what the deck did before it stopped.
