@@ -27,6 +27,16 @@ This page covers ``build-die``, ``die-view``, ``emit-ready-die``,
 ``derive-padring-die`` and ``pad-frame``. ``chiplet-die-flow <command>
 --help`` lists every option of a command.
 
+Three commands are not covered here. ``prepare-die`` makes the die project
+``build-die`` builds for a bondpad-only die, a pad frame around a core: it
+stages and builds the core, then stages the die project around it.
+``check-die-project`` reads that project back without changing anything and
+says whether it is still as prepared. ``emit-eda-views`` copies a built
+die's EDA views (DEF, SDC, LEF, Liberty, SPEF, pins and gate-level Verilog)
+from its LibreLane run into a record bound by digest. For a bondpad-frame
+die, start from the template in ``templates/chiplet-full/README.md`` of the
+staged tree.
+
 The ready die
 -------------
 
