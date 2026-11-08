@@ -468,12 +468,9 @@ Common failures
     one run reports them all.
 
 ``Attach frame refused: ...``
-    The worker could not read the mount plane,
-    ``beol.attachment_surface_z_um`` in ``libs.tech/intm4tm2_stack.json``,
-    because no interposer PDK resolved or the file is unreadable. Every export
-    needs it, with or without pillars. Set ``INTERPOSER_PDK_ROOT`` to an
-    IntM4TM2 checkout; :doc:`/flow/05_hyp_to_gds` explains why there is no
-    fallback.
+    The worker could not read the mount plane from the interposer PDK, which
+    every export needs. Set ``INTERPOSER_PDK_ROOT`` to an IntM4TM2 checkout;
+    :ref:`hyp_to_gds_attach_frame` explains why there is no fallback.
 
 ``Die outline refused: U1: ...``
     The worker found the declared layer in the die GDS empty, or not one
