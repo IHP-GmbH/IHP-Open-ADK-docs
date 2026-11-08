@@ -17,15 +17,18 @@ assumptions built on top of that number.
 Upstream KiCad is a PCB tool, and a PCB is a millimetre-scale object. Constants,
 validation limits, default grids, drawing decorations and intermediate
 arithmetic were all chosen for designs whose smallest feature is roughly 0.1 mm.
-An interposer built on the IntM4TM2 technology has features three to four orders
-of magnitude smaller. Every one of those PCB-scale assumptions then shows up as
-a concrete failure:
+An interposer built on the IntM4TM2 technology has features nearly three orders
+of magnitude smaller: its thin metals are 0.2 um wide, its smallest via
+0.19 um, all on a 5 nm grid. Every one of those PCB-scale assumptions then
+shows up as a concrete failure:
 
-- Dialogs refuse a track width of 10 nm because a hardcoded minimum rejects it.
+- Dialogs refuse a 0.2 um track, the narrowest IntM4TM2 metal, because a
+  hardcoded 0.01 mm minimum rejects it.
 - The nearest grid a user can snap to is 10 um, which is coarser than the
   feature being drawn.
-- A locked-item shadow sized from the silkscreen line width (about 0.15 mm)
-  drawn around a 10 nm via is 15000 times larger than the via.
+- A locked-item shadow sized from the silkscreen line width (about 0.15 mm,
+  that is 150 um) drawn around a 0.19 um via is about 790 times larger than the
+  via.
 - A squared distance accumulated in 32-bit arithmetic overflows once the two
   points are more than about 46 um apart, after which a "nearest item" search
   compares wrapped negative values and picks the wrong item.
@@ -34,7 +37,7 @@ a concrete failure:
 
 .. figure:: /_figures/tikz_nm_scale_ladder.*
     :align: center
-    :alt: A logarithmic length axis from 1 nanometre to 1 millimetre. The hardcoded constants of upstream KiCad cluster between 1 micrometre and 0.15 millimetre, interposer features sit between 10 and 100 nanometres, and the fork moves the four floors to 10 nanometres and adds grid presets down to 1 nanometre.
+    :alt: A logarithmic length axis from 1 nanometre to 1 millimetre. The hardcoded constants of upstream KiCad cluster between 1 micrometre and 0.15 millimetre, the smallest interposer features sit between 0.2 and 2 micrometres on a 5 nanometre grid, and the fork moves the four floors to 10 nanometres and adds grid presets down to 1 nanometre.
     :width: 95%
 
     The same failures on a logarithmic length axis. Every upstream
@@ -145,7 +148,7 @@ micrometre features.
 The first is decoration sizing, in ``pcbnew/pcb_painter.cpp``. The locked-item
 shadow margin defaults to four times the silkscreen line thickness, and the hole
 wall thickness to the plating thickness times an advanced-config multiplier.
-Both are absolute lengths. Against nanometre geometry they swamp the object they
+Both are absolute lengths. Against sub-micrometre geometry they swamp the object they
 decorate. The fork clamps each to a fraction of the item it is drawn on: the via
 shadow to a quarter of the via width, the hole wall to a quarter of the drill
 size, the track shadow to the track width. At PCB scale the clamps never
