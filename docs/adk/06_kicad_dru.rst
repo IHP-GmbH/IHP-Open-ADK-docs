@@ -226,12 +226,23 @@ directories carry no ``__init__.py``), so put the generator's directory on
 
     import sys
     sys.path.insert(0, "/path/to/adk/kicad/dru")
-    from generate_assembly_dru import load_defaults, render_assembly_rules
+    from generate_assembly_dru import (
+        load_defaults, parse_adapter_overrides, render_assembly_rules,
+        resolve_adapter_path,
+    )
 
-    section = render_assembly_rules(load_defaults(), adapter_name="intm4tm2")
+    rules = load_defaults()
+    rules.update(parse_adapter_overrides(resolve_adapter_path("intm4tm2")))
+    section = render_assembly_rules(rules, adapter_name="intm4tm2")
 
-``render_assembly_rules`` returns a string ready to append to a
-``.kicad_dru``, below its ``(version 1)`` line. Its signature is append-only:
+``render_assembly_rules`` renders the numbers it is given. ``adapter_name`` is
+only the provenance label in the file's ``Source:`` comment: passing it does not
+merge the adapter's overrides, so merge them yourself, as above, or the file
+claims overrides it does not contain. The CLI also refuses an override of an
+unknown key or a negative value before it merges; a generator that merges by
+hand should check the same. ``render_assembly_rules`` returns a string ready to
+append to a ``.kicad_dru``, below its ``(version 1)`` line. Its signature is
+append-only:
 
 .. code-block:: python
 
