@@ -13,8 +13,9 @@ file, which was produced on someone else's machine.
 No tool contains fixed-depth path arithmetic, a ``parents[3]`` or a ``../../..``
 reaching into a sibling repository, because that hard-codes a directory layout
 that only holds on the machine where it was written. Every consumer resolves
-every dependency with the same chain, implemented identically in the Python tools
-and in Chiplet Studio's C++ reader.
+the five shared roots with the same chain, implemented identically in the Python
+tools and in Chiplet Studio's C++ reader. Chiplet Studio reads three more roots
+of its own, listed with the others below.
 
 The discovery chain
 -------------------
@@ -27,16 +28,17 @@ First hit wins:
    read the variable from. Set these under ``Board Setup > Text Variables``.
 #. **Upward walk** from the consumer looking for a conventional sibling
    directory. Each root accepts a small closed set of candidate names. For
-   three of the five roots that set includes the name a default clone of the
-   upstream GitHub repository produces; for ``ADK_ROOT`` and
-   ``GDS_TO_KICAD_ROOT`` it does not. The table below lists them.
+   three of the five shared roots that set includes the name a default clone
+   of the upstream GitHub repository produces; for ``ADK_ROOT`` and
+   ``GDS_TO_KICAD_ROOT`` it does not. The marker tables below list them.
 #. **Loud failure**, naming every location that was probed and the variable to
    set.
 
 A candidate is not accepted merely because the directory exists. Each root has
 a **marker subpath** that must exist under it, and a set-but-invalid
 environment value falls through to the walk rather than winning and then
-failing later.
+failing later. ``CHIPLET_FLOW_TECH`` has no walk: when it is unset or invalid,
+it does not resolve.
 
 The KiCad plugin makes one exception, for ``INTERPOSER_PDK_ROOT``. A set value
 that is not an IntM4TM2 tree no longer falls through to the sibling checkout,
