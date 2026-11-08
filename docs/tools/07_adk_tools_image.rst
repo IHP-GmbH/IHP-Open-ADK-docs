@@ -388,7 +388,7 @@ variable and hold the other six fixed.
 
 .. code-block:: bash
 
-    # follow the branch tracked in .gitmodules (usually main)
+    # follow the branch .gitmodules names (dev for every tool at this release)
     git submodule update --remote tools/adk
     git add tools/adk
     python3 -B ci/pin_set.py    # the pin set records every staged gitlink
