@@ -54,8 +54,7 @@ The repositories
         placement, routing, GDS, DRC and assembly LVS to a verdict, with a
         signature at each checkpoint. See :doc:`/tools/10_packaging_flow`.
     * - interposer-pnr
-      - GPL-3.0-or-later; descriptors taken from Apache-2.0 PDKs keep that
-        license
+      - GPL-3.0-or-later
       - Placement, bumps and interposer routing as a draft KiCad board, a
         proof of concept, and the routing-technology descriptor contract. See
         :doc:`/tools/11_interposer_pnr`.
@@ -69,7 +68,7 @@ The repositories
       - Connectivity of a placed assembly against its declared nets. See
         :doc:`/tools/09_assembly_lvs`.
     * - chiplet-cosim
-      - GPL-3.0-or-later; a few files Apache-2.0
+      - GPL-3.0-or-later
       - Co-simulation of the dies as the system file connects them, under
         cocotb with Icarus Verilog and, for mixed-signal blocks, ngspice, with
         one verdict record per run. This site does not document it yet.
@@ -84,6 +83,11 @@ Five rows carry no link because those repositories are not public yet:
 packaging-flow, interposer-pnr, chiplet-flow, assembly-lvs and chiplet-cosim.
 ADK-Tools stages each one into the image from the commit its ``staging.pin``
 names, and the image carries that source under ``/opt/adk-tools/staging/``.
+
+For those five the license column gives the tree's primary license. A staged
+tree can also carry files under another license, such as Apache-2.0 format
+schemas, vendored upstream copies and test fixtures, and ``NOTICE.md`` in
+ADK-Tools names each one.
 
 The base process PDK, |pdk-repo|, sits underneath all of this and is documented
 separately at https://ihp-open-pdk-docs.readthedocs.io.
@@ -165,8 +169,7 @@ Licensing in practice
 The ADK, the format specification and both PDKs are Apache-2.0, so a rule deck,
 an adapter or a reader can be reused with minimal obligation. The tools built on
 KiCad and KLayout are GPL, as their upstreams require, and so are the flow
-tools (packaging-flow, interposer-pnr, chiplet-flow, chiplet-cosim and
-assembly-lvs).
+engines in the table above, apart from the files ``NOTICE.md`` lists.
 
 The container image is a mere aggregation of independently licensed components.
 Each keeps its own license, and ``NOTICE.md`` in the ADK-Tools repository

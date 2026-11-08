@@ -118,10 +118,10 @@ License
 =======
 
 The ADK, the interposer PDK, the interconnect PDK and the chiplet format
-specification are Apache-2.0. The KiCad fork, the KiCad plugin, gds2kicad,
-Chiplet Studio and the flow tools (packaging-flow, interposer-pnr,
-chiplet-flow, chiplet-cosim and assembly-lvs) are GPL-3.0-or-later. ADK-Tools
-is GPL-3.0-or-later, except its record schemas and most of its CI and Nix
-helpers, which are Apache-2.0. :doc:`intro/03_ecosystem` carries the
-per-repository breakdown, and the ADK-Tools image ships a ``NOTICE.md`` with
-the per-component licence breakdown and the corresponding-source obligation.
+specification are Apache-2.0. The KiCad fork, the KiCad plugin, gds2kicad and
+Chiplet Studio are GPL-3.0-or-later, and so are the flow engines ADK-Tools
+stages, with file-level exceptions. ADK-Tools is GPL-3.0-or-later, except its
+record schemas and most of its CI and Nix helpers, which are Apache-2.0.
+:doc:`intro/03_ecosystem` carries the per-repository breakdown, and the
+ADK-Tools image ships a ``NOTICE.md`` with the per-component license breakdown
+and the corresponding-source obligation.
