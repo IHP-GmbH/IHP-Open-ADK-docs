@@ -24,12 +24,14 @@ What one run produces
 
     <output-dir>/
       <board>.chiplet                        canonical assembly file
+      <board>.chiplet.exportcontent.sha256   digest of the exporter-owned content
       <board>.hyp                            the HyperLynx netlist that drove the run
       MANIFEST.md                            what was produced this run, ticked
       layout/
         <board>_interposer.gds               interposer layout
         <board>_interposer.boundaries.json   chiplet boundary manifest
         <board>_interposer.pillars.json      as-drawn Cu-pillar centres
+        <board>_interposer.fill_coverage.json  coarse fill coverage map (with fill)
         <board>_complete.gds                 interposer plus placed dies
         <board>_complete.boundaries.json
         <board>_complete.pillars.json
@@ -37,6 +39,7 @@ What one run produces
       reports/
         <board>_assembly_drc.lyrdb           ADK assembly DRC results
         <board>_cupillar_drc.json            Cu-pillar connection DRC summary
+        <board>_fill_density.json            per-metal fill density (with fill)
         assembly_drc/                        DRC scratch directory
       logs/
         <timestamp>_<board>.log              one file per run
@@ -46,6 +49,12 @@ The convention is deliberate and the orchestrator enforces it in one place, the
 drift apart.
 
 - The ``.chiplet`` stays at the **root**, because that is the file a user opens.
+  Its ``.exportcontent.sha256`` sidecar sits beside it: the digest of the
+  exporter-owned content recorded after each successful export. The next
+  export refuses to replace a ``.chiplet`` whose exporter-owned content was
+  edited by hand since, unless a headless caller sets ``ExportOptions.force``.
+  Blocks the exporter does not own, such as ``flow:``, are carried over and
+  never trip it.
 - The GDS layouts go under ``layout/`` **with their sidecars**. Each manifest is
   discovered by its GDS's stem, as a sibling, so a layout and its contract move
   together or not at all. The ``.chiplet`` points at the interposer GDS with a
@@ -58,9 +67,11 @@ drift apart.
   and a counter suffix is appended.
 
 ``MANIFEST.md`` is written at the end of every run. It lists the ``.chiplet``,
-the seven ``layout/`` products and the two DRC reports, each with a checkbox
+the eight ``layout/`` products and the three reports, each with a checkbox
 ticked according to what actually appeared on disk, so a partial run is visible
-without comparing directory listings. Writing it is best effort: a manifest that
+without comparing directory listings. Optional products, the fill files for
+example, stay unticked when the run did not ask for them. The manifest also
+reports what the previous-export content guard found. Writing it is best effort: a manifest that
 cannot be written never fails the export.
 
 .. tip::

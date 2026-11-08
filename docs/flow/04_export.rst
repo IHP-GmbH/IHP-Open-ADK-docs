@@ -154,6 +154,7 @@ parentheses:
 
     outputs/
       two_die_interposer.chiplet                        deliverable
+      two_die_interposer.chiplet.exportcontent.sha256   deliverable
       MANIFEST.md                                       deliverable
       (two_die_interposer.hyp)                          regenerated
       layout/
@@ -175,7 +176,13 @@ interposer GDS by a ``layout/<file>`` relative path, resolved against the
 ``.chiplet``'s own directory. It then auto-detects the ``_complete.gds`` from
 that same directory, and the assembly DRC finds each sidecar next to its GDS.
 So layouts and their sidecars travel together under ``layout/``, reports under
-``reports/``, and only the two index files sit at the root.
+``reports/``, and only the two index files and the ``.chiplet``'s digest
+sidecar sit at the root.
+
+The reference design runs without metal fill. With fill on
+(:ref:`hyp_to_gds_fill_seal_ring`), two more files appear:
+``layout/<board>_interposer.fill_coverage.json`` and
+``reports/<board>_fill_density.json``.
 
 File by file
 ------------
@@ -200,6 +207,18 @@ step failed. Read the dialog log rather than the file.
 
 :doc:`/formats/01_chiplet` and :doc:`/formats/02_chiplet_components` are the
 field reference; :doc:`/formats/03_coordinate_frames` explains the frame.
+
+``<board>.chiplet.exportcontent.sha256``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A digest of the exporter-owned content of the ``.chiplet``, recorded after each
+successful export. The next export compares the file on disk against it before
+replacing the ``.chiplet``: if you edited an exporter-owned field by hand, a
+position for example, the re-export stops instead of overwriting your edit.
+Blocks the exporter does not own, such as ``flow:`` and ``netlist:``, are
+carried over and do not change the digest. ``MANIFEST.md`` reports what the
+check found under *Previous-export content guard*. It says nothing about
+whether the content is correct. Keep it next to the ``.chiplet``.
 
 ``MANIFEST.md``
 ~~~~~~~~~~~~~~~
@@ -372,9 +391,9 @@ The scaffolded project ``.gitignore`` encodes the split. Ignored:
     outputs/reports/assembly_drc/
     outputs/logs/
 
-Everything else under ``outputs/`` is tracked on purpose: the ``.chiplet``, the
-``MANIFEST.md``, the interposer GDS, the boundary, pillar and interconnect
-sidecars, and both DRC reports.
+Everything else under ``outputs/`` is tracked on purpose: the ``.chiplet`` and
+its digest sidecar, the ``MANIFEST.md``, the interposer GDS, the boundary,
+pillar and interconnect sidecars, and the DRC reports.
 
 The obvious split, track sources and ignore all outputs, is not the one used
 here. A fresh clone should open the design in Chiplet Studio and show the
@@ -389,8 +408,12 @@ Checking the export
 ``NOT RUN`` usually means the complete assembly GDS was not enabled, or the
 KLayout command line is unavailable.
 
-**Read ``MANIFEST.md``.** Every file the run intended to produce is listed. A
-file listed there but missing on disk means a stage failed quietly.
+**Read ``MANIFEST.md``.** Every file the run can produce is listed, ticked
+``[x]`` when it is on disk. An unticked ``[ ]`` entry is either an output the
+run did not ask for, such as the fill files without fill, the pillar files
+without a Cu-pillar stack, or the complete GDS and the DRC reports with the
+complete GDS off, or a stage that failed quietly. Compare the unticked entries
+against the options you ran with.
 
 **Check the ``.chiplet`` was finalised.** No ``_metadata`` block should remain.
 
