@@ -38,10 +38,10 @@ The published open-source flows cover die design thoroughly. Between the
 finished dies and a fabricable assembly there was very little.
 
 **No interposer PDK usable by an open flow.** A full process PDK carries several
-hundred layer/purpose pairs, nearly all of them frontend layers an interposer
-never uses. The interposer needs the upper metal stack, the vias between those
-metals, and the attachment structures, presented as a technology an open layout
-tool can load.
+hundred layer/purpose pairs, and more than half of them serve front-end devices,
+the lower metals and process options an interposer never uses. The interposer
+needs the upper metal stack, the vias between those metals, and the attachment
+structures, presented as a technology an open layout tool can load.
 
 **No path from die GDS into a board-level design tool.** An interposer is
 laid out much like a very small, very dense PCB, but a PCB tool cannot read
