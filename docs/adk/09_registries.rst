@@ -26,11 +26,12 @@ between them fails CI.
 
 The sidecar schemas version independently, because they describe a data contract
 between separate tools rather than the ADK release, and their readers pin them
-**exactly**: a boundary manifest, a per-method interconnect file or a
-resolved-v2 attachment sidecar whose ``version`` is not ``1.0.0``, or a pillar
-manifest whose ``version`` is neither ``1.0.0`` nor ``1.1.0``, is rejected
-rather than best-effort parsed. See
-:doc:`/tools/07_adk_tools_image` for the full version matrix.
+**exactly**: a boundary manifest or a per-method interconnect file whose
+``version`` is not ``1.0.0``, or a pillar manifest whose ``version`` is neither
+``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed, and the
+resolved-v2 attachment sidecar is pinned the same way.
+:doc:`/tools/07_adk_tools_image` carries the version matrix, which does not
+list the attachment sidecar yet.
 
 .. note::
    The registries are also baked into the ADK-Tools container image, which is
