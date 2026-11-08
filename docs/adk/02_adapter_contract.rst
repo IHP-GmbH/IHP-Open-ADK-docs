@@ -265,13 +265,12 @@ reported (see :ref:`adk_ixn_fail_loud`).
       - Representative pad size, in micrometres, used for the pitch-to-spacing
         conversion.
 
-The whole of ``pdk_adapters/interconnect/ihp_cupillar.drc``, comments aside, is:
+The executable content of ``pdk_adapters/interconnect/ihp_cupillar.drc``,
+below its header comment, is:
 
-.. code-block:: ruby
-
-    interconnect_rules['IXN_spacing']  = 40.0   # edge-to-edge between pillar pads
-    interconnect_rules['IXN_pitch']    = 75.0   # centre-to-centre pitch
-    interconnect_rules['IXN_pad_size'] = 35.0   # passivation opening
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interconnect/ihp_cupillar.drc
+    :language: ruby
+    :start-at: interconnect_rules['IXN_spacing']
 
 The deck enforces ``IXN_pitch > IXN_pad_size`` at rule time, because the pitch
 check is implemented as a spacing of ``pitch - pad_size``: KLayout has no

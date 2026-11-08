@@ -90,14 +90,10 @@ IHP IntM4TM2 interposer it is derived from its two attachment mechanisms, the
 Cu pillar and the solder bump, each formed where a passivation opening and a
 final Cu pad overlap:
 
-.. code-block:: ruby
-
-    passiv_pillar = polygons(9, 35)
-    dfpad_pillar  = polygons(41, 35)
-    passiv_sbump  = polygons(9, 36)
-    dfpad_sbump   = polygons(41, 36)
-
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interposer/intm4tm2.drc
+    :language: ruby
+    :start-at: passiv_pillar =
+    :end-at: chiplet_attachment_input =
 
 Together with the optional ``wire_bond_pad_input`` lambda, that is the
 entire executable content of ``pdk_adapters/interposer/intm4tm2.drc``; the
