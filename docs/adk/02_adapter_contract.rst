@@ -158,30 +158,13 @@ loads from ``config/rule_params.json`` before the adapter runs:
     drc_rules['ASM_b'] = 250.0  # this interposer's own chiplet spacing rule
 
 An override is the technology's own rule, not a relaxation of the default.
-Both ADK consumers honour it, by different mechanisms. The KLayout deck simply
-reads the mutated dictionary. The KiCad DRU generator does not evaluate Ruby:
-it reads the overrides with the ADK's own parser, ``adk_rule_params.py``, and
-merges them on top of the registry defaults, only when invoked with
-``--interposer-adapter <name>``. The parser cannot know what the deck would
-apply for anything but a plain literal, so it refuses rather than guesses:
-
-* write one override per line, ``drc_rules['NAME'] = NUMBER``, at most once per
-  name, above any other code in the adapter (only blank lines, comments and
-  other overrides before it);
-* a computed value, for example ``drc_rules['ASM_b'] = base * 1.5``, exponent
-  or underscore digits, a trailing ``;``, ``store`` or ``merge!``, or a
-  continued line is refused, and so is a comment that names a rule table,
-  on its own line or after an override;
-* an override targeting a key that is not in ``config/rule_params.json``, or a
-  negative value, is refused.
-
-Placement reads no adapter: interposer-pnr legalizes to ``ASM_b`` and the
-packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
-from ``config/rule_params.json``. So a packaging-flow run that dispatches the
-deck refuses an interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a
-value other than the registry's, since the deck would check a different value
-than placement used. The ADK's adapter README lists the exact
-override form. See :doc:`/adk/06_kicad_dru`.
+Both ADK consumers honour it, by different mechanisms: the KLayout deck reads
+the mutated dictionary, and the KiCad DRU generator reads the adapter with the
+ADK's own parser, ``adk_rule_params.py``, which accepts plain literals only and
+refuses anything else. Placement reads no adapter, so a packaging-flow run
+refuses an override of ``ASM_b`` or ``ASM_g`` that differs from the registry.
+:ref:`adk_override_grammar` is the reference for the accepted form and for that
+refusal.
 
 What interposer adapters must NOT do
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

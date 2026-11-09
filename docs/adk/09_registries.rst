@@ -49,7 +49,8 @@ dictionary, which the interposer adapter may then override and which
 file as its defaults. Both consumers apply adapter overrides, which is what makes
 the KLayout and KiCad checks agree. Placement reads it too, without overrides:
 interposer-pnr legalizes to ``ASM_b`` and the packaging flow keeps wire-bond pads
-``ASM_g`` from each die. See :doc:`/adk/02_adapter_contract`.
+``ASM_g`` from each die. See :doc:`/adk/02_adapter_contract`, and
+:ref:`adk_override_grammar` for the override form.
 
 .. csv-table:: Assembly rule parameters
     :file: tables/asm_params.csv

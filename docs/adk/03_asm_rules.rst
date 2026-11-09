@@ -338,19 +338,11 @@ rule, not a relaxation of the default:
     # in pdk_adapters/interposer/<your_interposer>.drc
     drc_rules['ASM_b'] = 250.0   # this interposer's own chiplet spacing rule
 
-The deck and the KiCad DRU generator both apply the override. Write it as one
-literal number per line, above any other code in the adapter: the ADK reads
-overrides for the generator with its own parser, which refuses a computed value
-or any form it cannot read rather than guess. The adapter README in the ADK
-lists the exact form. See :doc:`/adk/06_kicad_dru`.
-
-Placement does not read adapters. interposer-pnr legalizes to ``ASM_b`` and the
-packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
-from ``config/rule_params.json``. So that placement and the deck never work to
-two different numbers, a packaging-flow run that dispatches the deck refuses an
-interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
-the registry's, and says the deck would check a different value than placement
-used.
+The deck and the KiCad DRU generator both apply the override; write it as a
+plain literal so the generator can read it. Placement reads no adapter, so a
+packaging-flow run refuses an override of ``ASM_b`` or ``ASM_g`` that differs
+from the registry. :ref:`adk_override_grammar` gives the accepted form and the
+reason for that refusal.
 
 The shipped ``intm4tm2`` adapter overrides no value; an IntM4TM2 run therefore
 checks the registry defaults.

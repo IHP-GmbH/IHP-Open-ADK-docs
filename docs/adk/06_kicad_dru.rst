@@ -178,11 +178,13 @@ Append the rendered section to the project's ``.kicad_dru``, below its
 ``(version 1)`` line. KiCad reads that file per project, so the rules apply to the board you are placing chiplets on
 and to nothing else.
 
+.. _adk_override_grammar:
+
 How adapter overrides are merged
 --------------------------------
 
-An interposer adapter is Ruby, read by the KLayout deck. The generator does not
-execute it. It reads the overrides with the ADK's own parser,
+An interposer adapter is Ruby, read by the KLayout deck, which simply reads the
+``drc_rules`` dictionary the adapter mutated. The generator does not execute it. It reads the overrides with the ADK's own parser,
 ``adk_rule_params.py``, which accepts one form per line:
 
 .. code-block:: ruby
@@ -208,6 +210,18 @@ deck would apply for anything else, so it refuses rather than guesses:
   would emit the default, which looks like a working override and is not.
 - A negative value is a hard error. A spacing or area constraint cannot be
   negative.
+
+The generator merges overrides only when invoked with
+``--interposer-adapter <name>``. The ADK's adapter README lists the exact
+override form.
+
+Placement reads no adapter: interposer-pnr legalizes to ``ASM_b`` and the
+packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
+from ``config/rule_params.json``. So that placement and the deck never work to
+two different numbers, a packaging-flow run that dispatches the deck refuses an
+interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
+the registry's, and says the deck would check a different value than placement
+used.
 
 Lengths are rendered in mm, as fixed-point decimals to 1 nm with trailing zeros
 stripped: 200 um becomes ``0.2mm``. Scientific notation is never emitted,
