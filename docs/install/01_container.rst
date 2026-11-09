@@ -408,6 +408,8 @@ assembly GDS files open with named, coloured layers:
 
 You can also pick ``intm4tm2`` in KLayout's technology selector.
 
+.. _adk_smoke:
+
 Run the self test
 -----------------
 

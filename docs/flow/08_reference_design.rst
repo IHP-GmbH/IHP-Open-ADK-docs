@@ -190,18 +190,12 @@ Walking the flow
 Step 0: open what is already there
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From the host, using the launcher in the ADK-Tools checkout:
-
-.. code-block:: bash
-
-    "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
-    "$ADK_TOOLS_ROOT/run.sh" kicad          example/kicad/two_die_interposer.kicad_pro
-
-Or from a shell inside the container, where both tools are on the path. Expect
-Chiplet Studio to show the interposer slab with two dies standing off it on
-their pillars, and the wire-bond pads with their fan-out traces around the edge;
-switch a
-die to a detailed render mode to see its actual artwork as geometry. See
+Open the copy in Chiplet Studio and in KiCad as step 3 of :doc:`/quickstart`
+does, from the host through ``run.sh`` or from a shell inside the container,
+where both tools are on the path. Expect Chiplet Studio to show the interposer
+slab with two dies standing off it on their pillars, and the wire-bond pads
+with their fan-out traces around the edge; switch a die to a detailed render
+mode to see its actual artwork as geometry. See
 :doc:`/flow/07_view_and_inspect`.
 
 Step 1: the gds2kicad prior steps
@@ -350,18 +344,9 @@ carrying the 3Dblox commands. See :doc:`/flow/06_verification_stages`.
 Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
-
-    adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
-
-``adk-smoke`` takes one board and has no default, because the runtime image
-carries no copy of the reference design; without a board it exits 2 and says
-where to copy this design from. It verifies that the ``intm4tm2`` KLayout
-technology is registered and its layer properties resolve, then exports the
-board end to end into a throwaway directory and fails unless the assembly DRC
-passed. It is the fastest way to tell whether a container is wired correctly.
-On success it ends with the line ``adk-smoke: PASS (export + assembly DRC
-green)``; any failure exits non-zero before that.
+``adk-smoke`` on this board is step 2 of :doc:`/quickstart`. It is the fastest
+way to tell whether a container is wired correctly, and :ref:`adk_smoke` says
+what it checks and how it fails.
 
 What the committed reports say
 ------------------------------
