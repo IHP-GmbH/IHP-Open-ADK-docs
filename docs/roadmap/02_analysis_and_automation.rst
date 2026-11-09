@@ -85,6 +85,9 @@ is one of inputs: a simulation needs a meshed geometry with materials, and the
 assembly artefacts this flow already produces are a reasonable starting point
 for building one.
 
+:doc:`/tools/08_multiphysics` describes the method behind the published
+reference results.
+
 The interconnect PDK already carries a three-dimensional stackup fragment per
 attachment method, which Chiplet Studio (:doc:`/tools/04_chiplet_studio`) uses
 to render each pillar or bump at its elevation. The same z data is a starting point for a solver geometry. See

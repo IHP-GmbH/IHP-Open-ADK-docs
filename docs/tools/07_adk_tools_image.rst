@@ -21,7 +21,7 @@ instructions rather than the design of the image, read
 :doc:`/install/01_container`.
 
 .. note::
-    ADK-Tools is a |current-status|. The tool pages in this section describe
+    ADK-Tools is a |current-status|. The pages under :doc:`/tools` describe
     the individual repositories; this page describes how they are pinned,
     built and shipped together.
 

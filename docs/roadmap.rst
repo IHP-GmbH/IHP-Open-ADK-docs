@@ -21,6 +21,7 @@ noting that no rules are shipped yet.
 
     ADK domains <roadmap/01_adk_domains>
     Analysis and automation <roadmap/02_analysis_and_automation>
+    Multiphysics (EM and thermal) <tools/08_multiphysics>
 
 The connectivity axis of assembly verification
 ----------------------------------------------
