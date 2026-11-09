@@ -294,7 +294,8 @@ reads the nine states as four words:
       - ``definite_open``, ``definite_short``, ``unavoidable_mismatch``
     * - INCONCLUSIVE
       - ``ambiguous``, ``placement_dependent``, ``inconclusive``, and an
-        assembly the flow could not express as a resolved input
+        assembly the flow could not express as a resolved input, for which
+        the flow names the cause
     * - ERROR
       - ``invalid``, a report the flow refuses, or a tool failure
 
@@ -306,7 +307,9 @@ which the engine itself accepts, is an assembly the flow cannot express, and
 the check reads INCONCLUSIVE with the cause ``unsupported_orientation``.
 ``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it
-again from those copies and runs assembly-lvs on it.
+again from those copies and runs assembly-lvs on it. Here ``$WD`` is the run's
+working directory, the ``run/`` folder inside the run folder
+(:doc:`/tools/10_packaging_flow`):
 
 .. code-block:: bash
 

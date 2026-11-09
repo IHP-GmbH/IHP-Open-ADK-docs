@@ -194,7 +194,8 @@ Assembly LVS in a run
 The ``assembly-lvs`` row derives the resolved input from the run's own records,
 writes it to ``out/assembly-lvs/resolved.json``, runs ``assembly-lvs`` on it
 and keeps its report at ``out/reports/assembly_lvs.json``.
-:ref:`assembly_lvs_flow_run` says how the nine assembly-lvs states read as the
+:ref:`The flow-run mapping <assembly_lvs_flow_run>` on
+:doc:`/tools/09_assembly_lvs` says how the nine assembly-lvs states read as the
 four flow words, what a match does not claim, and how ``lvs-bundle`` and
 ``lvs-verify`` repeat the check on a completed run's copies.
 
