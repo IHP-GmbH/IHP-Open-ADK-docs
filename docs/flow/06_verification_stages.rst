@@ -59,6 +59,10 @@ to ship a mistake through this flow.
 The first four rows are the geometric axis and the last is the connectivity
 axis.
 
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
 .. _stage-1-kicad-design-time-rules:
 
 KiCad design-time rules
@@ -101,6 +105,10 @@ handling clearance, is enforced only here: the manifest records the placed die's
 bounding box and knows nothing about the reservation you drew around it.
 
 See :doc:`/adk/06_kicad_dru`.
+
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
 
 .. _stage-2-the-3dblox-export-and-check-3dblox:
 
@@ -156,6 +164,10 @@ export refuses outright, and a z edited directly into the generated ``.3dbx``
 is reported by the linter as an invalid connection.
 
 See :doc:`/adk/07_chiplet2dbx` and :doc:`/formats/08_3dblox_interop`.
+
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
 
 .. _stage-3-the-klayout-assembly-drc:
 
@@ -223,6 +235,10 @@ notion of a spacing rule between two dies' bump fields.
 
 See :doc:`/adk/05_run_drc`, :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
 .. _stage-4-the-pad-to-pillar-alignment-check:
 
 The pad-to-pillar alignment check
@@ -274,6 +290,10 @@ pads inside the die boundary, z is untouched so ``check_3dblox`` passes, and the
 assembly does not connect. Only this check compares pads against pillars.
 
 See :doc:`/adk/08_pads_vs_pillars`.
+
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
 
 .. _stage-5-assembly-lvs:
 

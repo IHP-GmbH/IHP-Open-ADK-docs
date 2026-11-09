@@ -62,6 +62,10 @@ RULES = [
      "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
      True, DASH_EXEMPT),
     (EMOJI, "Emojis are not allowed in documentation sources.", True, set()),
+    # flow/06 keeps its stage-N labels for old URL fragments; flow/01 owns the numbers.
+    (r":ref:`(?:[^`<]*<)?stage-\d",
+     "Do not link a legacy stage-N label. Stage numbers live in the flow/01 table.",
+     False, set()),
 ]
 
 
