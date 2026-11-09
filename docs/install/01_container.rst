@@ -1,5 +1,5 @@
-The ADK-Tools image
-===================
+Building and running the image
+==============================
 
 .. include:: /common.inc
 

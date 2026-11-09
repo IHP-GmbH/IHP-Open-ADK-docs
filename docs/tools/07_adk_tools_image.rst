@@ -1,5 +1,5 @@
-The ADK-Tools image
-===================
+How ADK-Tools is built and pinned
+=================================
 
 .. include:: /common.inc
 
