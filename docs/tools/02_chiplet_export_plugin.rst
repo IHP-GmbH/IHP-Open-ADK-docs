@@ -599,7 +599,8 @@ Two headless entry points exist.
 and ``chiplet-export`` in the tools image runs it. It must run under an
 interpreter that can ``import pcbnew``, which means the KiCad fork's
 interpreter; the image's command already does. The worker Python for the GDS
-step is resolved separately through the discovery chain.
+step is resolved separately through the discovery chain, and is usually a
+different interpreter.
 
 .. code-block:: bash
 

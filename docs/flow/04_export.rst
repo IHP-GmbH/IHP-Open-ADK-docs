@@ -60,8 +60,8 @@ I/O pad carriers or the export report is at fault. Each refusal is listed under
 ``.chiplet``, runs ``hyp_to_gds.py``, which builds the GDS layouts and their
 sidecars under ``layout/`` and finalises the ``.chiplet`` in place, and, with
 the complete GDS enabled, runs the ADK assembly DRC into
-``reports/<board>_assembly_drc.lyrdb``. :ref:`chiplet_export_sequence` lists
-every step.
+``reports/<board>_assembly_drc.lyrdb``. :ref:`The export sequence
+<chiplet_export_sequence>` lists every step.
 
 The DRC is a check, not a gate: a DRC failure does not invalidate the exported
 artefacts, the dialog's run still succeeds, and the verdict is reported
@@ -89,8 +89,9 @@ for. From ``/work``, on the board you drew in a project ``adk-new-project`` made
 
 It always writes the complete assembly GDS and always runs the assembly DRC,
 and its exit status says whether the DRC passed. Add ``--export-report PATH``
-for a board drawn against a sheet. :ref:`chiplet_export_headless` has the exit
-table, the flags and the interpreter it needs.
+for a board drawn against a sheet. :ref:`The plugin's headless reference
+<chiplet_export_headless>` has the exit table, the flags and the interpreter it
+needs.
 
 The output tree
 ---------------
@@ -144,9 +145,9 @@ readable, diffable. It names the assembly, the interposer adapter, every
 technology with a path to its layer-properties file, the expanded connection
 stacks, and one component entry per interposer and per die.
 
-The version written in step 3 is **intermediate**: board coordinates are not
-yet in the canonical frame, and the file carries a
-``_metadata.finalize_required: true`` marker. ``hyp_to_gds.py`` rewrites it in
+The version the plugin writes before ``hyp_to_gds.py`` runs is
+**intermediate**: board coordinates are not yet in the canonical frame, and the
+file carries a ``_metadata.finalize_required: true`` marker. ``hyp_to_gds.py`` rewrites it in
 place once the interposer GDS exists, re-anchors every position to the GDS
 bounding-box corner frame, and strips the marker. Readers refuse a file that
 still carries it, so an aborted export cannot be mistaken for a finished one.
