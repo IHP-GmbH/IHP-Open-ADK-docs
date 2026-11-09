@@ -100,6 +100,11 @@ The run is a fixed list of stages. The ones you see in ``status`` include
 each checkpoint. A design finding before a checkpoint does not stop the run:
 it is recorded on its row, and the run is not green.
 
+Placement works to the registry's ``ASM_b`` and ``ASM_g``, so a run that
+dispatches the assembly DRC deck refuses an interposer adapter that overrides
+either to a different value (:ref:`placement and adapter overrides
+<adk_placement_overrides>`).
+
 Checkpoints and signatures
 --------------------------
 

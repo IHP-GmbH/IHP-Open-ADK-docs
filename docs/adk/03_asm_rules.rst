@@ -324,10 +324,11 @@ rule, not a relaxation of the default:
     drc_rules['ASM_b'] = 250.0   # this interposer's own chiplet spacing rule
 
 The deck and the KiCad DRU generator both apply the override; write it as a
-plain literal so the generator can read it. Placement reads no adapter, so a
-packaging-flow run refuses an override of ``ASM_b`` or ``ASM_g`` that differs
-from the registry. :ref:`adk_override_grammar` gives the accepted form and the
-reason for that refusal.
+plain literal so the generator can read it (:ref:`the override grammar
+<adk_override_grammar>`). Placement reads no adapter, so a packaging-flow run
+that dispatches the deck refuses an override of ``ASM_b`` or ``ASM_g`` that
+differs from the registry (:ref:`placement and adapter overrides
+<adk_placement_overrides>`).
 
 The shipped ``intm4tm2`` adapter overrides no value; an IntM4TM2 run therefore
 checks the registry defaults.

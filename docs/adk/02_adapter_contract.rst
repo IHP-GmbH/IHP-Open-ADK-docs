@@ -161,10 +161,18 @@ An override is the technology's own rule, not a relaxation of the default.
 Both ADK consumers honour it, by different mechanisms: the KLayout deck reads
 the mutated dictionary, and the KiCad DRU generator reads the adapter with the
 ADK's own parser, ``adk_rule_params.py``, which accepts plain literals only and
-refuses anything else. Placement reads no adapter, so a packaging-flow run
-refuses an override of ``ASM_b`` or ``ASM_g`` that differs from the registry.
-:ref:`adk_override_grammar` is the reference for the accepted form and for that
-refusal.
+refuses anything else. :ref:`The override grammar <adk_override_grammar>` is
+the reference for the accepted form.
+
+.. _adk_placement_overrides:
+
+Placement reads no adapter: interposer-pnr legalizes to ``ASM_b`` and the
+packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
+from ``config/rule_params.json``. So that placement and the deck never work to
+two different numbers, a packaging-flow run that dispatches the deck refuses an
+interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
+the registry's, and says the deck would check a different value than placement
+used.
 
 What interposer adapters must NOT do
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
