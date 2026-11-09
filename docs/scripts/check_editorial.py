@@ -43,9 +43,9 @@ MYST_INCLUDE = re.compile(r"^\s*[`:]{3,}\{(?:literal)?include\}\s+(\S+)", re.MUL
 DASH_EXEMPT = {
     # Recorded 2026-11-09 at Chiplets-KiCad-Plugin 233b7da.
     "src/Chiplets-KiCad-Plugin/plugins/chiplet_export/README.md",
-    "src/Chiplets-KiCad-Plugin/plugins/resizer_passive_elements/README.md",
 }
 
+DASHES = "[\u2014\u2013]"
 EMOJI = "[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]"
 
 # (pattern, message, whether it covers upstream files, files allowed to match).
@@ -58,7 +58,7 @@ RULES = [
     (r"signoff.?grade|production.?grade",
      "Do not claim signoff-grade or production-grade. This is a preview release.", True,
      {"docs/contrib/02_documentation.rst"}),
-    ("[\u2014\u2013]",
+    (DASHES,
      "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
      True, DASH_EXEMPT),
     (EMOJI, "Emojis are not allowed in documentation sources.", True, set()),
@@ -124,10 +124,14 @@ def main():
             failed = True
             print("::error::" + message)
             print("\n".join(hits))
-    for name in sorted(DASH_EXEMPT - upstream):
+    for name in sorted(DASH_EXEMPT):
+        if name in upstream:
+            with open(os.path.join(REPO_ROOT, name), encoding="utf-8") as handle:
+                if re.search(DASHES, handle.read()):
+                    continue
         failed = True
-        print("::error::{} is exempt from the dash rule but no page publishes it. "
-              "Drop the exemption.".format(name))
+        print("::error::{} is exempt from the dash rule but is no longer published "
+              "or has no dash left. Drop the exemption.".format(name))
     return 1 if failed else 0
 
 
