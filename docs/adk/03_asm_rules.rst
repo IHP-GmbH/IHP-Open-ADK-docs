@@ -287,26 +287,11 @@ one.
 Single-tier limitation
 ----------------------
 
-``chiplet_boundary`` is a flat 2D region. The boundary manifest records
-placement polygons with no z coordinate, and ``layers_def.drc`` inserts every
-polygon into one region with no per-die identity retained.
-
-The consequence is that **ASM.a flags any XY overlap between chiplet
-boundaries**, including the case of two dies legally stacked at different
-heights in a multi-tier assembly. The assumption is baked into the manifest data
-model, not just into the rule, so lifting it would need all of: a z-aware
-manifest schema and therefore a schema version bump, per-die identity carried
-through ``layers_def.drc``, and a tier-aware ASM.a. The KiCad-side mirror,
-native courtyard collision, is equally 2D.
-
-This is not a practical constraint today: nothing in the toolchain produces
-multi-tier assemblies. It is recorded here so that the day someone does, the
-failure is understood rather than debugged.
-
-A second, related boundary: per-die z consistency is not an ASM rule at all. It
-is enforced at export time by ``openroad/chiplet2dbx.py`` and re-verified by
-OpenROAD's ``check_3dblox``, so an assembly that is never exported gets no
-automated z check. See :doc:`/adk/07_chiplet2dbx`.
+``chiplet_boundary`` is a flat 2D region, so **ASM.a flags any XY overlap
+between chiplet boundaries**, including two dies legally stacked at different
+heights, and per-die z consistency is checked at export rather than by any ASM
+rule. :ref:`adk_known_limitations` gives the reasons and what lifting the limit
+would take.
 
 Where the numbers come from
 ---------------------------

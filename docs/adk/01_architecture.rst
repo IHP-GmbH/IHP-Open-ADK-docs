@@ -319,6 +319,8 @@ namespace, the assembly contract is PDK-agnostic by construction and no
 ``(190, 0)`` literal survives in the default path.
 :doc:`/formats/04_boundary_manifest` is the normative description.
 
+.. _adk_known_limitations:
+
 Known limitations
 -----------------
 
