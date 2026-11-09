@@ -59,7 +59,8 @@ the ``klayout.db`` Python module.
 Exit codes
 ~~~~~~~~~~
 
-Both scripts share one table:
+Both scripts use the same codes, but a missing input does not map to the same
+code in each:
 
 .. list-table::
     :header-rows: 1
@@ -68,16 +69,21 @@ Both scripts share one table:
     * - Code
       - Meaning
     * - ``0``
-      - Written. The entry prints the path of each output.
+      - Written. The derive tool prints the sidecar path, the entry the path of
+        each output.
     * - ``1``
-      - Usage error: the sidecar, the resolved document or the dies root is not
-        where it is named, ``klayout.db`` is missing, or an adapter id is not
-        registered.
+      - Usage error. For the derive tool: ``--document`` is not a file or
+        ``--dies-root`` is not a directory. For the entry: ``--sidecar`` is not
+        a file, or ``klayout.db`` is missing. For both: an adapter id is not
+        registered. ``1`` is also Python's own exit code for a failure neither
+        script catches, which prints a traceback: neither guards the whole run.
     * - ``2``
-      - Refused. The message names the key or input that failed. Nothing is
-        left behind: the entry removes its output directory, and the derive
-        tool publishes no sidecar. ``argparse`` also exits ``2`` for a command
-        line it refuses.
+      - Refused. The message names the key or input that failed. A missing
+        ``--chiplet`` or ``--pillars`` is a refusal of the derive tool, and a
+        ``document`` or ``dies_root`` named in the sidecar that is not there is
+        a refusal of the entry. Nothing is left behind: the entry removes its
+        output directory, and the derive tool publishes no sidecar.
+        ``argparse`` also exits ``2`` for a command line it refuses.
     * - ``5``, ``6``, ``7``
       - An adapter registry problem, with the meanings
         :doc:`/adk/05_run_drc` gives them.
