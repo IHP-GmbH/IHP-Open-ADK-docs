@@ -3,7 +3,6 @@ Interposer PDK (OpenIntM4TM2)
 
 .. include:: /common.inc
 .. include:: /_counts.inc
-.. include:: /_frame_values.inc
 
 OpenIntM4TM2 is the KLayout PDK for the IHP 130 nm **IntM4TM2** aluminium
 back-end interposer. It is the substrate the reference flow assembles onto, and
@@ -59,53 +58,15 @@ Three consequences follow, and they explain most of the PDK.
 The metal stack
 ~~~~~~~~~~~~~~~
 
-The vertical stack, taken from the electromagnetic and extraction stackups that
-ship with the PDK, with z = 0 at the carrier top surface:
+The vertical stack, from the PDK's ``libs.tech/intm4tm2_stack.json``, which its
+electromagnetic and extraction stackups are checked against, with z = 0 at the
+carrier top surface. Each via spans from the top of the metal below it to the
+bottom of the metal above:
 
-.. list-table::
-    :header-rows: 1
+.. csv-table::
+    :file: tables/interposer_stack.csv
+    :header: "Layer", "GDS layer", "z min (um)", "z max (um)", "Thickness (um)"
     :widths: 24 14 20 20 22
-
-    * - Layer
-      - GDS layer
-      - z min (um)
-      - z max (um)
-      - Thickness (um)
-    * - TopMetal2
-      - 134
-      - 7.8103
-      - |interposer-attachment-z|
-      - 3.000
-    * - TopVia2
-      - 133
-      - 5.0103
-      - 7.8103
-      - 2.800
-    * - TopMetal1
-      - 126
-      - 3.0103
-      - 5.0103
-      - 2.000
-    * - TopVia1
-      - 125
-      - 2.1600
-      - 3.0103
-      - 0.850
-    * - Metal5
-      - 67
-      - 1.6700
-      - 2.1600
-      - 0.490
-    * - Via4
-      - 66
-      - 1.1300
-      - 1.6700
-      - 0.540
-    * - Metal4
-      - 50
-      - 0.6400
-      - 1.1300
-      - 0.490
 
 Above TopMetal2 sit 1.5 um of oxide and 0.4 um of SiN passivation, so the total
 build-up from the carrier surface to the top of the passivation is about
