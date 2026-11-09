@@ -1,0 +1,18 @@
+usage: derive_attachment_sidecar.py [-h] --chiplet CHIPLET --pillars PILLARS
+                                    --document DOCUMENT --dies-root DIES_ROOT
+                                    [--methods-manifest METHODS_MANIFEST]
+                                    --out OUT
+
+Derive an ADK attachment sidecar from an accepted .chiplet plus pillar
+manifest.
+
+options:
+  -h, --help            show this help message and exit
+  --chiplet CHIPLET
+  --pillars PILLARS     pillar manifest (1.1.0, with methods)
+  --document DOCUMENT   the resolved v2 document
+  --dies-root DIES_ROOT
+                        root directory of the ADK die layouts
+  --methods-manifest METHODS_MANIFEST
+                        in-root path under the registry root INTERCONNECT_PDK
+  --out OUT             sidecar path to write (must not exist)

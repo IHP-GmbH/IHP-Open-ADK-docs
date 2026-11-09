@@ -25,6 +25,10 @@ COMMANDS = {
     "pads_vs_pillars": os.path.join("checks", "pads_vs_pillars.py"),
     "generate_assembly_dru": os.path.join("kicad", "dru", "generate_assembly_dru.py"),
     "assembly_admission": os.path.join("checks", "assembly_admission.py"),
+    "derive_attachment_sidecar": os.path.join(
+        "bridges", "assembly_lvs", "derive_attachment_sidecar.py"
+    ),
+    "resolved_v2_entry": os.path.join("bridges", "assembly_lvs", "resolved_v2_entry.py"),
 }
 
 WRAP_COLUMNS = "80"

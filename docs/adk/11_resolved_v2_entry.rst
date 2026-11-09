@@ -46,17 +46,15 @@ Derive the sidecar once from the accepted design, then run the entry:
 
 .. include:: /_image_adk_scripts.inc
 
-``derive_attachment_sidecar.py`` takes the accepted ``.chiplet``
-(``--chiplet``), its pillar manifest at version 1.1.0 with ``methods``
-(``--pillars``), the resolved document (``--document``) and the directory that
-holds the ADK die layouts (``--dies-root``). ``--methods-manifest`` names the
-interconnect methods manifest as a path inside the registry root
-``INTERCONNECT_PDK``; the default is ``manifest/interconnect_methods.json``.
-``--out`` must not exist.
+.. literalinclude:: /adk/_usage/derive_attachment_sidecar.txt
+   :language: text
 
-``resolved_v2_entry.py`` takes the sidecar (``--sidecar``) and an output
-directory (``--out``) that must not exist yet. It needs the ``klayout.db``
-Python module.
+.. literalinclude:: /adk/_usage/resolved_v2_entry.txt
+   :language: text
+
+Neither script replaces anything: the derive tool refuses a ``--out`` that
+exists, and the entry refuses an output directory that exists. The entry needs
+the ``klayout.db`` Python module.
 
 Exit codes
 ~~~~~~~~~~
