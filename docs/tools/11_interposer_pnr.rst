@@ -113,7 +113,7 @@ interposer-pnr reads no PDK kit files. An interposer enters as a
 routing-technology descriptor, a small JSON file checked against a schema, and
 ``--tech`` takes its path or the name of a shipped one. The descriptor is the
 one place the engine couples to a process, and the engine's ``PDK_CONTRACT``
-document says how to write one for a new interposer. Version |interposer-pnr-version| ships three:
+document says how to write one for a new interposer. Version 0.5.0 ships three:
 
 .. list-table::
     :header-rows: 1
