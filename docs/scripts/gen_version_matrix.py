@@ -8,6 +8,15 @@ VERSION, ADK-Tools tags calendar releases, the chiplet format carries its own
 format_version, and each manifest schema is pinned independently. Nothing in
 the source repositories relates them, so this table is the only place the
 relationship is written down, and it is derived rather than typed.
+
+The flow engines ADK-Tools stages are not submodules here: their commits come
+from the pinned ADK-Tools ``staging.pin``, and each version from the
+``pyproject.toml`` at that commit in a sibling checkout (beside this
+repository, or in the directory ``STAGE_SIBLINGS`` names, as for ADK-Tools
+itself). The pinned commits are local-only, so a build without the sibling
+checkouts (CI, Read the Docs) reuses the version recorded for that exact commit
+in ``tools/tables/staged_engines.json`` and fails when staging.pin has moved
+past it.
 """
 
 import glob
@@ -19,12 +28,17 @@ import tomllib
 from _common import (
     ADK,
     DOCS_DIR,
+    GENERATED_BANNER,
     INTERCONNECT,
     INTERPOSER,
+    REPO_ROOT,
     SPEC,
     SRC_DIR,
+    TOOLS,
     fail,
     git,
+    git_or_fail,
+    run_git,
     release_tags,
     read_json,
     read_text,
@@ -77,6 +91,84 @@ def constant(path, name):
     return ", ".join(values)
 
 
+STAGING_PIN = os.path.join(TOOLS, "staging.pin")
+STAGED_RECORD = os.path.join(DOCS_DIR, "tools", "tables", "staged_engines.json")
+# staging.pin keeps every assignment a plain literal on one line, because
+# ADK-Tools' own checks match some of them as whole lines.
+STAGE_ASSIGNMENT = re.compile(r"^STAGE_([A-Z0-9_]+)_(PATH|REF)=")
+STAGE_PATH = re.compile(r"^STAGE_([A-Z0-9_]+)_PATH=([A-Za-z0-9._-]+)$")
+STAGE_REF = re.compile(r"^STAGE_([A-Z0-9_]+)_REF=([0-9a-f]{40})$")
+
+
+def staged_trees():
+    """(path, ref) of every tree staging.pin stages, in file order."""
+    paths, refs = {}, {}
+    for line in read_text(STAGING_PIN).splitlines():
+        if not STAGE_ASSIGNMENT.match(line):
+            continue
+        match = STAGE_PATH.match(line) or STAGE_REF.match(line)
+        if not match:
+            fail("staging.pin: cannot read {!r}".format(line))
+        target = paths if line.split("=")[0].endswith("_PATH") else refs
+        if match.group(1) in target:
+            fail("staging.pin assigns {} twice".format(line.split("=")[0]))
+        target[match.group(1)] = match.group(2)
+    if not paths or set(paths) != set(refs):
+        fail("staging.pin: every STAGE_*_PATH needs one STAGE_*_REF and back")
+    return [(paths[key], refs[key]) for key in paths]
+
+
+def is_submodule(path):
+    """Whether this repository pins src/<path> as a submodule."""
+    entry = git_or_fail(REPO_ROOT, "ls-files", "--stage", "--", "src/" + path)
+    return entry.startswith("160000 ")
+
+
+def engine_identity(siblings, path, ref):
+    """Distribution name and version at ref in the sibling checkout of path,
+    or None when there is no such checkout holding that commit."""
+    clone = os.path.join(siblings, path)
+    if not os.path.isdir(clone):
+        return None
+    code, _, _ = run_git(clone, "cat-file", "-e", ref + "^{commit}")
+    if code != 0:
+        return None
+    project = tomllib.loads(git_or_fail(clone, "show", ref + ":pyproject.toml")).get("project", {})
+    name, version = project.get("name"), project.get("version")
+    if not isinstance(name, str) or not isinstance(version, str) or not name or not version:
+        fail("{} at {} has no [project] name and version".format(clone, ref[:12]))
+    return {"distribution": name, "version": version}
+
+
+def staged_engines():
+    """Every staged tree that is not a submodule here, with its version.
+
+    Read from the sibling checkouts when they hold the pinned commit, else
+    taken from the record, which must then be for the same commit.
+    """
+    siblings = os.environ.get("STAGE_SIBLINGS") or os.path.dirname(REPO_ROOT)
+    record = read_json(STAGED_RECORD) if os.path.isfile(STAGED_RECORD) else {}
+    engines = {}
+    for path, ref in staged_trees():
+        if is_submodule(path):
+            continue
+        identity = engine_identity(siblings, path, ref)
+        if identity is None:
+            kept = record.get(path, {})
+            if kept.get("ref") != ref:
+                fail(
+                    "staging.pin stages {} at {}, but {} records its version for {}. "
+                    "Rerun with a checkout of {} that has the commit, beside this "
+                    "repository or in STAGE_SIBLINGS".format(
+                        path, ref[:12], os.path.relpath(STAGED_RECORD, REPO_ROOT),
+                        (kept.get("ref") or "no commit")[:12], path))
+            identity = {key: kept[key] for key in ("distribution", "version")}
+        engines[path] = dict(ref=ref, **identity)
+    if not engines:
+        fail("staging.pin stages no tree outside this repository's submodules")
+    return engines
+
+
 def declared_version(repo_path, from_pyproject=False):
     """The VERSION file, or for a PYPROJECT_VERSIONED repository that has none,
     ``[project].version`` of pyproject.toml, named in the cell as its source."""
@@ -116,6 +208,20 @@ def main():
             version = ", ".join(sorted(tags)) if tags else "by commit"
         rows.append([name, role, license_id, version, commit])
     write_csv(os.path.join(DOCS_DIR, "tools", "tables", "versions.csv"), rows)
+
+    # The loop above has checked src/ADK-Tools out at its pin.
+    engines = staged_engines()
+    write_text(STAGED_RECORD, json.dumps(engines, indent=2, sort_keys=True) + "\n")
+    write_csv(
+        os.path.join(DOCS_DIR, "tools", "tables", "staged_engines.csv"),
+        [[path, e["distribution"], e["version"], e["ref"][:7]] for path, e in engines.items()],
+    )
+    write_text(
+        os.path.join(DOCS_DIR, "tools", "_staged_engines.inc"),
+        GENERATED_BANNER.format(script="gen_version_matrix.py") + "\n" + "".join(
+            ".. |{}-version| replace:: {}\n".format(path, e["version"])
+            for path, e in engines.items()),
+    )
 
     # Schema and format versions. These are pinned independently of any
     # repository version, and they are what a file on disk actually has to

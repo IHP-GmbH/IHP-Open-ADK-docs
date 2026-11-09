@@ -1,0 +1,27 @@
+{
+  "assembly-lvs": {
+    "distribution": "assembly-lvs",
+    "ref": "32d4739590a136dd35f13d53455c223c05fd4dde",
+    "version": "0.8.0"
+  },
+  "chiplet-cosim": {
+    "distribution": "chiplet-cosim",
+    "ref": "dcd7fdcdd7afa2149e3e8b738009b9ea4c25417f",
+    "version": "0.1.0"
+  },
+  "chiplet-flow": {
+    "distribution": "chiplet-die-flow",
+    "ref": "d78b01e4202e284a135d4270089ad7b8028c5281",
+    "version": "0.1.0"
+  },
+  "interposer-pnr": {
+    "distribution": "interposer-pnr",
+    "ref": "54caf817e08a713ded71173c331815b4e2572a12",
+    "version": "0.5.0"
+  },
+  "packaging-flow": {
+    "distribution": "packaging_flow",
+    "ref": "9ec146d1d6f5882f92407fbb85bbed28f1eedd67",
+    "version": "0.1.0"
+  }
+}

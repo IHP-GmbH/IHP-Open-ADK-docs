@@ -2,6 +2,7 @@ Assembly LVS (assembly-lvs)
 ===========================
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``assembly-lvs`` checks the connectivity axis of assembly-level verification,
 the one :doc:`/intro/01_what_is_the_adk` calls assembly LVS. It reads the layout
@@ -11,7 +12,7 @@ vias and contacts its input declares. It then compares the nets it extracted
 with the logical nets the input declares, and reports every open and every
 short it finds.
 
-Version 0.8.0 ships in the ADK-Tools image as the ``assembly-lvs`` command.
+Version |assembly-lvs-version| ships in the ADK-Tools image as the ``assembly-lvs`` command.
 packaging-flow runs it as one stage of a flow run, and you can also run it on
 its own. It is licensed GPL-3.0-or-later.
 

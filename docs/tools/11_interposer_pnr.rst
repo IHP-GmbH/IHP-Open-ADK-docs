@@ -2,6 +2,7 @@ interposer-pnr
 ==============
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``interposer-pnr`` places the dies of a 2.5D assembly on the interposer, puts
 a bump on every die pad, routes the nets between them with OpenROAD and writes
@@ -10,7 +11,7 @@ Each step is one subcommand that reads files and writes one, so
 :doc:`/tools/10_packaging_flow` runs the steps in turn and stops at the first
 refusal. You can also run them by hand.
 
-Version 0.5.0 ships in the ADK-Tools image as the ``interposer-pnr`` command.
+Version |interposer-pnr-version| ships in the ADK-Tools image as the ``interposer-pnr`` command.
 It is licensed GPL-3.0-or-later. The shipped routing descriptors, the vendored
 ``.chiplet`` reader and the schema of the record ``signoff --check`` writes are
 Apache-2.0.
@@ -112,7 +113,7 @@ interposer-pnr reads no PDK kit files. An interposer enters as a
 routing-technology descriptor, a small JSON file checked against a schema, and
 ``--tech`` takes its path or the name of a shipped one. The descriptor is the
 one place the engine couples to a process, and the engine's ``PDK_CONTRACT``
-document says how to write one for a new interposer. Version 0.5.0 ships three:
+document says how to write one for a new interposer. Version |interposer-pnr-version| ships three:
 
 .. list-table::
     :header-rows: 1

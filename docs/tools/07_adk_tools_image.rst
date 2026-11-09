@@ -302,6 +302,22 @@ nothing on this site is generated from it. The image does pin it, at
 required to equal the pins of any particular image tag. The authoritative
 answer for a running image is the manifest baked into it.
 
+.. _staged_engines:
+
+Staged engines
+~~~~~~~~~~~~~~
+
+The flow engines are not submodules of this site either. This table takes the
+commit of each one from ``staging.pin`` in the pinned ADK-Tools, and the
+distribution and version from the ``pyproject.toml`` at that commit. The engine
+pages quote these versions. The chiplet specification is staged too, but it is
+a submodule here, so it is in the matrix above.
+
+.. csv-table:: Staged engines
+   :file: tables/staged_engines.csv
+   :header: "Staged tree", "Distribution", "Version", "Commit"
+   :class: adk-wide-table
+
 The version story
 -----------------
 

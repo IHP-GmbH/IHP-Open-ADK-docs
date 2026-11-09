@@ -2,6 +2,7 @@ chiplet-die-flow
 ================
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``chiplet-die-flow``, the die flow, builds one die of a multi-die system and
 hands it over as a **ready die**: the layout, its pin list and a contract that
@@ -14,7 +15,7 @@ It is for whoever designs a die that goes into an assembly. You keep authoring
 your LibreLane project as usual; the die flow adds the step that turns a
 finished run into something the rest of the flow can check.
 
-chiplet-die-flow 0.1.0 ships in the ADK-Tools image as the
+chiplet-die-flow |chiplet-flow-version| ships in the ADK-Tools image as the
 ``chiplet-die-flow`` command, staged as
 ``/opt/adk-tools/staging/chiplet-flow``. It is licensed GPL-3.0-or-later.
 
@@ -88,8 +89,8 @@ build record binds the file by name and digest.
 
 A contract is read by a strict reader, ``chiplet_format_io`` from the
 reference readers of |spec-repo|, which versions its own boundary as a reader
-revision. The image stages reader revision 4, the one packaging-flow 0.1.0
-requires; the die flow accepts revisions 3 and 4. Revision 4 admits a 1.2
+revision. The image stages reader revision 4, the one packaging-flow
+|packaging-flow-version| requires; the die flow accepts revisions 3 and 4. Revision 4 admits a 1.2
 contract and its ``supply_domains``; revision 3 reads one and ignores them,
 and the die flow then will not package it. A reader the die flow cannot use
 stops it with exit 11 before anything is read.

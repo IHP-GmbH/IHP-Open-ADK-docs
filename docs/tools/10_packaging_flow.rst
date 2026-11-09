@@ -2,6 +2,7 @@ packaging-flow
 ==============
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``packaging-flow`` runs an assembly from one ``system.chiplet`` to a verdict.
 It admits each ready die from its contract (or builds it with
@@ -12,7 +13,7 @@ for a person's signature at four checkpoints on the way. Everything it does is
 recorded in a manifest that ``packaging-flow verify`` recomputes from the files
 on disk.
 
-Version 0.1.0 ships in the ADK-Tools image as the ``packaging-flow`` command.
+Version |packaging-flow-version| ships in the ADK-Tools image as the ``packaging-flow`` command.
 It is licensed GPL-3.0-or-later.
 
 .. warning::
