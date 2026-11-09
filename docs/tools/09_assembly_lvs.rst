@@ -271,6 +271,8 @@ Open it over an assembly layout whose top cell has the interposer's top-cell
 name, with ``klayout <assembly layout> -mn <report stem>.lvsdb``. The ``-mn``
 option loads a netlist database; ``-m`` is for marker databases.
 
+.. _assembly_lvs_flow_run:
+
 In a flow run
 -------------
 
@@ -305,6 +307,11 @@ the check reads INCONCLUSIVE with the cause ``unsupported_orientation``.
 ``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it
 again from those copies and runs assembly-lvs on it.
+
+.. code-block:: bash
+
+    packaging-flow lvs-bundle $WD --output /tmp/lvs
+    packaging-flow lvs-verify /tmp/lvs
 
 The ADK view of a resolved document
 -----------------------------------

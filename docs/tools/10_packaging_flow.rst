@@ -193,19 +193,10 @@ Assembly LVS in a run
 
 The ``assembly-lvs`` row derives the resolved input from the run's own records,
 writes it to ``out/assembly-lvs/resolved.json``, runs ``assembly-lvs`` on it
-and keeps its report at ``out/reports/assembly_lvs.json``. How the nine
-assembly-lvs states read as the four flow words, and what a match does not
-claim, is in :doc:`/tools/09_assembly_lvs`. Only a ``robust_match`` or
-``robust_match_global`` reads ``PASS``. An assembly the flow cannot
-express as a resolved input reads ``INCONCLUSIVE`` and names the cause.
-
-Out of a run, ``lvs-bundle`` and ``lvs-verify`` do the same on a completed
-run's copies:
-
-.. code-block:: bash
-
-    packaging-flow lvs-bundle $WD --output /tmp/lvs
-    packaging-flow lvs-verify /tmp/lvs
+and keeps its report at ``out/reports/assembly_lvs.json``.
+:ref:`assembly_lvs_flow_run` says how the nine assembly-lvs states read as the
+four flow words, what a match does not claim, and how ``lvs-bundle`` and
+``lvs-verify`` repeat the check on a completed run's copies.
 
 Changing the design
 -------------------
