@@ -16,3 +16,4 @@ The Assembly Design Kit
     Pad to pillar alignment <adk/08_pads_vs_pillars>
     Registries and schemas <adk/09_registries>
     Assembly admission <adk/10_assembly_admission>
+    Resolved v2 entry <adk/11_resolved_v2_entry>

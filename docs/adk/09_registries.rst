@@ -261,8 +261,7 @@ schema string and the version exactly:
       - :doc:`/formats/06_ixn_methods`
     * - ``resolved_attachment.schema.json``
       - ``adk-resolved-attachment``
-      - ``docs/resolved_v2_entry.md`` in |adk-repo|; this site has no page
-        for the resolved-v2 entry yet
+      - :doc:`/adk/11_resolved_v2_entry`
 
 Changing a registry
 -------------------

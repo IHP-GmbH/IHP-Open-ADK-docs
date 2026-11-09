@@ -305,6 +305,16 @@ the check reads INCONCLUSIVE with the cause ``unsupported_orientation``.
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it
 again from those copies and runs assembly-lvs on it.
 
+The ADK view of a resolved document
+-----------------------------------
+
+The ADK can build its own files for the assembly a ``resolved/v2`` document
+describes: an assembly GDS, the boundary and pillar manifests, the per-method
+IXN sidecar and a ``.chiplet``, ready for the ADK DRC and the pad to pillar
+check. :doc:`/adk/11_resolved_v2_entry` describes that entry and the subset of
+v2 it accepts. On the ``.chiplet`` side, whether each placed die is the one its
+die contract describes is a separate gate, :doc:`/adk/10_assembly_admission`.
+
 What it does not check
 ----------------------
 
