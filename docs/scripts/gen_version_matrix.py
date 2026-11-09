@@ -246,28 +246,20 @@ def main():
     # refuses another major and warns on a higher minor. The JSON Schemas
     # themselves type the field as a plain string, so the constants in the
     # consuming modules are the authoritative pin.
+    #
+    # Each sidecar names its schema either by a constant in the reader or, where
+    # the reader has none, by the literal it compares against, which must then
+    # appear quoted in that file.
+    run_drc = ("klayout", "drc", "run_drc.py")
     SIDECAR_PINS = [
-        (
-            "Chiplet boundary manifest",
-            "``adk-boundary-manifest``",
-            os.path.join(ADK, "klayout", "drc", "run_drc.py"),
-            "SUPPORTED_MANIFEST_VERSION",
-            "IHP-Open-ADK ``klayout/drc/run_drc.py``",
-        ),
-        (
-            "Per-method interconnect sidecar",
-            "``adk-ixn-methods``",
-            os.path.join(ADK, "klayout", "drc", "run_drc.py"),
-            "SUPPORTED_IXN_METHODS_VERSION",
-            "IHP-Open-ADK ``klayout/drc/run_drc.py``",
-        ),
-        (
-            "Pillar manifest",
-            "``adk-pillar-manifest``",
-            os.path.join(ADK, "checks", "pads_vs_pillars.py"),
-            "SUPPORTED_PILLAR_MANIFEST_VERSIONS",
-            "IHP-Open-ADK ``checks/pads_vs_pillars.py``",
-        ),
+        ("Chiplet boundary manifest", run_drc,
+         ("literal", "adk-boundary-manifest"), "SUPPORTED_MANIFEST_VERSION"),
+        ("Per-method interconnect sidecar", run_drc,
+         ("literal", "adk-ixn-methods"), "SUPPORTED_IXN_METHODS_VERSION"),
+        ("Pillar manifest", ("checks", "pads_vs_pillars.py"),
+         ("constant", "PILLAR_MANIFEST_SCHEMA"), "SUPPORTED_PILLAR_MANIFEST_VERSIONS"),
+        ("Resolved-v2 attachment sidecar", ("bridges", "assembly_lvs", "resolved_v2_entry.py"),
+         ("constant", "SIDECAR_SCHEMA"), "SIDECAR_VERSION"),
     ]
 
     schema_rows = []
@@ -295,20 +287,18 @@ def main():
         ]
     )
 
-    for title, schema_id, path, name, source in SIDECAR_PINS:
-        schema_rows.append([title, schema_id, constant(path, name), source])
-
-    # The ADK's resolved-v2 entry pins the attachment sidecar it reads beside
-    # an assembly-lvs resolved v2 document; its schema string is a constant too.
-    entry = os.path.join(ADK, "bridges", "assembly_lvs", "resolved_v2_entry.py")
-    schema_rows.append(
-        [
-            "Resolved-v2 attachment sidecar",
-            "``{}``".format(constant(entry, "SIDECAR_SCHEMA")),
-            constant(entry, "SIDECAR_VERSION"),
-            "IHP-Open-ADK ``bridges/assembly_lvs/resolved_v2_entry.py``",
-        ]
-    )
+    for title, parts, (kind, schema), version_name in SIDECAR_PINS:
+        path = os.path.join(ADK, *parts)
+        if kind == "constant":
+            schema = constant(path, schema)
+        elif not re.search(r"['\"]{}['\"]".format(re.escape(schema)), read_text(path)):
+            fail("{} no longer compares against the schema {!r}".format(path, schema))
+        schema_rows.append([
+            title,
+            "``{}``".format(schema),
+            constant(path, version_name),
+            "IHP-Open-ADK ``{}``".format("/".join(parts)),
+        ])
 
     # Shared registries carry their version inline.
     for basename in ("rule_params", "interconnect", "layers", "chiplet_pads"):
