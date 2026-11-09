@@ -132,6 +132,11 @@ panel prints in its Mode column, which is the one you read off a screenshot. The
 right-click **Render Mode** menu spells the two detailed modes out again as
 ``Detailed (with Si bulk)`` and ``Detailed (no Si bulk)``.
 
+That menu, on a component's hierarchy row, offers ``Wireframe``,
+``Transparent`` and the two detailed modes. The interposer starts in an opaque
+``Solid`` mode and dies start ``Transparent``. Hiding a component is the
+checkbox on its hierarchy row, not a menu entry.
+
 .. list-table::
     :header-rows: 1
     :widths: 26 16 58
@@ -292,24 +297,44 @@ otherwise ``*_complete`` is appended). If no merged layout exists on disk it
 falls back to the interposer's own GDS and labels the view to say so, because in
 that state the dies are genuinely not in the picture.
 
-In **drill-down** mode you are inside one component's layout. Selecting a
-component in the 3D view or in the hierarchy panel drills into it; the header
-shows the component name and technology, a combo box selects the cell, and the
-status line gives live coordinates. The mapping between GDS cells and assembly
-components is kept by a dedicated ``CellComponentMapper``, which is what makes
-selection sync work in both directions instead of only from the tree down.
+In **drill-down** mode you are inside one component's layout. Double-clicking a
+component in the 3D view or in the hierarchy panel drills into it: the studio
+loads the component's ``layout`` file with the layer properties declared by the
+component's ``technology`` and navigates to its ``top_cell``. The header shows
+the component name and technology, a combo box selects the cell, and the status
+line gives live coordinates in microns. The mapping between GDS cells and
+assembly components is kept by a dedicated ``CellComponentMapper``, which is
+what makes selection sync work in both directions instead of only from the tree
+down.
+
+The **Back** button is context dependent. From an individual die's layout it
+returns to the assembly layout; from the assembly layout it resets to the full
+top-level view, undoing any hierarchy navigation you did in place. Closing the
+dock returns you to the 3D view alone.
+
+.. tip::
+    If a die opens without colours, its technology is missing a
+    ``layer_properties`` entry, or the ``.lyp`` that entry points at did not
+    resolve. The reference design declares two technologies, ``intm4tm2`` for
+    the interposer and ``sg13g2`` for the dies, each with its own ``.lyp``.
 
 Selection is synchronised across the 3D view, the hierarchy panel, the properties
 panel and the net graph. The properties panel shows the selected component's
 identity, position, dimensions and technology, with unit conversion.
 
+The **Hierarchy** dock lists the assembly's components with their type and
+technology, plus the interconnect method rows: an assembly-level row for the
+bumping method and, under each die, the method that die actually uses. The
+**Properties** tab is docked beside *2D Layout*. Selecting an interconnect row
+shows the method's stack instead of a component's geometry.
+
 The net graph
 -------------
 
-``Ctrl+G`` opens the net graph. It draws the assembly's connectivity as
-components (nodes) joined by nets (edges), with a hub node inserted for nets that
-have more than two endpoints so a power net does not turn into a mesh of
-pairwise edges.
+*View > Net Graph* (``Ctrl+G``) opens the net graph. It draws the assembly's
+connectivity as components (nodes) joined by nets (edges), with a hub node
+inserted for nets that have more than two endpoints so a power net does not
+turn into a mesh of pairwise edges.
 
 Nets are classified, and the classification drives both colour and filtering:
 ``Signal``, ``Power``, ``Ground``, ``DiffPair``, ``NC`` and ``Interface``, the
