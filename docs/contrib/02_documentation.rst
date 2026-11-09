@@ -24,27 +24,38 @@ What is generated
 
 ``docs/scripts/`` reads the submodules and writes the rule tables, the adapter
 tables, the version matrices, the command line transcripts, the image build
-recipe, the coordinate values the format and flow pages quote and the
-constants the admission and entry pages quote. Never edit
-the generated files: they are overwritten on every build.
+and update recipes, the interposer stack table, the coordinate values the
+format and flow pages quote and the constants the admission and entry pages
+quote. Never edit the generated files: they are overwritten on every build.
 
 .. list-table::
     :header-rows: 1
     :widths: 32 68
 
-    * - Generator
+    * - Script
       - Produces
     * - ``gen_rule_tables.py``
-      - The ASM and IXN rule and parameter tables, and the rule counts.
+      - The ASM and IXN rule and parameter tables under ``adk/tables/``, and
+        the rule counts in ``adk/tables/_rule_counts.inc``.
     * - ``gen_adapter_table.py``
-      - The shipped interposer and interconnect adapter tables.
+      - The shipped interposer and interconnect adapter tables. The interposer
+        table lists only the contract inputs each adapter declares.
     * - ``gen_version_matrix.py``
-      - The pinned component matrix and the format and schema version matrix.
+      - ``tools/tables/versions.csv``, the pinned component matrix;
+        ``tools/tables/schema_versions.csv``, the format and schema versions;
+        ``tools/tables/staged_engines.csv`` and the engine version
+        substitutions in ``tools/_staged_engines.inc``, from the record it
+        keeps in ``tools/tables/staged_engines.json``; ``_counts.inc``, the
+        interposer layer and rule deck counts and the ADK test count; and
+        ``formats/_vendored_state.inc``, the state of the ADK's vendored
+        ``.chiplet`` reader.
     * - ``gen_cli_usage.py``
-      - The ``--help`` transcript of each ADK command line tool.
+      - The ``--help`` transcript of each ADK command line tool, under
+        ``adk/_usage/``.
     * - ``gen_build_recipe.py``
-      - The image build recipe, copied from the ADK-Tools README with the
-        pinned release tag, and the ``|release-tag|`` substitution.
+      - ``install/_recipe/clone.sh``, ``build.sh`` and ``update.sh``, copied
+        from the ADK-Tools README with the pinned release tag, and the
+        ``|release-tag|`` substitution in ``install/_release_tag.inc``.
     * - ``gen_frame_values.py``
       - ``_frame_values.inc``: the interposer PDK's mount plane, each die's
         method, stack, pitch and spacing, the dimensions and die z of the
@@ -52,7 +63,8 @@ the generated files: they are overwritten on every build.
         reference die's origin offset (read from its GDS with KLayout), the
         positions Chiplet Studio's round-trip test asserts and the z
         tolerance of ``chiplet2dbx``. Also the specification excerpts under
-        ``formats/_excerpts/`` and the usage-class table. It fails when a
+        ``formats/_excerpts/``, the usage-class table and the interposer metal
+        stack table, ``tools/tables/interposer_stack.csv``. It fails when a
         file's plane or a die z disagrees with the PDK key.
     * - ``gen_admission_values.py``
       - ``_admission_values.inc``: the strict admission revision and contract
@@ -63,6 +75,9 @@ the generated files: they are overwritten on every build.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.
+    * - ``_common.py``
+      - Nothing. The helpers every generator shares, among them the check
+        that each submodule is checked out clean at its pin.
 
 The generators fail the build when the source drifts from what is documented.
 Adding a rule to a deck without describing it, renaming a command line tool, or
@@ -84,7 +99,11 @@ Updating to newer sources
     git diff
 
 The generators refuse a submodule whose checkout differs from the commit the
-index pins, so stage the new pin before regenerating. The ``--cached`` diff
+index pins, so stage the new pin before regenerating. The staged engines are
+not submodules: when the ADK-Tools pin moves one in its ``staging.pin``,
+regenerate with a checkout of that engine holding the new commit, beside this
+repository or in the directory ``STAGE_SIBLINGS`` names. Without one,
+``gen_version_matrix.py`` fails rather than keep the old version. The ``--cached`` diff
 lists the commits the move pulls in. Review the diff in the generated tables.
 It tells you exactly what changed in the code that this site makes claims
 about, and therefore which prose needs rereading.
