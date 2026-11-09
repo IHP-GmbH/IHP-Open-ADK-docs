@@ -82,17 +82,19 @@ result. It installs the requirements with ``python3 -m pip`` and calls
 Generated content
 =================
 
-No table, version matrix, recipe or command line transcript on this site is
-typed by hand. ``docs/scripts/`` reads the pinned submodules (and, for the
-staged engines, ``staging.pin`` in the pinned ADK-Tools) and writes the rule
-tables, adapter tables, version matrices, build recipes and command line
-transcripts. Running prose still types some values, such as the schema versions
-a page discusses; where prose and a generated table differ, the table describes
-the pinned code. The generators fail the build when the source
+``docs/scripts/`` reads the pinned submodules (and, for the staged engines,
+``staging.pin`` in the pinned ADK-Tools) and writes the rule and parameter
+tables, the adapter tables, the version and schema matrices, the staged engine
+and interposer stack tables, the image build and update recipes and the
+``--help`` transcripts of the ADK command line tools. None of those is typed by
+hand. Everything else is written by hand: the prose, the other tables and the
+command outputs not listed here. Where one of those and a generated table
+differ, the generated table describes the pinned code. The generators fail the build when the source
 drifts from what is documented, for example when a rule is added to a deck
 without a matching description. Continuous integration re-runs them and fails if
-the working tree is then dirty, which is what proves the published tables match
-the pinned revisions.
+the working tree is then dirty, which is what proves the generated tables match
+the pinned revisions. The staged engine versions are the exception: their
+commits are local-only, so only a run with the engine checkouts verifies them.
 
 Contributing
 ============
