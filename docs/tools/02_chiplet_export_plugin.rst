@@ -378,6 +378,8 @@ neither wx nor pcbnew at module load, which is what makes its argument
 construction unit-testable on plain host Python, and it exposes three things:
 ``ExportOptions``, ``build_cli_args`` and ``run_export``.
 
+.. _chiplet_export_sequence:
+
 The sequence
 ~~~~~~~~~~~~
 
