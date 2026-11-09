@@ -16,7 +16,9 @@ repository, or in the directory ``STAGE_SIBLINGS`` names, as for ADK-Tools
 itself). The pinned commits are local-only, so a build without the sibling
 checkouts (CI, Read the Docs) reuses the version recorded for that exact commit
 in ``tools/tables/staged_engines.json`` and fails when staging.pin has moved
-past it.
+past it. That record is a reviewed input, not proof: only a run with the
+sibling checkouts verifies it, and the script prints which source each
+version came from.
 """
 
 import glob
@@ -38,6 +40,7 @@ from _common import (
     fail,
     git,
     git_or_fail,
+    pinned_commit,
     run_git,
     release_tags,
     read_json,
@@ -95,24 +98,24 @@ STAGING_PIN = os.path.join(TOOLS, "staging.pin")
 STAGED_RECORD = os.path.join(DOCS_DIR, "tools", "tables", "staged_engines.json")
 # staging.pin keeps every assignment a plain literal on one line, because
 # ADK-Tools' own checks match some of them as whole lines.
-STAGE_ASSIGNMENT = re.compile(r"^STAGE_([A-Z0-9_]+)_(PATH|REF)=")
-STAGE_PATH = re.compile(r"^STAGE_([A-Z0-9_]+)_PATH=([A-Za-z0-9._-]+)$")
-STAGE_REF = re.compile(r"^STAGE_([A-Z0-9_]+)_REF=([0-9a-f]{40})$")
+STAGE_ASSIGNMENT = re.compile(r"^STAGE_([A-Z0-9_]+)_(PATH|REF)=(.*)$")
+STAGE_VALUE = {"PATH": re.compile(r"[A-Za-z0-9._-]+"), "REF": re.compile(r"[0-9a-f]{40}")}
 
 
 def staged_trees():
     """(path, ref) of every tree staging.pin stages, in file order."""
-    paths, refs = {}, {}
+    assigned = {"PATH": {}, "REF": {}}
     for line in read_text(STAGING_PIN).splitlines():
-        if not STAGE_ASSIGNMENT.match(line):
-            continue
-        match = STAGE_PATH.match(line) or STAGE_REF.match(line)
+        match = STAGE_ASSIGNMENT.match(line)
         if not match:
+            continue
+        tree, kind, value = match.groups()
+        if not STAGE_VALUE[kind].fullmatch(value):
             fail("staging.pin: cannot read {!r}".format(line))
-        target = paths if line.split("=")[0].endswith("_PATH") else refs
-        if match.group(1) in target:
-            fail("staging.pin assigns {} twice".format(line.split("=")[0]))
-        target[match.group(1)] = match.group(2)
+        if tree in assigned[kind]:
+            fail("staging.pin assigns STAGE_{}_{} twice".format(tree, kind))
+        assigned[kind][tree] = value
+    paths, refs = assigned["PATH"], assigned["REF"]
     if not paths or set(paths) != set(refs):
         fail("staging.pin: every STAGE_*_PATH needs one STAGE_*_REF and back")
     return [(paths[key], refs[key]) for key in paths]
@@ -144,13 +147,22 @@ def staged_engines():
     """Every staged tree that is not a submodule here, with its version.
 
     Read from the sibling checkouts when they hold the pinned commit, else
-    taken from the record, which must then be for the same commit.
+    taken from the record, which must then be for the same commit. A version
+    taken from the record is not verified, so each one says where it came
+    from. A staged tree that is a submodule here must be staged at the commit
+    this repository pins, or the matrix would describe a tree the image does
+    not ship.
     """
+    require_submodule(TOOLS, "src/ADK-Tools")
     siblings = os.environ.get("STAGE_SIBLINGS") or os.path.dirname(REPO_ROOT)
     record = read_json(STAGED_RECORD) if os.path.isfile(STAGED_RECORD) else {}
     engines = {}
     for path, ref in staged_trees():
         if is_submodule(path):
+            pinned = pinned_commit(os.path.join(SRC_DIR, path), "src/" + path)
+            if pinned != ref:
+                fail("staging.pin stages {} at {}, but this repository pins src/{} at {}. "
+                     "Move the two pins together".format(path, ref[:12], path, pinned[:12]))
             continue
         identity = engine_identity(siblings, path, ref)
         if identity is None:
@@ -163,6 +175,11 @@ def staged_engines():
                         path, ref[:12], os.path.relpath(STAGED_RECORD, REPO_ROOT),
                         (kept.get("ref") or "no commit")[:12], path))
             identity = {key: kept[key] for key in ("distribution", "version")}
+            source = "the record (unverified: no sibling checkout holds the commit)"
+        else:
+            source = "pyproject.toml in {}".format(os.path.join(siblings, path))
+        print("staged {} {} at {}: version {} from {}".format(
+            path, identity["distribution"], ref[:12], identity["version"], source))
         engines[path] = dict(ref=ref, **identity)
     if not engines:
         fail("staging.pin stages no tree outside this repository's submodules")
@@ -209,7 +226,6 @@ def main():
         rows.append([name, role, license_id, version, commit])
     write_csv(os.path.join(DOCS_DIR, "tools", "tables", "versions.csv"), rows)
 
-    # The loop above has checked src/ADK-Tools out at its pin.
     engines = staged_engines()
     write_text(STAGED_RECORD, json.dumps(engines, indent=2, sort_keys=True) + "\n")
     write_csv(

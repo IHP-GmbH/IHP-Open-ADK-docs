@@ -311,7 +311,8 @@ The flow engines are not submodules of this site either. This table takes the
 commit of each one from ``staging.pin`` in the pinned ADK-Tools, and the
 distribution and version from the ``pyproject.toml`` at that commit. The engine
 pages quote these versions. The chiplet specification is staged too, but it is
-a submodule here, so it is in the matrix above.
+a submodule here, so it is in the matrix above, and the build fails unless
+``staging.pin`` stages it at the commit this site pins.
 
 .. csv-table:: Staged engines
    :file: tables/staged_engines.csv

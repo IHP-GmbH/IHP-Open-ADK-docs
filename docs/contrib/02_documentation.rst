@@ -47,8 +47,7 @@ quote. Never edit the generated files: they are overwritten on every build.
       - ``tools/tables/versions.csv``, the pinned component matrix;
         ``tools/tables/schema_versions.csv``, the format and schema versions;
         ``tools/tables/staged_engines.csv`` and the engine version
-        substitutions in ``tools/_staged_engines.inc``, from the record it
-        keeps in ``tools/tables/staged_engines.json``; ``_counts.inc``, the
+        substitutions in ``tools/_staged_engines.inc``; ``_counts.inc``, the
         interposer layer and rule deck counts and the ADK test count; and
         ``formats/_vendored_state.inc``, the state of the ADK's vendored
         ``.chiplet`` reader.
@@ -106,8 +105,18 @@ index pins, so stage the new pin before regenerating. The staged engines are
 not submodules: when the ADK-Tools pin moves one in its ``staging.pin``,
 regenerate with a checkout of that engine holding the new commit, beside this
 repository or in the directory ``STAGE_SIBLINGS`` names. Without one,
-``gen_version_matrix.py`` fails rather than keep the old version. The ``--cached`` diff
-lists the commits the move pulls in. Review the diff in the generated tables.
+``gen_version_matrix.py`` fails rather than keep the old version.
+
+The engines' commits are local-only, so continuous integration and Read the
+Docs cannot read their versions. There the script reuses
+``tools/tables/staged_engines.json``, the distribution and version last read
+for each commit, as long as the commit still matches ``staging.pin``. That
+file is a reviewed input, not a generated proof: only a local run with the
+sibling checkouts verifies it, and the script prints, for each engine, whether
+its version came from ``pyproject.toml`` or from the record. Never edit it by
+hand.
+
+The ``--cached`` diff lists the commits the move pulls in. Review the diff in the generated tables.
 It tells you exactly what changed in the code that this site makes claims
 about, and therefore which prose needs rereading.
 
