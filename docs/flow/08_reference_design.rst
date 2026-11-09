@@ -308,9 +308,10 @@ Step 5: checks the reference design does not run for you
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Of the four geometric checks in :doc:`/flow/06_verification_stages`, only the
-KLayout assembly DRC, step 4 here and stage 6 of :ref:`flow_stages`, is part of
-the reference design's pipeline. The other three are not. Two of them you can run yourself
-against the shipped artefacts, and they are given below. The third, the KiCad
+KLayout assembly DRC, step 4 here and stage 6 of the :ref:`flow overview
+<flow_stages>`, is part of the reference design's pipeline. The other three are
+not. Two of them you can run yourself against the shipped artefacts, and they
+are given below. The third, the KiCad
 design-time check, cannot be run here at all: the reference design's ``kicad/``
 tree ships no generated ``.kicad_dru``, so there is nothing for pcbnew to
 enforce. Generate one as :doc:`/adk/06_kicad_dru` describes for a board of your
@@ -345,8 +346,8 @@ Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``adk-smoke`` on this board is step 2 of :doc:`/quickstart`. It is the fastest
-way to tell whether a container is wired correctly, and :ref:`adk_smoke` says
-what it checks and how it fails.
+way to tell whether a container is wired correctly, and :ref:`the self test's
+reference <adk_smoke>` says what it checks and how it fails.
 
 What the committed reports say
 ------------------------------

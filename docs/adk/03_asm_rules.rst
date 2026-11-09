@@ -290,8 +290,8 @@ Single-tier limitation
 ``chiplet_boundary`` is a flat 2D region, so **ASM.a flags any XY overlap
 between chiplet boundaries**, including two dies legally stacked at different
 heights, and per-die z consistency is checked at export rather than by any ASM
-rule. :ref:`adk_known_limitations` gives the reasons and what lifting the limit
-would take.
+rule. :ref:`The known limitations <adk_known_limitations>` give the reasons and
+what lifting the limit would take.
 
 Where the numbers come from
 ---------------------------
