@@ -17,6 +17,7 @@ IHP Open Assembly Design Kit (ADK)
     tools
     roadmap
     contrib
+    Glossary <intro/04_glossary>
     references
 
 Current Status: |current-status|
