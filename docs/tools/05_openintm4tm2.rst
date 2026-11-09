@@ -3,6 +3,7 @@ Interposer PDK (OpenIntM4TM2)
 
 .. include:: /common.inc
 .. include:: /_counts.inc
+.. include:: /tools/_interposer_stack.inc
 
 OpenIntM4TM2 is the KLayout PDK for the IHP 130 nm **IntM4TM2** aluminium
 back-end interposer. It is the substrate the reference flow assembles onto, and
@@ -68,11 +69,11 @@ bottom of the metal above:
     :header: "Layer", "GDS layer", "z min (um)", "z max (um)", "Thickness (um)"
     :widths: 24 14 20 20 22
 
-Above TopMetal2 sit 1.5 um of oxide and 0.4 um of SiN passivation, so the total
-build-up from the carrier surface to the top of the passivation is about
-12.71 um. The inter-metal gaps reproduce the module specification exactly:
-Metal4 to Metal5 is 0.54 um, Metal5 to TopMetal1 is 0.85 um, TopMetal1 to
-TopMetal2 is 2.80 um.
+Above TopMetal2 sit |interposer-passivation-oxide| um of oxide and
+|interposer-passivation-nitride| um of SiN passivation, so the total build-up
+from the carrier surface to the top of the passivation is
+|interposer-passivation-top| um. The gap between two metals is the thickness
+of the via that joins them in the table.
 
 Connectivity for net tracing is declared in the technology file as three
 stacks: ``Metal4-Via4-Metal5``, ``Metal5-TopVia1-TopMetal1`` and

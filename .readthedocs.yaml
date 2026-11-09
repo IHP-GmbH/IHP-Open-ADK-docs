@@ -32,6 +32,7 @@ build:
       - python3 docs/scripts/gen_version_matrix.py
       - python3 docs/scripts/gen_cli_usage.py
       - python3 docs/scripts/gen_build_recipe.py
+      - python3 docs/scripts/gen_interposer_stack.py
       - python3 docs/scripts/gen_frame_values.py
       - python3 docs/scripts/gen_admission_values.py
       - python3 docs/scripts/check_validation_rules.py

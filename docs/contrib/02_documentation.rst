@@ -65,8 +65,7 @@ quote. Never edit the generated files: they are overwritten on every build.
         reference die's origin offset (read from its GDS with KLayout), the
         positions Chiplet Studio's round-trip test asserts and the z
         tolerance of ``chiplet2dbx``. Also the specification excerpts under
-        ``formats/_excerpts/``, the usage-class table and the interposer metal
-        stack table, ``tools/tables/interposer_stack.csv``. It fails when a
+        ``formats/_excerpts/`` and the usage-class table. It fails when a
         file's plane or a die z disagrees with the PDK key.
     * - ``gen_admission_values.py``
       - ``_admission_values.inc``: the strict admission revision and contract
@@ -74,6 +73,11 @@ quote. Never edit the generated files: they are overwritten on every build.
         limits of the resolved v2 entry, all read from the ADK's constants. It
         fails when an exit code mapping or the handling of
         ``DieContractIncomplete`` no longer matches what the pages say.
+    * - ``gen_interposer_stack.py``
+      - ``tools/tables/interposer_stack.csv``, the interposer metal stack,
+        and the passivation values in ``tools/_interposer_stack.inc``. It
+        fails when a layer does not start where the one below it ends, or
+        when the mount plane is no longer the top of TopMetal2.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.

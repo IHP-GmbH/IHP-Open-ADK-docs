@@ -6,9 +6,8 @@
 Sources, each read at its pin:
 
 - the interposer PDK's mount plane, ``beol.attachment_surface_z_um`` in
-  OpenIntM4TM2 ``libs.tech/intm4tm2_stack.json``, and its metal stack, with
-  each via spanning the two metals the technology's connectivity joins it to
-  and each GDS layer number from the canonical layer list;
+  OpenIntM4TM2 ``libs.tech/intm4tm2_stack.json``, read through
+  gen_interposer_stack.py;
 - the interconnect methods manifest of IHP-Interconnect-IntM4TM2, for each
   method's pitch and spacing;
 - the specification's hand-written worked example,
@@ -42,9 +41,8 @@ The parts of the specification the pages show are written out as excerpts
 under ``docs/formats/_excerpts/`` and included from there, so the CI drift
 gate shows every upstream change to them.
 
-Writes ``docs/_frame_values.inc``, ``docs/formats/_excerpts/*.yaml``,
-``docs/formats/tables/io_class_interface_types.csv`` and
-``docs/tools/tables/interposer_stack.csv``.
+Writes ``docs/_frame_values.inc``, ``docs/formats/_excerpts/*.yaml`` and
+``docs/formats/tables/io_class_interface_types.csv``.
 """
 
 import ast
@@ -71,6 +69,7 @@ from _common import (
     write_csv,
     write_text,
 )
+from gen_interposer_stack import read_stack
 
 STUDIO = os.path.join(SRC_DIR, "chiplet-studio")
 
@@ -211,73 +210,6 @@ class Chiplet:
         if len(units) != 1:
             fail("{}: technologies disagree on dbu".format(self.label))
         return units.pop()
-
-
-def read_plane():
-    path = os.path.join(INTERPOSER, "libs.tech", "intm4tm2_stack.json")
-    stack = json.loads(read_text(path), parse_float=Decimal)
-    try:
-        plane = number(stack["beol"]["attachment_surface_z_um"], "attachment_surface_z_um")
-        tops = [m["zmax_um"] for m in stack["beol"]["metals"] if m["name"] == "TopMetal2"]
-    except (KeyError, TypeError):
-        fail("intm4tm2_stack.json has no beol.attachment_surface_z_um or metals")
-    # formats/03 and tools/05 call the plane the top of TopMetal2.
-    if [number(top, "TopMetal2 zmax_um") for top in tops] != [plane]:
-        fail("intm4tm2_stack.json: the plane is no longer the top of TopMetal2")
-    return plane
-
-
-def interposer_stack_rows():
-    """The metal stack top down: layer, GDS layer, z min, z max, thickness.
-
-    Metals come from intm4tm2_stack.json. A via spans from the top of the
-    metal below it to the bottom of the one above, as the technology's
-    connectivity stacks pair them, so its z is derived rather than stored.
-    """
-    tech = os.path.join(INTERPOSER, "libs.tech", "klayout", "tech")
-    stack = json.loads(
-        read_text(os.path.join(INTERPOSER, "libs.tech", "intm4tm2_stack.json")),
-        parse_float=Decimal,
-    )
-    try:
-        metals = {
-            m["name"]: (number(m["zmin_um"], m["name"]), number(m["zmax_um"], m["name"]))
-            for m in stack["beol"]["metals"]
-        }
-    except (KeyError, TypeError):
-        fail("intm4tm2_stack.json: beol.metals has no name, zmin_um and zmax_um")
-    spans = dict(metals)
-    for connection in re.findall(
-        r"<connection>([^<]*)</connection>", read_text(os.path.join(tech, "intm4tm2.lyt"))
-    ):
-        parts = [part.strip() for part in connection.split(",")]
-        if len(parts) != 3 or parts[0] not in metals or parts[2] not in metals:
-            fail("intm4tm2.lyt: connection {!r} is not metal, via, metal of the "
-                 "stack file's metals".format(connection))
-        spans[parts[1]] = (metals[parts[0]][1], metals[parts[2]][0])
-    gds = {}
-    for line in read_text(os.path.join(tech, "intm4tm2_layers.txt")).splitlines():
-        fields = line.split()
-        if len(fields) == 4 and fields[1] == "drawing":
-            gds[fields[0]] = fields[2]
-    rows = []
-    for name, (low, high) in sorted(spans.items(), key=lambda item: -item[1][0]):
-        if name not in gds:
-            fail("intm4tm2_layers.txt has no drawing layer for {}".format(name))
-        if not low < high:
-            fail("intm4tm2 stack: {} spans {} to {}".format(name, low, high))
-        cells = []
-        for value in (low, high, high - low):
-            fixed = value.quantize(Decimal("0.0001"))
-            if fixed != value:
-                fail("intm4tm2 stack: {} has more than four decimals".format(value))
-            cells.append(str(fixed))
-        rows.append([name, gds[name]] + cells)
-    if [row[0] for row in rows if row[0] in metals] != sorted(
-        metals, key=lambda name: -metals[name][0]
-    ) or any(rows[i][2] != rows[i + 1][3] for i in range(len(rows) - 1)):
-        fail("intm4tm2 stack: the metals and vias do not stack without a gap")
-    return rows
 
 
 def read_methods():
@@ -582,7 +514,7 @@ def main():
     require_submodule(STUDIO, "chiplet-studio")
     require_submodule(ADK, "IHP-Open-ADK")
 
-    plane = read_plane()
+    plane = read_stack()["plane"]
     methods = read_methods()
     block, contract_values = contract_position_block(plane)
 
@@ -607,10 +539,6 @@ def main():
     write_csv(
         os.path.join(DOCS_DIR, "formats", "tables", "io_class_interface_types.csv"),
         io_class_rows(),
-    )
-    write_csv(
-        os.path.join(DOCS_DIR, "tools", "tables", "interposer_stack.csv"),
-        interposer_stack_rows(),
     )
 
 
