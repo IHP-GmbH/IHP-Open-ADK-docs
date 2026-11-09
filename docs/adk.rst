@@ -8,9 +8,9 @@ The Assembly Design Kit
 
     Architecture <adk/01_architecture>
     Adapter contract <adk/02_adapter_contract>
+    Running the assembly DRC <adk/05_run_drc>
     Placement rules (ASM) <adk/03_asm_rules>
     Interconnect rules (IXN) <adk/04_ixn_rules>
-    Running the assembly DRC <adk/05_run_drc>
     KiCad DRU generation <adk/06_kicad_dru>
     OpenROAD 3Dblox export <adk/07_chiplet2dbx>
     Pad to pillar alignment <adk/08_pads_vs_pillars>

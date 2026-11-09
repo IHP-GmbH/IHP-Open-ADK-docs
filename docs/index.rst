@@ -82,7 +82,7 @@ Where to start
     * - Follow the flow end to end
       - :doc:`flow/01_overview`, then :doc:`flow/08_reference_design`
     * - Check an assembly
-      - :doc:`adk/05_run_drc`
+      - :doc:`adk/05_run_drc` (inputs from :doc:`flow/05_hyp_to_gds`)
     * - Check an assembly's connectivity
       - :doc:`tools/09_assembly_lvs`
     * - Support a new interposer or bumping vendor
