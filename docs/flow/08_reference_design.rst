@@ -307,9 +307,9 @@ items in the ``.lyrdb`` under the rule that flagged them.
 Step 5: checks the reference design does not run for you
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Only stage 3, the KLayout assembly DRC of step 4, is part of the reference
-design's pipeline. The other three of the four :doc:`verification stages
-</flow/06_verification_stages>` are not. Two of them you can run yourself
+Of the four geometric checks in :doc:`/flow/06_verification_stages`, only the
+KLayout assembly DRC, step 4 here and stage 6 of :ref:`flow_stages`, is part of
+the reference design's pipeline. The other three are not. Two of them you can run yourself
 against the shipped artefacts, and they are given below. The third, the KiCad
 design-time check, cannot be run here at all: the reference design's ``kicad/``
 tree ships no generated ``.kicad_dru``, so there is nothing for pcbnew to

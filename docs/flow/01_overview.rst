@@ -90,6 +90,8 @@ The same pipeline, seen as the files each stage consumes and writes:
     The flow in artefact terms. Each stage names the tool that runs
     it and the files it writes.
 
+.. _flow_stages:
+
 The stages
 ----------
 

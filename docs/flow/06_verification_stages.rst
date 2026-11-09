@@ -7,7 +7,7 @@ Verification stages
 Assembly-level verification has two axes, set out in
 :doc:`/intro/01_what_is_the_adk`, and this preview release ships a check for
 each. Most of this page is about the geometric axis. The connectivity axis has
-one stage, assembly LVS, described in `Stage 5: assembly LVS`_.
+one stage, described in `Assembly LVS`_.
 
 Within the geometric axis an assembly passes through four complementary checking
 stages.
@@ -59,8 +59,10 @@ to ship a mistake through this flow.
 The first four rows are the geometric axis and the last is the connectivity
 axis.
 
-Stage 1: KiCad design-time rules
---------------------------------
+.. _stage-1-kicad-design-time-rules:
+
+KiCad design-time rules
+-----------------------
 
 **Runs on** the KiCad board, continuously, while you place and move chiplet
 footprints.
@@ -100,8 +102,10 @@ bounding box and knows nothing about the reservation you drew around it.
 
 See :doc:`/adk/06_kicad_dru`.
 
-Stage 2: the 3Dblox export and ``check_3dblox``
-------------------------------------------------
+.. _stage-2-the-3dblox-export-and-check-3dblox:
+
+The 3Dblox export and ``check_3dblox``
+--------------------------------------
 
 **Runs on** a geometric model derived from the finalised ``.chiplet``, not on
 any layout file.
@@ -153,8 +157,10 @@ is reported by the linter as an invalid connection.
 
 See :doc:`/adk/07_chiplet2dbx` and :doc:`/formats/08_3dblox_interop`.
 
-Stage 3: the KLayout assembly DRC
-----------------------------------
+.. _stage-3-the-klayout-assembly-drc:
+
+The KLayout assembly DRC
+------------------------
 
 **Runs on** the assembly GDS, with the chiplet boundaries injected from the
 ``<gds-stem>.boundaries.json`` sidecar next to it.
@@ -191,8 +197,8 @@ vendor method is not checked against a coarse Cu-pillar pitch.
 - **Connectivity.** The deck compares polygons against rules, never nets against
   a netlist. An assembly whose dies are placed and attached legally but wired to
   the wrong nets is clean here. Reconciling the placed assembly against the
-  system netlist is the connectivity axis of assembly-level verification, which
-  is Stage 5.
+  system netlist is the connectivity axis of assembly-level verification,
+  covered under `Assembly LVS`_.
 - **z.** The deck sees a flat 2D region. ``ASM.a`` therefore flags any XY
   overlap between chiplet boundaries, including dies that a multi-tier assembly
   would legally stack at different heights. Nothing in the current toolchain
@@ -217,8 +223,10 @@ notion of a spacing rule between two dies' bump fields.
 
 See :doc:`/adk/05_run_drc`, :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
-Stage 4: the pad-to-pillar alignment check
--------------------------------------------
+.. _stage-4-the-pad-to-pillar-alignment-check:
+
+The pad-to-pillar alignment check
+---------------------------------
 
 **Runs on** the finalised ``.chiplet``, the assembly's pillar manifest, and a
 pad source per die.
@@ -267,8 +275,10 @@ assembly does not connect. Only this check compares pads against pillars.
 
 See :doc:`/adk/08_pads_vs_pillars`.
 
-Stage 5: assembly LVS
----------------------
+.. _stage-5-assembly-lvs:
+
+Assembly LVS
+------------
 
 **Runs on** the placed component layouts, the interposer layout and each die's
 layout, together with the declared nets. All of them are named in one resolved
