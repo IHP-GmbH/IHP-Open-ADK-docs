@@ -32,8 +32,8 @@ Current Status: |current-status|
    This documentation is a work in progress. Pages describing future domains
    state directions, not shipped features.
 
-What the ADK is
-===============
+The ADK in brief
+================
 
 The Assembly Design Kit sits one abstraction layer above all PDKs. It owns the
 rules and tooling that govern *how chiplets are placed and connected* on an
