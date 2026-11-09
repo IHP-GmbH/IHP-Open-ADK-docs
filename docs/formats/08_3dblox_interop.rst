@@ -138,11 +138,12 @@ the target vocabulary lacks the combination it needs.
 What does not map, and why
 --------------------------
 
-Dropped by declaration
-~~~~~~~~~~~~~~~~~~~~~~
+What .chiplet expresses that 3Dblox does not
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These exist in ``.chiplet`` and have no 3Dblox target, because 3Dblox sits at
-the P&R abstraction and does not reference artwork:
+These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
+3Dblox sits at the P&R abstraction and does not reference artwork. Some survive
+the export only in reduced form:
 
 1. **Per-layer interconnect metallurgy.** ``connection_stacks`` carries a name,
    material, height and diameter per layer, and derives the die z from the
