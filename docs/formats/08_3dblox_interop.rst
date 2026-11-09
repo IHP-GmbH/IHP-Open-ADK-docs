@@ -138,8 +138,8 @@ the target vocabulary lacks the combination it needs.
 What does not map, and why
 --------------------------
 
-What .chiplet expresses that 3Dblox does not
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Reduced or dropped on export
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
 3Dblox sits at the P&R abstraction and does not reference artwork. Some survive
