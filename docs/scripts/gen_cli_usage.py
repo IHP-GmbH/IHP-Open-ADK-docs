@@ -24,6 +24,7 @@ COMMANDS = {
     "chiplet2dbx": os.path.join("openroad", "chiplet2dbx.py"),
     "pads_vs_pillars": os.path.join("checks", "pads_vs_pillars.py"),
     "generate_assembly_dru": os.path.join("kicad", "dru", "generate_assembly_dru.py"),
+    "assembly_admission": os.path.join("checks", "assembly_admission.py"),
 }
 
 WRAP_COLUMNS = "80"

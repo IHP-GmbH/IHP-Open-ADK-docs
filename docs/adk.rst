@@ -15,3 +15,4 @@ The Assembly Design Kit
     OpenROAD 3Dblox export <adk/07_chiplet2dbx>
     Pad to pillar alignment <adk/08_pads_vs_pillars>
     Registries and schemas <adk/09_registries>
+    Assembly admission <adk/10_assembly_admission>
