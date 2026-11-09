@@ -24,7 +24,8 @@ What is generated
 
 ``docs/scripts/`` reads the submodules and writes the rule tables, the adapter
 tables, the version matrices, the command line transcripts, the image build
-recipe and the coordinate values the format and flow pages quote. Never edit
+recipe, the coordinate values the format and flow pages quote and the
+constants the admission and entry pages quote. Never edit
 the generated files: they are overwritten on every build.
 
 .. list-table::
@@ -53,6 +54,12 @@ the generated files: they are overwritten on every build.
         tolerance of ``chiplet2dbx``. Also the specification excerpts under
         ``formats/_excerpts/`` and the usage-class table. It fails when a
         file's plane or a die z disagrees with the PDK key.
+    * - ``gen_admission_values.py``
+      - ``_admission_values.inc``: the strict admission revision and contract
+        minor, the component type table, and the profile, schema versions and
+        limits of the resolved v2 entry, all read from the ADK's constants. It
+        fails when an exit code mapping or the handling of
+        ``DieContractIncomplete`` no longer matches what the pages say.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.

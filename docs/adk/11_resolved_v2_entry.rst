@@ -2,6 +2,7 @@ Resolved v2 entry
 =================
 
 .. include:: /common.inc
+.. include:: /_admission_values.inc
 
 An assembly-lvs input is one **resolved** document that names every component
 layout, where it sits, its terminals and the logical nets
@@ -14,7 +15,7 @@ between them can be reproduced.
 Two scripts under ``bridges/assembly_lvs/`` in |adk-repo| do the work.
 ``derive_attachment_sidecar.py`` writes an attachment sidecar from an accepted
 ``.chiplet`` and its pillar manifest. ``resolved_v2_entry.py`` reads one
-``assembly-lvs.resolved/v2`` document together with that sidecar and writes the
+|entry-resolved-schema| document together with that sidecar and writes the
 ADK view into a fresh directory.
 
 .. important::
@@ -54,7 +55,8 @@ Derive the sidecar once from the accepted design, then run the entry:
 
 Neither script replaces anything: the derive tool refuses a ``--out`` that
 exists, and the entry refuses an output directory that exists. The entry needs
-the ``klayout.db`` Python module.
+the ``klayout.db`` Python module. ``--methods-manifest`` defaults to
+|derive-methods-manifest-default|.
 
 Exit codes
 ~~~~~~~~~~
@@ -92,9 +94,9 @@ The attachment sidecar
 ----------------------
 
 A resolved v2 document does not carry what the ADK view needs. The sidecar,
-schema ``adk-resolved-attachment`` version 1.0.0, adds it: the interposer and
-interconnect adapter ids (resolved through the ADK registry, see
-:doc:`/adk/02_adapter_contract`), the five attachment layers of the carrier,
+schema |entry-sidecar-schema| version |entry-sidecar-version|, adds it: the
+interposer and interconnect adapter ids (resolved through the ADK registry, see
+:doc:`/adk/02_adapter_contract`), the attachment layers of the carrier,
 the attachment surface z, the carrier's thickness and z, and per die its
 connection method, technology, thickness, declared dimensions, layout and top
 cell. Its schema file is listed with the other sidecar schemas in
@@ -120,8 +122,8 @@ round-trips against it, and the identities of both inputs as ``derived_from``.
 It validates its candidate with the entry's own loader before publishing, and
 never replaces an existing file.
 
-``interposer.attachment_layers`` names ``opening``, ``dfpad``, ``body``,
-``body2`` and ``mark``. ``opening`` and ``dfpad`` must equal the pillar branch
+``interposer.attachment_layers`` names one layer per role:
+|entry-attachment-roles|. ``opening`` and ``dfpad`` must equal the pillar branch
 of the ``chiplet_attachment_input`` line of the interposer adapter deck. The
 entry parses that line as data; it never executes the deck.
 
@@ -129,9 +131,9 @@ The accepted subset
 -------------------
 
 The entry accepts a documented subset of valid v2, the profile
-``nominal-identity-carrier/1.0.0``. Only ``schema_version``
-``assembly-lvs.resolved/v2`` is read; v3 to v5 are refused. On top of the v2
-semantics, each of these is a refusal:
+|entry-profile|. Only ``schema_version`` |entry-resolved-schema| is
+read; v3 to v5 are refused. On top of the v2 semantics, each of these is a
+refusal:
 
 - A carrier not placed at identity (``rotation_deg`` 0, ``mirror_x`` false).
 - A non-empty ``contracts.internal_equivalences``.
@@ -141,9 +143,11 @@ semantics, each of these is a refusal:
   more than one interposer contact conductor across the interface contacts.
 - A numeric string such as ``"50"``, a YAML integer written in hexadecimal,
   octal or sexagesimal, or a number with a leading zero such as ``012``.
-- A coordinate or size outside plus or minus 1073741823 grid units.
-- An ``assembly.id`` that is not one plain path component: 1 to 64 characters
-  from ``[A-Za-z0-9_.-]``, starting with a letter or digit. It is the stem of
+- A coordinate or size outside plus or minus |entry-safe-grid-coord| grid
+  units.
+- An ``assembly.id`` that is not one plain path component: 1 to
+  |entry-id-max-length| characters from |entry-id-chars|, starting with a
+  letter or digit. It is the stem of
   every output name.
 
 Everything else follows the assembly-lvs reader: duplicate keys are refused,
@@ -232,7 +236,7 @@ The output directory must not exist. ``<id>`` is ``assembly.id``.
     not compared.
 
 ``entry_manifest.json``
-    Schema ``adk-resolved-v2-entry`` version 1.0.0: every input and output
+    Schema |entry-schema| version |entry-version|: every input and output
     digest, the frame constants, the preservation record, the body records,
     the correspondence tables, the z arithmetic, the adapter resolutions, the
     scope statement and the next commands to run.

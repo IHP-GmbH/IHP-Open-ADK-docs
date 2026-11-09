@@ -2,6 +2,7 @@ Assembly admission
 ==================
 
 .. include:: /common.inc
+.. include:: /_admission_values.inc
 
 A ``.chiplet`` places dies, but it does not say whether a placed die is the die
 its producer described. A die built by the die flow carries a die contract
@@ -79,23 +80,11 @@ Component types
 unexpected spelling would otherwise match nothing and pass silently. Strict
 admission therefore classifies every component, not only the ones it checks:
 
-.. list-table::
-    :header-rows: 1
+.. csv-table:: Component types under strict admission
+    :file: tables/admission_types.csv
+    :header: "``type``", "Treatment"
     :widths: 26 74
     :class: adk-wide-table
-
-    * - ``type``
-      - Treatment
-    * - ``die``
-      - Checked against its die contract.
-    * - ``interposer``, ``substrate``
-      - Recognized and excluded. A die contract does not describe them.
-    * - ``die_array``
-      - Refused by name. A die contract binds one layout and one top cell, so
-        it cannot speak for the several instances an array places.
-    * - anything else
-      - Unclassified. The assembly cannot be decided, even when every die in
-        it was admitted.
 
 An assembly in which nothing matched, for example one with only an interposer,
 cannot be decided either: a pass on an empty subject would look exactly like
@@ -148,7 +137,7 @@ Exit codes
         legacy profile, which asked nothing.
     * - ``1``
       - ``REFUSED``: the reader refused at least one die, or the assembly
-        holds a ``die_array``. Each refusal carries the reason the reader gave.
+        holds a |admission-refused-types|. Each refusal carries the reason the reader gave.
     * - ``2``
       - ``UNDECIDABLE``: strict admission was requested and the answer is not
         known. Also a command line that ``argparse`` refuses, an unreadable or
@@ -162,8 +151,8 @@ An undecidable outcome has one of two causes, and the report keeps them apart:
     or partly into the ADK's ``vendor`` directory; its ``die_contract`` comes
     from another installation; it ships no schema; ``jsonschema`` is missing;
     or its strict admission revision is not one this check accepts. The check
-    accepts revision 4 only, the revision that reads die contract 1.2 and its
-    ``supply_domains``.
+    accepts revision |admission-revision| only, the revision that reads die
+    contract |admission-contract-minor|.
 
 ``coverage_incomplete``
     The assembly holds a component this profile cannot classify, or no
@@ -184,7 +173,8 @@ This is the vocabulary :doc:`/adk/08_pads_vs_pillars` uses.
     ``tooling_unavailable`` cause appears in the report of an
     ``admit_assembly`` call made from Python.
 
-A contract above the minor version the reader accepts, 1.3 and up, is read
+A contract above the minor version the reader accepts,
+|admission-contract-next-minor| and up, is read
 element by element. An unknown key there admits the die, and the reader's
 warning is collected in the report's ``warnings``: that is the reader's answer
 for the newer minor, not a strict failure turned into a warning. An element the
