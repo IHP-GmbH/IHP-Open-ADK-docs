@@ -314,6 +314,9 @@ IXN sidecar and a ``.chiplet``, ready for the ADK DRC and the pad to pillar
 check. :doc:`/adk/11_resolved_v2_entry` describes that entry and the subset of
 v2 it accepts. On the ``.chiplet`` side, whether each placed die is the one its
 die contract describes is a separate gate, :doc:`/adk/10_assembly_admission`.
+Run it on the accepted ``.chiplet`` that carries the ``die_contract``
+references, not on the ``.chiplet`` the entry writes: the entry writes none, so
+strict admission refuses every die in it.
 
 What it does not check
 ----------------------

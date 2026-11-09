@@ -102,9 +102,11 @@ connection method, technology, thickness, declared dimensions, layout and top
 cell. Its schema file is listed with the other sidecar schemas in
 :doc:`/adk/09_registries`; the entry reads it with an exact version match.
 
-``document`` and ``dies_root`` are paths relative to the sidecar's directory.
-Every other path is a plain relative path inside its root, and a layout reached
-through a symlink is refused.
+``document``, ``dies_root``, ``expect_chiplet`` and the ``derived_from`` paths
+resolve against the sidecar's directory and may leave it; the derive tool
+writes ``../`` when the ``.chiplet`` sits elsewhere. Every other path is a plain
+relative path inside its root, and a layout reached through a symlink is
+refused.
 
 ``binds`` is an exact inventory by SHA-256: the resolved document, the layout
 of every component it names, the ADK layout of every die, the methods manifest
@@ -114,13 +116,17 @@ layout, which KLayout reads from a path, is hashed before and after it is read.
 After the outputs exist, every bound input is hashed again, and an input that
 changed during the run is a refusal that discards the outputs.
 
-The derive tool copies the dies' dimensions from the ``.chiplet`` verbatim,
-recomputes every die z from the methods manifest and refuses a ``.chiplet``
-that disagrees, and checks the pillar manifest's ``methods`` against the same
-manifest. It records the ``.chiplet`` as ``expect_chiplet``, so the entry
-round-trips against it, and the identities of both inputs as ``derived_from``.
-It validates its candidate with the entry's own loader before publishing, and
-never replaces an existing file.
+The derive tool needs a ``.chiplet`` with exactly one ``interposer`` component,
+every die placed with ``anchor: gds_origin`` and every die layout under
+``--dies-root``, and every technology's ``dbu`` equal to the resolved
+document's ``grid_um``; anything else is a refusal. It copies the dies'
+dimensions from the ``.chiplet`` verbatim, recomputes every die z from the
+methods manifest and refuses a ``.chiplet`` that disagrees, and checks the
+pillar manifest's ``methods`` against the same manifest. It records the
+``.chiplet`` as ``expect_chiplet``, so the entry round-trips against it, and
+the identities of both inputs as ``derived_from``. It validates its candidate
+with the entry's own loader before publishing, and never replaces an existing
+file.
 
 ``interposer.attachment_layers`` names one layer per role:
 |entry-attachment-roles|. ``opening`` and ``dfpad`` must equal the pillar branch
@@ -183,8 +189,11 @@ body, and the body strictly inside the dfpad. Per the die's connection method,
 the bounding-box sizes must match the methods manifest exactly in database
 units: the opening equals ``passiv_opening_um``, the dfpad equals
 ``passiv_opening_um`` plus twice ``tm2_enclosure_um``, and the body equals
-``body_diameter_um``. The whole dfpad must be covered by one merged contact
-conductor polygon.
+``body_diameter_um``. The mark's bounding box equals the dfpad's. The whole
+dfpad must be covered by one merged contact conductor polygon. The carrier
+must carry no attachment on the deck's ``sbump`` branch: its opening and pad
+layers may not overlap anywhere, because the profile binds the pillar branch
+only.
 
 These are predicates of the profile, not process rules. A failure means the
 artwork differs from what the profile binds. They do not enforce a minimum
