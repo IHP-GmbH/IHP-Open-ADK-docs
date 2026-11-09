@@ -82,9 +82,13 @@ result. It installs the requirements with ``python3 -m pip`` and calls
 Generated content
 =================
 
-Nothing normative on this site is typed by hand. ``docs/scripts/`` reads the
-pinned submodules and writes the rule tables, adapter tables, version matrices
-and command line transcripts. The generators fail the build when the source
+No table, version matrix, recipe or command line transcript on this site is
+typed by hand. ``docs/scripts/`` reads the pinned submodules (and, for the
+staged engines, ``staging.pin`` in the pinned ADK-Tools) and writes the rule
+tables, adapter tables, version matrices, build recipes and command line
+transcripts. Running prose still types some values, such as the schema versions
+a page discusses; where prose and a generated table differ, the table describes
+the pinned code. The generators fail the build when the source
 drifts from what is documented, for example when a rule is added to a deck
 without a matching description. Continuous integration re-runs them and fails if
 the working tree is then dirty, which is what proves the published tables match

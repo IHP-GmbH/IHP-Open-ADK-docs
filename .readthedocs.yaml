@@ -26,7 +26,7 @@ build:
   jobs:
     pre_build:
       # Regenerate every table and CLI transcript from the pinned sources under
-      # src/. Nothing normative in this site is hand-typed.
+      # src/. No table, matrix, recipe or transcript is hand-typed.
       - python3 docs/scripts/gen_rule_tables.py
       - python3 docs/scripts/gen_adapter_table.py
       - python3 docs/scripts/gen_version_matrix.py

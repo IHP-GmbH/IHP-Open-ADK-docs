@@ -4,8 +4,11 @@ Contributing to this documentation
 .. include:: /common.inc
 
 This site lives in its own repository and documents code it does not own. The
-sources are pinned as git submodules under ``src/``, and the parts of the site
-that state facts about that code are generated from it rather than typed.
+sources are pinned as git submodules under ``src/``, and the tables, matrices,
+recipes and transcripts that state facts about that code are generated from it
+rather than typed. Running prose still types some values, such as the schema
+versions a page discusses; where prose and a generated table differ, the table
+describes the pinned code.
 
 Getting a local build
 ---------------------

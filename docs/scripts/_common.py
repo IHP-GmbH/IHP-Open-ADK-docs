@@ -3,9 +3,9 @@
 """Shared helpers for the documentation generators.
 
 Every generator in this directory reads the pinned submodules under ``src/``
-and writes into ``docs/``. Nothing normative on this site is typed by hand, so
-a change in the source repositories shows up as a diff in the generated files,
-which is what the CI drift gate checks.
+and writes into ``docs/``. The site's tables, matrices, recipes and transcripts
+are not typed by hand, so a change in the source repositories shows up as a
+diff in the generated files, which is what the CI drift gate checks.
 """
 
 import json
