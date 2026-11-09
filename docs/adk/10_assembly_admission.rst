@@ -14,8 +14,11 @@ die component of a finalized ``.chiplet``, whether its contract admits it.
 The check does not judge the contract itself. It hands each die component to
 ``die_contract.admit_component`` in the reference reader ``chiplet_format_io``
 from |spec-repo|, and turns the answers into one outcome and one exit code. The
-contract, its schema and every rule in it belong to the specification; the ADK
-restates none of them.
+contract, its schema and its rules belong to the specification, and the
+specification's reader is the authority on them;
+``docs/STRICT_ADMISSION_API.md`` in |spec-repo| describes that reader boundary.
+The next section summarises what the reader checks, so that you can read a
+refusal.
 
 Profiles
 --------
@@ -37,16 +40,18 @@ Profiles
 .. important::
 
     A legacy run exits ``0`` without checking anything. It says the assembly
-    loads, nothing more. A CI gate that means to admit dies must pass
+    loads, nothing more, and its summary line reads
+    ``outcome=NOT_REQUESTED``. A CI gate that means to admit dies must pass
     ``--profile strict``.
 
 What strict admission checks
 ----------------------------
 
-A die component must carry a ``die_contract`` reference, an object with a
-``path`` to the contract and the contract's ``sha256``. The key is additive: a
-reader that never asks for admission ignores it. For each die component the
-reader then refuses the die when any of these fails:
+At reader revision |admission-revision|, a die component must carry a
+``die_contract`` reference, an object with a ``path`` to the contract and the
+contract's ``sha256``. The key is additive: a reader that never asks for
+admission ignores it. For each die component the reader then refuses the die
+when any of these fails:
 
 - The component declares a ``die_contract`` reference, the referenced file
   exists, and its digest equals the recorded ``sha256``.
@@ -72,6 +77,11 @@ be relative and resolve inside that directory; an absolute path or one that
 climbs out of it is refused, and ``${VAR}`` references are not expanded. Paths
 written inside the contract resolve against the contract's own directory, so a
 contract bundle can move as a unit.
+
+The component's ``layout`` must exist at that path. A missing layout, or one
+written with ``${VAR}``, is not a refusal: the run stops with
+``assembly_admission: error:`` and exit ``2``, before the summary line and
+without a JSON report.
 
 Component types
 ~~~~~~~~~~~~~~~
@@ -108,13 +118,15 @@ Running the check
 Strict admission needs the installed ``chiplet-format-io`` distribution with
 its ``strict`` extra, which adds ``jsonschema``. Outside the image, install it
 from ``reference/python`` in |spec-repo|. The tools image installs it in
-``/opt/adk-tools/venv``, and the image build stops if strict admission cannot
-load there.
+``/opt/adk-tools/venv``, and the image's ``verify`` stage, which ``build.sh``
+runs unless ``--skip-verify`` is given, stops if strict admission cannot load
+there.
 
-Each refused die is printed to stdout as ``REFUSED [<id>]: <reason>``. Reader
-warnings go to stderr prefixed with ``WARNING:``, and the reasons for an
-undecidable outcome go to stderr prefixed with ``UNDECIDABLE:``. The run ends
-with a one-line summary:
+Reader warnings go to stderr prefixed with ``WARNING:``, and each refused
+component is printed to stdout as ``REFUSED [<id>]: <reason>``. Then comes a
+one-line summary. The reasons for an undecidable outcome follow it on stderr,
+prefixed with ``UNDECIDABLE:``, and with ``--json`` the last line is
+``Report: <path>``. The summary reads:
 
 .. code-block:: text
 
@@ -137,7 +149,8 @@ Exit codes
         legacy profile, which asked nothing.
     * - ``1``
       - ``REFUSED``: the reader refused at least one die, or the assembly
-        holds a |admission-refused-types|. Each refusal carries the reason the reader gave.
+        holds a |admission-refused-types|. Each refusal carries the reason the
+        reader gave.
     * - ``2``
       - ``UNDECIDABLE``: strict admission was requested and the answer is not
         known. Also a command line that ``argparse`` refuses, an unreadable or
@@ -203,7 +216,10 @@ The JSON report
         "types_seen": {"die": 2, "interposer": 1}
       },
       "components": [
-        {"id": "U1", "type": "die", "outcome": "admitted"}
+        {"id": "interposer", "type": "interposer", "outcome": "excluded",
+         "reason": "type 'interposer' is recognised and outside what a die output contract describes"},
+        {"id": "U1", "type": "die", "outcome": "admitted"},
+        {"id": "U2", "type": "die", "outcome": "admitted"}
       ],
       "reasons": [],
       "warnings": [],
@@ -226,13 +242,22 @@ Importable entry points
 
     AdmissionUnavailable                        # the third outcome, as an error
     load_admission() -> module                  # the installed die_contract
-    admit_assembly(assembly, base_dir, *, profile="legacy") -> report dict
+    admit_assembly(assembly, base_dir, *, profile="legacy",
+                   admitted_types=ADMITTED_TYPES,
+                   refused_types=REFUSED_TYPES,
+                   permitted_types=PERMITTED_TYPES,
+                   on_warn=None) -> report dict
     exit_code(report) -> int
     main(argv=None) -> int
 
 ``admit_assembly`` takes an already loaded ``.chiplet`` dictionary and the
 directory its references resolve against. It raises ``ValueError`` for an
 unknown profile; a tooling gap is returned as an ``UNDECIDABLE`` report, never
-raised. ``AdmissionUnavailable`` is deliberately not a reader error type, so
-"the check said no" and "nobody could ask" cannot be confused. As everywhere in
-the ADK, new options are appended as trailing keyword arguments with defaults.
+raised. A missing component layout raises the ``OSError`` instead of returning
+a report. ``on_warn``, when given, receives each reader warning in place of the
+report's ``warnings`` list. The three type arguments replace the buckets of the
+component type table, so a caller that widens ``permitted_types`` excludes what
+the command line would leave unclassified. ``AdmissionUnavailable`` is
+deliberately not a reader error type, so "the check said no" and "nobody could
+ask" cannot be confused. As everywhere in the ADK, new options are appended as
+trailing keyword arguments with defaults.
