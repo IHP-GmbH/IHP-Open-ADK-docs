@@ -12,8 +12,9 @@ returns an exit code you can branch on in a script.
 This page is about running it. For what the rules actually check, see
 :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
-You need an assembly GDS and its ``<gds-stem>.boundaries.json`` sidecar.
-:doc:`/flow/05_hyp_to_gds` produces both.
+You need an assembly GDS and its ``<gds-stem>.boundaries.json`` sidecar, which
+the producer writes together: ``hyp_to_gds`` (:doc:`/flow/05_hyp_to_gds`) or
+``blackbox_chiplet``. `Prerequisites`_ lists the rest.
 
 Prerequisites
 -------------
