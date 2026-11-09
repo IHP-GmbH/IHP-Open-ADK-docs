@@ -82,7 +82,7 @@ Shipped interposer adapters
 
 .. csv-table:: Interposer adapters shipped with the ADK
     :file: tables/interposer_adapters.csv
-    :header: "Adapter", "Interposer", "Declares"
+    :header: "Adapter", "Interposer", "Contract inputs declared"
     :widths: 18 42 40
     :class: adk-rule-table
     :align: left

@@ -29,6 +29,10 @@ SPDX = re.compile(r"^#\s*SPDX-License-Identifier:")
 COMMENT = re.compile(r"^#\s?(.*)$")
 ASSIGN = re.compile(r"^\s*interconnect_rules\[['\"](?P<key>\w+)['\"]\]\s*=\s*(?P<val>[-\d.]+)")
 DECLARES = re.compile(r"^\s*(?P<name>\w+)\s*=\s*(?!=)")
+# The deck names the inputs an interposer adapter must declare in one list,
+# and tests every optional one with defined?(name) before it reads it.
+REQUIRED_INPUTS = re.compile(r"^required_inputs\s*=\s*\[([^\]]*)\]", re.MULTILINE)
+OPTIONAL_INPUT = re.compile(r"defined\?\((\w+)\)")
 
 
 def summary_of(path):
@@ -64,20 +68,41 @@ def declared_names(path):
     return names
 
 
+def contract_inputs():
+    """The deck's required interposer inputs, and every name it tests with
+    defined? before reading it, which an adapter may declare."""
+    deck_dir = os.path.join(ADK, "klayout", "drc")
+    match = REQUIRED_INPUTS.search(read_text(os.path.join(deck_dir, "adk_assembly.drc")))
+    required = re.findall(r"['\"](\w+)['\"]", match.group(1)) if match else []
+    if not required:
+        fail("no required_inputs list found in adk_assembly.drc")
+    optional = set()
+    for path in glob.glob(os.path.join(deck_dir, "**", "*.drc"), recursive=True):
+        optional.update(OPTIONAL_INPUT.findall(read_text(path)))
+    return required, optional - set(required)
+
+
 def main():
     require_submodule(ADK, "src/IHP-Open-ADK")
     base = os.path.join(ADK, "pdk_adapters")
+    required, optional = contract_inputs()
 
     interposer_rows = []
     for path in sorted(glob.glob(os.path.join(base, "interposer", "*.drc"))):
         name = os.path.splitext(os.path.basename(path))[0]
         names = declared_names(path)
-        if "chiplet_attachment_input" not in names:
+        missing = [input_name for input_name in required if input_name not in names]
+        if missing:
             fail(
                 "interposer adapter {} does not declare the required abstract "
-                "input chiplet_attachment_input".format(path)
+                "input(s) {}".format(path, ", ".join(missing))
             )
-        interposer_rows.append([name, summary_of(path), ", ".join(names)])
+        # Only the contract inputs: the adapter's own intermediate layers are
+        # not part of the contract.
+        declared = required + [
+            "{} (optional)".format(input_name) for input_name in names if input_name in optional
+        ]
+        interposer_rows.append([name, summary_of(path), ", ".join(declared)])
     if not interposer_rows:
         fail("no interposer adapters found under {}".format(base))
     write_csv(
