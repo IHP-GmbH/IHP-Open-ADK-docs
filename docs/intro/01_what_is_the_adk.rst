@@ -20,28 +20,21 @@ open answer.
     comes from its own PDK, and the interposer is the attachment surface they
     share.
 
-The role model
---------------
+One layer above every PDK
+-------------------------
 
-The ADK sits one abstraction layer above all PDKs.
-
-.. figure:: /_figures/rolemodel.*
-    :align: center
-    :alt: The ADK as a single layer above chiplet PDK A, the interposer PDK and chiplet PDK B, reaching each one through an adapter.
-    :width: 90%
-
-    The role model. The ADK sits one abstraction layer above every PDK
-    and reaches each one only through an adapter.
+The ADK sits one abstraction layer above all PDKs and reaches each one only
+through an adapter.
 
 Each PDK owns its own fabrication rules for metal, vias and pads. The ADK
 governs only the interactions between chiplets and the interposer, never the
-internal manufacturing of any single PDK. The consequence that matters most is
-the middle box: from the ADK's point of view **the interposer is just another
-PDK**, so nothing in the assembly rule set is specific to IHP's IntM4TM2
+internal manufacturing of any single PDK. The consequence that matters most
+concerns the interposer: from the ADK's point of view **the interposer is just
+another PDK**, so nothing in the assembly rule set is specific to IHP's IntM4TM2
 interposer, or to any interposer.
 
-The abstraction boundary
-------------------------
+Why the rules never name a layer
+--------------------------------
 
 Rules reference **abstract input names only**. The mapping from an abstract name
 to a PDK-specific fabrication layer lives in a small adapter file, and nowhere
