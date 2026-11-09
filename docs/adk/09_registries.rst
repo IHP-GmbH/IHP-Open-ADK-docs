@@ -30,8 +30,8 @@ between separate tools rather than the ADK release, and their readers pin them
 ``version`` is not ``1.0.0``, or a pillar manifest whose ``version`` is neither
 ``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed, and the
 resolved-v2 attachment sidecar is pinned the same way.
-:doc:`/tools/07_adk_tools_image` carries the version matrix, which does not
-list the attachment sidecar yet.
+:doc:`/tools/07_adk_tools_image` carries the version matrix, with the version
+each reader pins.
 
 .. note::
    The registries are also baked into the ADK-Tools container image, which is

@@ -176,6 +176,18 @@ def main():
     for title, schema_id, path, name, source in SIDECAR_PINS:
         schema_rows.append([title, schema_id, constant(path, name), source])
 
+    # The ADK's resolved-v2 entry pins the attachment sidecar it reads beside
+    # an assembly-lvs resolved v2 document; its schema string is a constant too.
+    entry = os.path.join(ADK, "bridges", "assembly_lvs", "resolved_v2_entry.py")
+    schema_rows.append(
+        [
+            "Resolved-v2 attachment sidecar",
+            "``{}``".format(constant(entry, "SIDECAR_SCHEMA")),
+            constant(entry, "SIDECAR_VERSION"),
+            "IHP-Open-ADK ``bridges/assembly_lvs/resolved_v2_entry.py``",
+        ]
+    )
+
     # Shared registries carry their version inline.
     for basename in ("rule_params", "interconnect", "layers", "chiplet_pads"):
         registry_path = os.path.join(ADK, "config", "{}.json".format(basename))

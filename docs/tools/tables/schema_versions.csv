@@ -3,6 +3,7 @@
 "Chiplet boundary manifest","``adk-boundary-manifest``","1.0.0","IHP-Open-ADK ``klayout/drc/run_drc.py``"
 "Per-method interconnect sidecar","``adk-ixn-methods``","1.0.0","IHP-Open-ADK ``klayout/drc/run_drc.py``"
 "Pillar manifest","``adk-pillar-manifest``","1.0.0, 1.1.0","IHP-Open-ADK ``checks/pads_vs_pillars.py``"
+"Resolved-v2 attachment sidecar","``adk-resolved-attachment``","1.0.0","IHP-Open-ADK ``bridges/assembly_lvs/resolved_v2_entry.py``"
 "Registry","``config/rule_params.json``","0.3.0","IHP-Open-ADK"
 "Registry","``config/interconnect.json``","0.3.0","IHP-Open-ADK"
 "Registry","``config/layers.json``","0.3.0","IHP-Open-ADK"
