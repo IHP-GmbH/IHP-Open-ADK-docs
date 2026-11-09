@@ -164,11 +164,7 @@ From a die GDS
         --lyp-file pdk.lyp --pad-layer TopMetal2.drawing \
         --extract-pins die.pins.json
 
-In the tools image the gds2kicad scripts sit under ``$GDS_TO_KICAD_ROOT`` and
-the ADK ones under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_gds2kicad_scripts.inc
 
 Pads are extracted from the pad layer, names are paired to pad polygons by
 proximity to text labels, and ``classify_pin`` assigns an initial symbol side
@@ -250,6 +246,8 @@ Consumer 1: bump maps for the 3Dblox export
         --out-dir build/3dblox \
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
+
+.. include:: /_image_adk_scripts.inc
 
 Supplying a pin list for a die turns its export bump-aware. The die's
 ``ChipletDef`` gains a ``.bmap`` bump map plus a per-method bump macro LEF

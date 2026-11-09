@@ -68,10 +68,7 @@ Ask first:
 
     python3 gds_to_kicad.py die.gds --scan-layers
 
-In the tools image these scripts sit under ``$GDS_TO_KICAD_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_gds2kicad_scripts.inc
 
 That reports the candidate pad and text layers with their shape counts. To see
 how a layer-properties file names those layers:
