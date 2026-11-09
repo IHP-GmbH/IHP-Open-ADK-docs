@@ -120,6 +120,19 @@ band selects. ``Ctrl+B`` toggles the base plane and ``Ctrl+M`` the scene
 mini-map. ``File > Export PNG`` (``Ctrl+E``) renders the current view offscreen
 at a chosen resolution, which is how you get a figure out of it.
 
+The hierarchy and properties docks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The **Hierarchy** dock lists the assembly's components with their type and
+technology, plus the interconnect method rows: an assembly-level row for the
+bumping method and, under each die, the method that die actually uses. The
+**Properties** tab is docked beside *2D Layout*. It shows the selected
+component's identity, position, dimensions and technology, with unit
+conversion; selecting an interconnect row shows the method's stack instead.
+
+Selection is synchronised across the 3D view, the hierarchy panel, the properties
+panel and the net graph.
+
 Render modes
 ~~~~~~~~~~~~
 
@@ -129,13 +142,11 @@ full detail while its neighbours stay as cheap solids.
 Each mode has two names. The first column below is the name the C++ enumeration
 and the scripting surface use; the second is the abbreviation the hierarchy
 panel prints in its Mode column, which is the one you read off a screenshot. The
-right-click **Render Mode** menu spells the two detailed modes out again as
-``Detailed (with Si bulk)`` and ``Detailed (no Si bulk)``.
-
-That menu, on a component's hierarchy row, offers ``Wireframe``,
-``Transparent`` and the two detailed modes. The interposer starts in an opaque
-``Solid`` mode and dies start ``Transparent``. Hiding a component is the
-checkbox on its hierarchy row, not a menu entry.
+right-click **Render Mode** menu on a component's hierarchy row offers
+``Wireframe``, ``Transparent`` and the two detailed modes, which it spells out
+again as ``Detailed (with Si bulk)`` and ``Detailed (no Si bulk)``. The
+interposer starts in an opaque ``Solid`` mode and dies start ``Transparent``.
+Hiding a component is the checkbox on its hierarchy row, not a menu entry.
 
 .. list-table::
     :header-rows: 1
@@ -317,16 +328,6 @@ dock returns you to the 3D view alone.
     ``layer_properties`` entry, or the ``.lyp`` that entry points at did not
     resolve. The reference design declares two technologies, ``intm4tm2`` for
     the interposer and ``sg13g2`` for the dies, each with its own ``.lyp``.
-
-Selection is synchronised across the 3D view, the hierarchy panel, the properties
-panel and the net graph. The properties panel shows the selected component's
-identity, position, dimensions and technology, with unit conversion.
-
-The **Hierarchy** dock lists the assembly's components with their type and
-technology, plus the interconnect method rows: an assembly-level row for the
-bumping method and, under each die, the method that die actually uses. The
-**Properties** tab is docked beside *2D Layout*. Selecting an interconnect row
-shows the method's stack instead of a component's geometry.
 
 The net graph
 -------------
