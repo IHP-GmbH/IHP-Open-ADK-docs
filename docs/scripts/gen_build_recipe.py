@@ -23,7 +23,11 @@ Writes, under docs/install/:
 - ``_recipe/build.sh``: the block up to reading the image ID, without the run
   line, which each page states in its own context;
 - ``_recipe/update.sh``: the block of the README's "Updating an existing
-  clone" section, for the update recipe on the ADK-Tools page;
+  clone" section, for the update recipe on the ADK-Tools page, with the Build
+  block's ``nix build`` command spliced in before its ``./build.sh``. The
+  README asks for the Nix packages to be realised at every commit built, but
+  its update block leaves the step out, and a reader runs a block top to
+  bottom;
 - ``_release_tag.inc``: defines |release-tag|.
 """
 
@@ -80,13 +84,36 @@ def resolve(text, tag):
     return text
 
 
-def index_of(lines, prefix):
+def index_of(lines, prefix, block="build"):
     """The index of the one line that starts with prefix."""
     found = [n for n, line in enumerate(lines) if line.startswith(prefix)]
     if len(found) != 1:
-        fail("expected one line starting {!r} in the README build block, found {}".format(
-            prefix, len(found)))
+        fail("expected one line starting {!r} in the README {} block, found {}".format(
+            prefix, block, len(found)))
     return found[0]
+
+
+def command_at(lines, start):
+    """The command starting at lines[start], with its continuation lines."""
+    end = start
+    while lines[end].rstrip("\n").endswith("\\"):
+        end += 1
+        if end == len(lines):
+            fail("the README build block ends inside a continued command")
+    return lines[start: end + 1]
+
+
+def update_recipe(build_lines, update_block):
+    """The update block with the build block's nix build command before its
+    ./build.sh line."""
+    nix = command_at(build_lines, index_of(build_lines, "nix build "))
+    lines = update_block.splitlines(keepends=True)
+    if any(line.startswith("nix build") for line in lines):
+        fail("the README update block now realises the Nix packages itself; "
+             "stop splicing the build block's nix build into it")
+    build = index_of(lines, "./build.sh", "update")
+    note = "# realise the Nix packages at the new tag (step from the README Build section)\n"
+    return "".join(lines[:build] + [note] + nix + lines[build:])
 
 
 def main():
@@ -103,7 +130,7 @@ def main():
     write_text(os.path.join(INSTALL_DIR, "_recipe", "build.sh"), "".join(lines[: image + 1]))
     write_text(
         os.path.join(INSTALL_DIR, "_recipe", "update.sh"),
-        resolve(section_block(readme, "## Updating an existing clone"), tag),
+        update_recipe(lines, resolve(section_block(readme, "## Updating an existing clone"), tag)),
     )
     write_text(
         os.path.join(INSTALL_DIR, "_release_tag.inc"),

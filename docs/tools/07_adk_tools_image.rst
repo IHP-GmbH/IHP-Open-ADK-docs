@@ -376,15 +376,13 @@ To run a newer release, check out its tag and build it.
 
 A release clone sits on its tag, not on a branch, so fetch the tags and check
 out the new one rather than pulling. This is the recipe of the ADK-Tools
-README:
+README, with the ``nix build`` step of its build recipe added before
+``./build.sh``: ``build.sh`` copies OpenROAD, LibreLane and the other Nix
+packages from the host's store, and they have to be realised at the commit you
+build.
 
 .. literalinclude:: /install/_recipe/update.sh
     :language: bash
-
-``build.sh`` copies OpenROAD, LibreLane and the other Nix packages from the
-host's store, and the ADK-Tools README asks for them to be realised at the
-commit you build. Run the ``nix build`` line of the build recipe in
-:doc:`/install/01_container` at the new tag before ``./build.sh``.
 
 The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
 the adk-examples checkout has to be at the new tag; the two ``--check`` calls
