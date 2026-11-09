@@ -374,21 +374,17 @@ Updating a clone
 
 To run a newer release, check out its tag and build it.
 
-
 A release clone sits on its tag, not on a branch, so fetch the tags and check
-out the new one rather than pulling:
+out the new one rather than pulling. This is the recipe of the ADK-Tools
+README:
 
-.. code-block:: bash
+.. literalinclude:: /install/_recipe/update.sh
+    :language: bash
 
-    # the quickstart's exports, again in a fresh shell
-    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
-    cd "$ADK_TOOLS_ROOT"
-    git fetch --tags
-    git checkout vYYYY.MM    # a release clone sits on a tag, so there is nothing to pull
-    git submodule update --init --recursive
-    ./stage-sources.sh --check && ./stage-die-views.sh --check
-    ./build.sh    # cached stages rebuild only what changed
+``build.sh`` copies OpenROAD, LibreLane and the other Nix packages from the
+host's store, and the ADK-Tools README asks for them to be realised at the
+commit you build. Run the ``nix build`` line of the build recipe in
+:doc:`/install/01_container` at the new tag before ``./build.sh``.
 
 The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
 the adk-examples checkout has to be at the new tag; the two ``--check`` calls

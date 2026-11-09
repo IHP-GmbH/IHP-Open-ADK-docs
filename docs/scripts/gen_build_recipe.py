@@ -22,6 +22,8 @@ Writes, under docs/install/:
   page, which builds later;
 - ``_recipe/build.sh``: the block up to reading the image ID, without the run
   line, which each page states in its own context;
+- ``_recipe/update.sh``: the block of the README's "Updating an existing
+  clone" section, for the update recipe on the ADK-Tools page;
 - ``_release_tag.inc``: defines |release-tag|.
 """
 
@@ -55,15 +57,27 @@ def release_tag():
     return releases[0] if releases else PLACEHOLDER
 
 
-def build_block(readme):
-    """The text of the first bash block of the README's Build section."""
-    section = re.search(r"^### Build\n(.*?)(?=^#{2,3} |\Z)", readme, re.MULTILINE | re.DOTALL)
+def section_block(readme, heading):
+    """The text of the first bash block of the README section under heading,
+    a whole heading line such as "### Build"."""
+    section = re.search(
+        r"^{}\n(.*?)(?=^#{{2,3}} |\Z)".format(re.escape(heading)),
+        readme, re.MULTILINE | re.DOTALL)
     if not section:
-        fail("ADK-Tools README has no '### Build' section")
+        fail("ADK-Tools README has no {!r} section".format(heading))
     block = re.search(r"^```bash\n(.*?)^```", section.group(1), re.MULTILINE | re.DOTALL)
     if not block:
-        fail("the Build section of the ADK-Tools README has no bash block")
+        fail("the {!r} section of the ADK-Tools README has no bash block".format(heading))
     return block.group(1)
+
+
+def resolve(text, tag):
+    """The block with the release tag filled in and its pointers dropped."""
+    text = text.replace(" (see below)", "").replace(PLACEHOLDER, tag)
+    if "(see " in text:
+        fail("a README block points at another README section: {}".format(
+            re.search(r"\(see [^)]*\)?", text).group(0)))
+    return text
 
 
 def index_of(lines, prefix):
@@ -78,12 +92,8 @@ def index_of(lines, prefix):
 def main():
     require_submodule(TOOLS, "src/ADK-Tools")
     tag = release_tag()
-    text = build_block(read_text(os.path.join(TOOLS, "README.md")))
-    text = text.replace(" (see below)", "").replace(PLACEHOLDER, tag)
-    if "(see " in text:
-        fail("the README build block points at another README section: {}".format(
-            re.search(r"\(see [^)]*\)?", text).group(0)))
-    lines = text.splitlines(keepends=True)
+    readme = read_text(os.path.join(TOOLS, "README.md"))
+    lines = resolve(section_block(readme, "### Build"), tag).splitlines(keepends=True)
 
     checks = index_of(lines, "./stage-sources.sh --check")
     image = index_of(lines, "export ADK_TOOLS_IMAGE=")
@@ -91,6 +101,10 @@ def main():
         fail("the README build block reads the image ID before the staging checks")
     write_text(os.path.join(INSTALL_DIR, "_recipe", "clone.sh"), "".join(lines[: checks + 1]))
     write_text(os.path.join(INSTALL_DIR, "_recipe", "build.sh"), "".join(lines[: image + 1]))
+    write_text(
+        os.path.join(INSTALL_DIR, "_recipe", "update.sh"),
+        resolve(section_block(readme, "## Updating an existing clone"), tag),
+    )
     write_text(
         os.path.join(INSTALL_DIR, "_release_tag.inc"),
         GENERATED_BANNER.format(script="gen_build_recipe.py")
