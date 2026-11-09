@@ -54,60 +54,10 @@ jobs:
       - name: Check editorial constraints
         # These are factual and legal constraints, not style preferences. The
         # authoring contract that explains each one is the Editorial rules
-        # section of docs/contrib/02_documentation.rst.
-        run: |
-          status=0
-          # Every file the site serves or generates is scanned: the pages,
-          # figures and recipes, and the generated tables, includes and
-          # transcripts. -R follows the _repos symlinks into the repositories
-          # whose own pages the site builds.
-          FILES=(--include='*.rst' --include='*.md' --include='*.svg' --include='*.sh'
-                 --include='*.csv' --include='*.inc' --include='*.txt' --exclude-dir=_build)
-          # check PATTERN MESSAGE EXEMPT [GREP OPTIONS]: EXEMPT is one file
-          # allowed to match, or empty.
-          check() {
-            local pattern="$1" message="$2" exempt="$3"
-            shift 3
-            local hits
-            hits=$(grep -RniE "${FILES[@]}" "$@" -e "$pattern" docs/ \
-                   | { if [ -n "$exempt" ]; then grep -v "^${exempt}:"; else cat; fi; } || true)
-            if [ -n "$hits" ]; then
-              echo "::error::$message"
-              echo "$hits"
-              status=1
-            fi
-          }
-          check 'netgen|run_demo\.py' 'Do not name the tools or scripts of the unreleased connectivity work.' ''
-          check 'pactech|pac tech' 'Do not name a bumping vendor in the site prose.' ''
-          # The contributing page quotes this rule in order to state it.
-          check 'signoff.?grade|production.?grade' 'Do not claim signoff-grade or production-grade. This is a preview release.' \
-                'docs/contrib/02_documentation.rst'
-          # The repositories' own pages are built as they stand and are fixed
-          # upstream, so the dash rule covers this site's files only.
-          check '[—–]' 'Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.' '' \
-                --exclude-dir=_repos
-          # Emoji ranges, checked with a Python pass since grep classes vary.
-          python3 - <<'PY' || status=1
-          import os, re, sys
-          emoji = re.compile('[\U0001F000-\U0001FAFF☀-➿️]')
-          suffixes = ('.rst', '.md', '.svg', '.sh', '.csv', '.inc', '.txt')
-          bad = []
-          for root, dirs, files in os.walk('docs', followlinks=True):
-              dirs[:] = [d for d in dirs if d not in ('_build', '.git')]
-              for name in files:
-                  if not name.endswith(suffixes):
-                      continue
-                  path = os.path.join(root, name)
-                  with open(path, encoding='utf-8') as handle:
-                      for number, line in enumerate(handle, 1):
-                          if emoji.search(line):
-                              bad.append(f'{path}:{number}: {line.strip()}')
-          if bad:
-              print('::error::Emojis are not allowed in documentation sources.')
-              print('\n'.join(bad))
-              sys.exit(1)
-          PY
-          exit $status
+        # section of docs/contrib/02_documentation.rst. The script reads the
+        # files the site publishes, its own and the upstream ones, and says
+        # which rule covers which.
+        run: python3 docs/scripts/check_editorial.py
 
       - name: Upload built site
         if: always()

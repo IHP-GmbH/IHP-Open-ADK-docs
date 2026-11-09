@@ -81,6 +81,10 @@ quote. Never edit the generated files: they are overwritten on every build.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.
+    * - ``check_editorial.py``
+      - Nothing. Continuous integration runs it after the build. It fails when
+        a published file breaks one of the `Editorial rules`_ below that a
+        pattern can catch.
     * - ``_common.py``
       - Nothing. The helpers every generator shares, among them the check
         that each submodule is checked out clean at its pin.
@@ -187,7 +191,10 @@ back even if the prose is good.
   what it does not, as :doc:`/tools/09_assembly_lvs` does. Never present a
   match as sign-off, as per-die LVS or as an electrical check, and make no
   benchmark or primacy claim for it.
-- No em-dashes and no emojis anywhere.
+- No em-dashes and no emojis anywhere. This covers the upstream pages the site
+  builds as they stand: a dash in one is fixed upstream, and until the pin
+  moves past the fix the file is listed, with the date, as an exemption in
+  ``docs/scripts/check_editorial.py``.
 - British spelling throughout, except in verbatim quotations of file names,
   command output and tool user-interface strings.
 - Do not present the shipped rule values as foundry rules. Read
