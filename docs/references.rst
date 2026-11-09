@@ -38,6 +38,9 @@ Project resources
 Bibliography
 ------------
 
+Background literature on 2.5D and 3D integration, and the tools and standards
+this flow builds on or exchanges data with.
+
 .. bibliography:: refs.bib
     :style: plain
     :all:
