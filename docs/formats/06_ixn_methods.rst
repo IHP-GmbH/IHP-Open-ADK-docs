@@ -45,6 +45,35 @@ assembly-global with the adapter's numbers, exactly as it did before per-method
 scoping existed. The KiCad export pipeline passes the file automatically when it
 was able to derive one.
 
+Producers and consumers
+-----------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 34 54
+   :class: adk-wide-table
+
+   * - Role
+     - Component
+     - Notes
+   * - Producer
+     - ``derive_interconnect_methods`` in the plugin's
+       ``pipeline/orchestrator.py`` (|plugin-repo|)
+     - One entry per method it recognises, joined from the ``.chiplet``'s
+       per-die connections and the interconnect PDK manifest. See
+       `How the exporter derives the file`_.
+   * - Producer
+     - The ADK's resolved-v2 entry (:doc:`/adk/11_resolved_v2_entry`)
+     - Writes ``<id>_assembled.ixn_methods.json``, version 1.0.0.
+   * - Consumer
+     - ``klayout/drc/run_drc.py``
+     - Takes the file only through ``--interconnect-methods`` and pins
+       ``schema`` and ``version``. See `Version policy`_.
+   * - Consumer
+     - ``adk_assembly.drc`` and ``8_2_interconnect.drc``
+     - Check every method entry, then switch the interconnect axis to
+       per-method mode. See `What the deck does with it`_.
+
 Schema
 ------
 
@@ -131,36 +160,6 @@ time.
 
 .. literalinclude:: /../src/IHP-Open-ADK/config/schema/ixn_methods.schema.json
     :language: json
-
-Example
--------
-
-Taken from the two-die reference assembly, where ``U1`` is attached with a Cu
-pillar and ``U2`` with a finer-pitch microbump:
-
-.. code-block:: json
-
-    {
-      "schema": "adk-ixn-methods",
-      "version": "1.0.0",
-      "generator": "chiplet_kicad_plugin/orchestrator",
-      "assembly_gds": "two_die_interposer_complete.gds",
-      "source_chiplet": "two_die_interposer.chiplet",
-      "methods": {
-        "cupillar_opt1": {
-          "dies": ["U1"],
-          "IXN_spacing": 40.0,
-          "IXN_pitch": 75.0,
-          "IXN_pad_size": 35.0
-        },
-        "vendorx_microbump": {
-          "dies": ["U2"],
-          "IXN_spacing": 15.0,
-          "IXN_pitch": 50.0,
-          "IXN_pad_size": 35.0
-        }
-      }
-    }
 
 How the exporter derives the file
 ---------------------------------
@@ -278,6 +277,36 @@ it further.
    If the DRC report suddenly shows ``IXN.b`` instead of ``IXN.b.<method>``, the
    methods file was not passed or derived nothing. Check that the ``.chiplet``
    dies carry a ``connection:`` id the interconnect PDK manifest knows.
+
+Example
+-------
+
+Taken from the two-die reference assembly, where ``U1`` is attached with a Cu
+pillar and ``U2`` with a finer-pitch microbump:
+
+.. code-block:: json
+
+    {
+      "schema": "adk-ixn-methods",
+      "version": "1.0.0",
+      "generator": "chiplet_kicad_plugin/orchestrator",
+      "assembly_gds": "two_die_interposer_complete.gds",
+      "source_chiplet": "two_die_interposer.chiplet",
+      "methods": {
+        "cupillar_opt1": {
+          "dies": ["U1"],
+          "IXN_spacing": 40.0,
+          "IXN_pitch": 75.0,
+          "IXN_pad_size": 35.0
+        },
+        "vendorx_microbump": {
+          "dies": ["U2"],
+          "IXN_spacing": 15.0,
+          "IXN_pitch": 50.0,
+          "IXN_pad_size": 35.0
+        }
+      }
+    }
 
 See :doc:`/adk/04_ixn_rules` for the rules themselves and their defaults, and
 :doc:`/tools/06_interconnect_pdk` for the method registry this sidecar is
