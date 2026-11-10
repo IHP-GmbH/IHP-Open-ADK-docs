@@ -83,7 +83,8 @@ into the image's own ``/nix/store``; the image needs no Nix to run them.
 Last, it pins the die views: ``die-views.sha256`` lists every file of the die
 records the image carries under ``/opt/adk-tools/die-views``, and
 ``staging.pin`` holds the sha256 of that listing. The records come from the
-``die-views/`` folder of an adk-examples checkout at the same release.
+``die-views/`` folder of an adk-examples checkout, and
+``stage-die-views.sh --check`` says whether they match the listing.
 
 ``ci/pin-set.json`` records every pinned commit in one file. ``build.sh``
 writes its sha256 on the image as the ``org.ihp.adk-tools.pin-set`` label,
@@ -386,8 +387,9 @@ build.
     :language: bash
 
 The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
-the adk-examples checkout has to be at the new tag; the two ``--check`` calls
-say which one does not.
+the adk-examples checkout has to hold die records that match the new
+``die-views.sha256`` (update it until they do); the two ``--check`` calls say
+which one does not.
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
 
@@ -476,10 +478,9 @@ branch, where submodule bumps and new tools land first and are verified.
 
 A release is this repository at its tag. No image is published: whoever runs
 a release builds the image from the tag, as :doc:`/install/01_container`
-describes, and gets an image ID of their own. The adk-examples checkout of the
-same release names, in its ``release-lock.json``, the reference image its
-examples were checked on and the pin set it was built from, and ``run.sh``
-runs any image of that pin set under the lock (:doc:`/install/00_release`).
+describes, and gets an image ID of their own. An adk-examples checkout names,
+in its ``release-lock.json``, the reference image its examples were checked on
+and the pin set it was built from, and ``run.sh`` runs any image of that pin set under the lock (:doc:`/install/00_release`).
 
 Licensing
 ---------

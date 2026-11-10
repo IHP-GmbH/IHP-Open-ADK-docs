@@ -17,8 +17,7 @@ builds the image and takes about an hour.
 You need Linux with Docker (a running daemon), Nix and git, network access to
 github.com, gitlab.com and the Ubuntu snapshot archive during the build, and an
 X server only for the graphical tools. The build also needs the sibling
-sources ADK-Tools stages and the die records in an adk-examples checkout at the
-same release tag. :doc:`/install/01_container` states the
+sources ADK-Tools stages and the die records in an adk-examples checkout. :doc:`/install/01_container` states the
 prerequisites in full.
 
 1. Build the image

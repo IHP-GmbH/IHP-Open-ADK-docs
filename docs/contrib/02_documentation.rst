@@ -50,7 +50,7 @@ quote. Never edit the generated files: they are overwritten on every build.
         substitutions in ``tools/_staged_engines.inc``; ``_counts.inc``, the
         interposer layer and rule deck counts and the ADK test count; and
         ``formats/_vendored_state.inc``, the state of the ADK's vendored
-        ``.chiplet`` reader.
+        ``.chiplet`` reader and the release of the one gds2kicad vendors.
     * - ``gen_cli_usage.py``
       - The ``--help`` transcript of each ADK command line tool, under
         ``adk/_usage/``.
@@ -66,7 +66,9 @@ quote. Never edit the generated files: they are overwritten on every build.
         positions Chiplet Studio's round-trip test asserts and the z
         tolerance of ``chiplet2dbx``. Also the specification excerpts under
         ``formats/_excerpts/`` and the usage-class table. It fails when a
-        file's plane or a die z disagrees with the PDK key.
+        file's plane disagrees with the PDK key, when a die z is not written
+        as the plane plus the die's stack, or when an interposer does not sit
+        at z 0, which the pages' sums assume.
     * - ``gen_admission_values.py``
       - ``_admission_values.inc``: the strict admission revision and contract
         minor, the component type table, and the profile, schema versions and
@@ -81,6 +83,12 @@ quote. Never edit the generated files: they are overwritten on every build.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.
+    * - ``check_bump_mirror.py``
+      - Nothing. It reads ``bump_mirror.py`` and its tests out of the pinned
+        OpenIntM4TM2 commit and fails, naming the statement, when the exit
+        codes or the ``--auto-resolve-best-effort`` behaviour that
+        :doc:`/tools/05_openintm4tm2` states in prose no longer hold, or when
+        a test that pins those exit codes is gone.
     * - ``check_editorial.py``
       - Nothing. Continuous integration runs it after the build. It fails when
         a published file breaks one of the `Editorial rules`_ below that a
@@ -123,6 +131,30 @@ file is a reviewed input, not a generated proof: only a local run with the
 sibling checkouts verifies it, and the script prints, for each engine, whether
 its version came from ``pyproject.toml`` or from the record. Never edit it by
 hand.
+
+A tree ``staging.pin`` stages that is also a submodule here is pinned at the
+staged commit. The one exception is a staged commit the public remote does not
+carry: the submodule may then pin one of the tree's ``STAGE_*_EXTRA_REFS``
+instead, the public commit staging.pin names beside it, as long as both
+commits have the same tree. The script checks the trees with a checkout that
+holds the staged commit and records the pair and its tree in the same file,
+which CI and Read the Docs then reuse. A ``STAGE_`` line of a kind the script
+does not know stops it.
+
+ADK-Tools pins this repository, so at a release ``src/ADK-Tools`` stays one
+step behind the other pins until the release writer moves it and regenerates.
+A submodule pinned ahead of the commit ADK-Tools stages is accepted only as a
+recorded lag: run ``STAGE_ACCEPT_LAG=<path> make -C docs preprocess`` with the
+submodule's history present, and the script checks that the staged commit is
+an ancestor of the pin and writes the pair to the same file with
+``"lag": true``. When the pin is a squash of the line that holds the staged
+commit, the staged commit is not its ancestor. Name the path as
+``STAGE_ACCEPT_LAG=<path>=<sha>`` instead, where ``<sha>`` is a commit of that
+line, present in ``src/<path>``, whose tree equals the pin's. The script checks
+the tree and the ancestry against it. That check is the author's, run once: the
+record keeps only the pair, so CI needs neither that commit nor its history.
+To check a recorded pair again, delete its entry and rerun with the variable.
+The entry drops out when the pins meet again.
 
 The ``--cached`` diff lists the commits the move pulls in. Review the diff in the generated tables.
 It tells you exactly what changed in the code that this site makes claims

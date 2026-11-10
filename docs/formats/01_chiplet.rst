@@ -26,7 +26,10 @@ contract described in :doc:`/formats/03_coordinate_frames`.
     :doc:`/formats/02_chiplet_components` is the whole of the assembly
     document. The 2026 revisions under ``"1.0"`` wrote down parts of the
     existing schema that had never been documented and added optional fields
-    with backward-compatible fallbacks (``attachment_surface_z`` among them).
+    (``attachment_surface_z`` among them). A later revision withdrew the stand-ins
+    for a missing ``attachment_surface_z``: an interposer that seats dies without
+    it has no mount plane (validation rule 17), and ``format_version`` stays
+    ``"1.0"``.
     Minor 1.1 tagged ``solder_bump`` with its minor and closed
     ``assembly.units`` to ``um``; no later minor changes the assembly
     document. Minors 1.1 to 1.5 otherwise add content to source documents
@@ -541,6 +544,10 @@ starts with ``CARRIER_UNSUPPORTED_TECHNOLOGY``. IntM4TM2 is the only carrier
 this release models, and the KiCad export plugin refuses a system on another
 carrier with the same id.
 
+The assembly the elaborator writes declares the carrier's mount plane as the
+interposer's ``attachment_surface_z``, with the carrier centred at z 0. No body
+is known at that point, so its ``dimensions.thickness`` is the plane as well.
+
 
 .. _chiplet_validation_rules:
 
@@ -606,9 +613,8 @@ Reader behaviour that warns or falls back rather than failing:
 10. New files should declare ``anchor`` on every component. A reader defaults
     an absent ``anchor`` to ``bbox_center`` and warns.
 11. A ``connection``, when present, should name a known interconnect method.
-    An absent or unresolved one falls back to the interposer's
-    ``attachment_surface_z``, or to ``dimensions.thickness`` when that field
-    is absent. The contract's full chain is
+    An absent or unresolved one mounts on the interposer's
+    ``attachment_surface_z`` with connection height 0. See
     :ref:`chiplet_mounting_plane`.
 12. A reader must warn, or reject, when any ``position.x`` or ``position.y``
     exceeds 1e5 um in magnitude. This is the leak guard for un-converted
@@ -620,6 +626,10 @@ Consumer-level expectations, not enforced by the reference library:
 14. Component ``type`` is one of the four canonical values.
 15. A ``technology`` reference names a defined technology id.
 16. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+17. An interposer that seats dies and declares no ``attachment_surface_z`` has
+    no mount plane. A tool that places dies in z for another tool refuses the
+    file; a viewer may show the dies on ``dimensions.thickness``, with a
+    warning naming the file. See :ref:`chiplet_mounting_plane`.
 
 .. validation-rules-end
 
@@ -684,7 +694,14 @@ whitespace. ``chiplet_format_io.sheet_names`` (reader release 1.21.0) holds
 the rule for net, pin and pad names on a sheet: a plain first character, then
 plain characters and ``[N]`` digit subscripts. A bus-style name such as
 ``IO[0].pad`` therefore reads back from a sheet as itself, while a range such
-as ``B[0..3]`` is refused.
+as ``B[0..3]`` is refused. ``chiplet_format_io.technology_package`` (reader
+release 1.22.0) validates a technology package, the tree whose manifest is
+``libs.tech/adk/technology.json`` (schema
+``schemas/technology_package.schema.json``), per capability set A (geometry
+and assembly), B (automated design) and C (analysis).
+``python -m chiplet_format_io.technology_package ROOT`` exits 0 when the
+required sets pass, 1 when one does not, 2 when the package is refused and 3
+when the validator itself fails. It needs the ``strict`` extra.
 
 The output is semantically equivalent to, but not byte-identical to, what the
 GPL host tools write. The KiCad fork exporter and the KiCad plugin writer are

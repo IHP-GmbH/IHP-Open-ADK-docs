@@ -28,10 +28,12 @@ its own. Both must declare the PDK's plane, and every die z must be written as
 the plane plus the die's stack height the way contract section 1.5 states: the
 shortest text of the exact decimal sum, with ``N.0`` accepted for a whole N, as
 ADK-Tools' ``ci/check_attach_plane.py`` accepts it. The comparison is on the
-text as written, not on the value. That upstream check already holds the
-reference design to this, so the check here matters for the specification's
-example, which no upstream check reads. Decimal text is kept exact: YAML floats
-load as Decimal and the PDK key is parsed with ``parse_float=Decimal``.
+text as written, not on the value. The contract's z-mounting rule (section 3.1)
+also adds the interposer's ``position.z``; the pages leave that term out
+because both files place their interposer at z 0, so a file that does not stops
+the build rather than leave the pages' sums wrong. Decimal
+text is kept exact: YAML floats load as Decimal and the PDK key is parsed with
+``parse_float=Decimal``.
 
 The die ids U1 and U2 are named here because the pages name them: flow/08 and
 formats/03 describe two dies with those ids, so a file that renamed them would
@@ -201,6 +203,19 @@ class Chiplet:
                 )
             )
 
+    def check_interposer_at_origin(self):
+        """Fail unless the interposer's position.z is 0.
+
+        The contract adds it to every die z; the pages' sums omit it.
+        """
+        z = self.value("interposer", "position", "z")
+        if z != 0:
+            fail(
+                "{}: interposer position.z is {}; formats/03 and flow/08 state die z "
+                "as the plane plus the stack, which holds only for an interposer "
+                "at z 0".format(self.label, plain(z))
+            )
+
     def dbu(self):
         """The one database unit every technology of the file declares."""
         units = {
@@ -294,6 +309,7 @@ def die_origin_offset(gds, cell_name, width, height, dbu):
 def reference_design_values(plane, methods):
     ref = Chiplet(os.path.join(TOOLS, REF_DESIGN), "ADK-Tools/" + REF_DESIGN)
     ref.check_plane(plane)
+    ref.check_interposer_at_origin()
     dbu = ref.dbu()
     values = [
         ("refdesign-interposer-" + key,
@@ -336,6 +352,7 @@ def reference_design_values(plane, methods):
 def spec_example_values(plane, methods):
     spec = Chiplet(os.path.join(SPEC, SPEC_EXAMPLE), "chiplet-spec/" + SPEC_EXAMPLE)
     spec.check_plane(plane)
+    spec.check_interposer_at_origin()
     values = []
     for die in DIES:
         values += die_values("spec-", spec, die, plane, methods)

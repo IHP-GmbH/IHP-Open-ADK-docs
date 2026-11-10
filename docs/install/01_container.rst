@@ -41,10 +41,11 @@ Prerequisites
   each one is there. Running an image built this way needs no Nix.
 - **git** and **python3**, for the clone and the build scripts.
 - **The staged sources.** A checkout of each sibling repository that
-  ``staging.pin`` lists, at the commit it pins, beside the clone or in the
+  ``staging.pin`` lists, holding the commit it pins and any extra commit it
+  names, beside the clone or in the
   directory ``STAGE_SIBLINGS`` names, and the die records the image carries:
-  the ``die-views/`` folder of an adk-examples checkout at the same release
-  tag.
+  the ``die-views/`` folder of an adk-examples checkout, whose records have to
+  match ADK-Tools' ``die-views.sha256``.
 - **Network access** to github.com, gitlab.com and the Ubuntu snapshot archive
   during the build. The build fetches the KiCad libraries, the PDK slices and
   the pinned Ubuntu packages directly.

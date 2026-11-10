@@ -182,7 +182,8 @@ z consistency, exactly
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The ``.chiplet`` z-mounting rule is
-``z_die = mounting_surface + connection.total_height()``. OpenROAD's linter
+``z_die = interposer.position.z + mounting_surface + connection.total_height()``.
+OpenROAD's linter
 asserts that a connection's declared thickness equals the actual gap between
 the connected surfaces, exactly. The equality is guaranteed only when the die's
 z was auto-calculated; a ``.chiplet`` may carry an explicit ``position.z``,
@@ -214,10 +215,22 @@ Mounting on ``attachment_surface_z``
 
 The mount surface is the interposer's component-level
 ``attachment_surface_z``: the BEOL-top die-attachment plane, decoupled from the
-physical interposer body. Legacy ``.chiplet`` files that predate the field
-encoded that surface in ``dimensions.thickness``, and the exporter falls back
-to it when ``attachment_surface_z`` is absent. A non-positive
-``attachment_surface_z`` is an error.
+physical interposer body. Nothing stands in for it. An interposer that seats
+dies and declares no ``attachment_surface_z`` is refused, because
+``dimensions.thickness`` is the body, not the plane:
+
+.. code-block:: text
+
+    chiplet2dbx: error: interposer 'interposer' seats dies but declares no
+    attachment_surface_z; declare the plane it mounts them on.
+    dimensions.thickness is the body, not the plane, and is not read in its
+    place
+
+The exporter checks the plane before it judges any die, so this is the error
+you get even when a die would also fail, for example on its anchor. A
+non-positive ``attachment_surface_z`` is an error. An interposer that seats no
+die needs no plane: its substrate def then takes ``dimensions.thickness``,
+unless the file declares a plane anyway.
 
 The die mount z is then the interposer's ``position.z`` plus that reference.
 The same reference is used as the substrate def's thickness, because the
@@ -297,8 +310,9 @@ Other preconditions
   strictly positive. For dies the physical thickness comes from the board's
   ``DIE_THICKNESS_UM`` field, and a zero or missing value says so in the error
   message rather than exporting a zero-height slab. The interposer needs
-  ``width`` and ``height`` on the same terms; it needs ``thickness`` only on
-  the legacy path, where it stands in for ``attachment_surface_z``.
+  ``width`` and ``height`` on the same terms. It needs ``attachment_surface_z``
+  whenever it seats a die, and ``thickness`` only when it seats none and
+  declares no plane.
 - Every component needs a ``technology``: the generated technology LEF is named
   after it.
 - All technologies must declare the same ``dbu``, and it must be an integer

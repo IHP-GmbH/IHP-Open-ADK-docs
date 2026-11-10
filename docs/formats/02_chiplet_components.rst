@@ -60,7 +60,8 @@ assembly.
       - no
       - ``{x: 0, y: 0, z: 0}``
       - 3D position of the component's anchor reference point in x and y, and
-        its seating plane in z, in the canonical frame.
+        in z a die's seating plane or an interposer's local-frame origin, in
+        the canonical frame.
     * - ``rotation``
       - no
       - ``{z: 0}``
@@ -106,7 +107,9 @@ Geometry: position, dimensions and anchor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``position`` places the component's **anchor reference point** in x and y,
-and its **seating plane** in z, that is, the bottom face of the placed body.
+and, for a die, its **seating plane** in z, that is, the bottom face of the
+placed body; an interposer's ``position.z`` is the origin of its local frame
+(:doc:`/formats/03_coordinate_frames`).
 The frame is the lower-left corner of the interposer top cell's GDS bounding
 box, y-up, micrometres. ``dimensions.thickness`` extends the body upward from
 ``position.z``.
@@ -159,14 +162,14 @@ interconnect method registry). Z-mounting is per-die:
 
 .. code-block:: text
 
-    z_die = mounting_surface + connection.total_height()
+    z_die = interposer.position.z + mounting_surface + connection.total_height()
 
 so one assembly can mix methods: the specification's worked example, shown in
 full :ref:`below <chiplet_complete_example>`, seats its two dies at different
 heights over the same interposer, and :ref:`chiplet_z_worked_case` does the
 arithmetic. A die with no ``connection``, or one whose ``connection`` does not
-resolve, falls back to the interposer's mounting plane with zero connection
-height. A die with an explicit non-zero ``position.z`` keeps that value; the
+resolve, mounts on the interposer's ``attachment_surface_z`` with zero
+connection height. A die with an explicit non-zero ``position.z`` keeps that value; the
 reader does not recompute it.
 
 The interposer attachment_surface_z
@@ -177,7 +180,8 @@ interposer only. It is the z of the die-attachment surface, the BEOL top
 through the passivation opening, expressed in the interposer-local frame. It is
 the plane dies mount on. :ref:`chiplet_mounting_plane` gives its value for the
 IHP IntM4TM2 interposer, the PDK key it comes from in |interposer-repo|, and
-what a reader uses when a file declares none. A file on an IntM4TM2 interposer
+what a tool does with a file that seats dies and declares none (validation
+rule 17). A file on an IntM4TM2 interposer
 must declare exactly the PDK's value (:ref:`plane check
 <chiplet_plane_check>`).
 
@@ -187,8 +191,10 @@ could not also carry the physical substrate body. With
 ``attachment_surface_z`` present, ``thickness`` means what it means everywhere
 else, the physical z-extent of the body (silicon plus BEOL), and the body
 extends **downward** from the attachment surface while dies sit above it.
-Files written before the field existed still seat their dies on the BEOL top,
-through the fallback. The plane is not the substrate's maximum z either; see
+``thickness`` is never a mount plane: an interposer that seats dies without
+``attachment_surface_z`` has none, and nothing stands in for it. An exporter
+refuses such a file; a viewer may show the dies on ``thickness`` as a display
+guess, with a warning. The plane is not the substrate's maximum z either; see
 :ref:`chiplet_passivation_trap`.
 
 io_pads

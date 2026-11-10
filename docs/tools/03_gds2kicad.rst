@@ -2,6 +2,7 @@ gds2kicad
 =========
 
 .. include:: /common.inc
+.. include:: /formats/_vendored_state.inc
 
 ``gds2kicad``, |gds2kicad-repo|, turns a die or chiplet GDSII into the KiCad
 parts you need in order to design an interposer around it: a ``.kicad_mod``
@@ -46,7 +47,7 @@ none of this applies: run ``gds-to-kicad`` and the GUI opens.
 
 The schematic tools and ``kicad_pcb_to_iopads.py`` import two readers that
 ship vendored in the clone, so they need nothing else:
-``_vendor/chiplet_format_io``, the ``.chiplet`` reader at release 1.21.0
+``_vendor/chiplet_format_io``, the ``.chiplet`` reader at release |gds2kicad-vendored-reader|
 (Apache-2.0, its text in ``LICENSES/Apache-2.0.txt``, inside this
 GPL-3.0-or-later tool), and ``_vendor/round_trip_names.py``, interposer-pnr's
 reader of its export report. An install from the clone's ``pyproject.toml``
@@ -463,13 +464,20 @@ of it.
 A die symbol names its footprint ``chiplet_dies:<top cell>``. A carrier, a
 component that is not a die but lists ``io_pads`` (a wire-bond interposer, for
 example), is drawn as its pads: one ``chiplet_system:EXT_PAD`` symbol per pad,
-with Reference the pad id and Footprint ``chiplet_carrier:EXT_PAD_<n>um`` from
+whose Reference starts as the pad id, with the pad id also in a hidden
+``IO_PAD_ID`` property, and Footprint ``chiplet_carrier:EXT_PAD_<n>um`` from
 the pad's size in the ``.chiplet``. Those are the footprints
 ``interposer-pnr export`` draws, so a board it drew pairs with the sheet symbol
 for symbol. The carrier's pin list is written next to the sheet as
 ``<id>.carrier_pins.json``. Reading the sheet back, with ``--check`` or with the
 connectivity reader, folds a carrier's pads into one carrier whose pins are the
-pad ids.
+pad ids. The pad id is read from ``IO_PAD_ID``, so annotating the sheet can
+change a pad's Reference without moving its terminal. A sheet on which no
+carrier pad has the field, one drawn before the field existed, is read by
+Reference as before. Once any carrier pad has the field every one must: a pad
+without it is refused as ``missing_identity``, naming its carrier and
+Reference, and two pads of one carrier with the same id are refused as
+``duplicate_pad``, naming both References, and neither folds.
 
 Each symbol carries a hidden ``CHIPLET_COMPONENT`` property with its component
 id, title-block comment 1 holds the sha256 of the ``.chiplet``, and reruns on
@@ -479,7 +487,9 @@ them are a pin the component does not have, a pad whose netlist net and
 ``io_pads`` net disagree, a pad whose size is missing, not square or not a
 whole number of micrometres, a pad id that is also a component id or another
 pad's, and a die that states no top cell. ``--check`` exports the sheet's
-netlist with ``kicad-cli`` and compares it with the ``.chiplet``. The exit
+netlist with ``kicad-cli`` and compares it with the ``.chiplet``. It reads
+the pads back as the connectivity reader does, so two symbols under one
+Reference, and a pad that does not fold, are reported as differences. The exit
 status is 0 when written, 3 when refused, and 4 when written but the check
 found a difference or could not run.
 
@@ -564,10 +574,16 @@ with its endpoints and whether KiCad made its name up, the base digest from the
 title block, and every input by path and sha256. The reader reports what KiCad
 resolved and judges nothing; that is the import's job. What the form cannot
 carry is listed in it as a refusal: a hierarchical sheet, a net named by a
-local label, two names on one net (from the ERC report), or a node on a pin its
-symbol does not have. ``--no-erc`` skips the ERC report and with it the
+local label, two names on one net (from the ERC report), a node on a pin its
+symbol does not have, two symbols under one Reference
+(``duplicate_reference``), a die symbol of the sheet's ``chiplet`` library
+without its ``CHIPLET_COMPONENT`` (``missing_identity``), and a carrier pad
+that does not fold (``unknown_pad``, ``missing_identity`` or
+``duplicate_pad``, above). ``--no-erc`` skips the ERC report and with it the
 two-name check. The exit status is 0 when the form is written, refusals
-included, and 2 when an input is missing or is not what it claims to be.
+included, and 2 when an input is missing or is not what it claims to be, a
+placed symbol whose UUID does not resolve in the root schematic included.
+Only root-sheet symbols are written, in every mode.
 Options may sit anywhere on the line, between the paths too.
 
 A sheet drawn on a handout has no generator report. Say which handout it came
@@ -587,9 +603,9 @@ from instead:
 ``--blank`` writes form 1.1 with ``sheet`` set to ``blank``: no base digest and
 no generator report, the library by path and sha256, and each symbol's
 ``part`` (library nickname and symbol name) with a null identity, since the
-designator is the only identity a blank sheet has. Two symbols under one
-reference, two left unannotated for instance, are refused as
-``duplicate_reference``.
+designator is the only identity a blank sheet has. As on a generated sheet,
+two symbols under one reference, two left unannotated or a pasted copy for
+instance, are refused as ``duplicate_reference``.
 
 ``--classic`` writes form 1.3 with ``sheet`` set to ``classic``. It adds each
 component's UUID key, its value, footprint and fields verbatim, explicitly
@@ -601,8 +617,8 @@ a classic sheet include a symbol with more than one unit (``multi_unit``), a
 net-naming power symbol from another library (``foreign_rail``; a
 ``PWR_FLAG`` names no net and is ignored), a drawn rail that is no netlist net
 (``rail_unused``), and two pins of one unit at one position with different
-numbers (``unit_pin_order``). Only root-sheet symbols are written. A symbol
-with no cached library symbol is an input error, exit 2.
+numbers (``unit_pin_order``). A symbol with no cached library symbol is an input
+error, exit 2.
 
 The GUIs
 --------
