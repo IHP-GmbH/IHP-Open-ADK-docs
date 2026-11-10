@@ -48,7 +48,9 @@ quote. Never edit the generated files: they are overwritten on every build.
         ``tools/tables/schema_versions.csv``, the format and schema versions;
         ``tools/tables/staged_engines.csv`` and the engine version
         substitutions in ``tools/_staged_engines.inc``; ``_counts.inc``, the
-        interposer layer and rule deck counts and the ADK test count; and
+        interposer layer and rule deck counts, the widest track that needs no
+        slits (``Slt.c``, which it holds the interposer routing technologies
+        to), and the ADK test count; and
         ``formats/_vendored_state.inc``, the state of the ADK's vendored
         ``.chiplet`` reader and the release of the one gds2kicad vendors.
     * - ``gen_cli_usage.py``
@@ -80,6 +82,21 @@ quote. Never edit the generated files: they are overwritten on every build.
         and the passivation values in ``tools/_interposer_stack.inc``. It
         fails when a layer does not start where the one below it ends, or
         when the mount plane is no longer the top of TopMetal2.
+    * - ``gen_example_blocks.py``
+      - The shell blocks and the system file of each typical application the
+        from-scratch guide includes, and in ``_blocks/<example>/values.inc``
+        the values its prose states about them, read from the blocks and from
+        the output the examples captured on the reference image. It renders
+        them from the adk-examples commit pinned in
+        ``_blocks/ADK_EXAMPLES_COMMIT`` when ``ADK_DOCS_EXAMPLES_ROOT`` names
+        a clone holding it, and fails when that commit's ``release-lock.json``
+        names another ADK-Tools commit than ``src/ADK-Tools``. Without a
+        clone, as in the public build, it verifies the committed files against
+        ``_blocks/SHA256SUMS`` and the pin. ``--pin <rev>`` moves the pin and
+        renders; ``make -C docs check-blocks`` (local) compares the committed
+        files with what the pinned commit renders. At a pin move, read again
+        the few values the guide still types by hand; a comment at the top of
+        ``from_scratch.rst`` names them.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.

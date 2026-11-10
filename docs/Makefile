@@ -9,7 +9,7 @@ SOURCEDIR     = .
 BUILDDIR      = _build
 PYTHON        ?= python3
 
-.PHONY: docs setup preprocess build linkcheck latexpdf clean display help
+.PHONY: docs setup preprocess check-blocks build linkcheck latexpdf clean display help
 
 # Default: full local build chain.
 docs: clean setup preprocess build display
@@ -30,6 +30,12 @@ preprocess:
 	$(PYTHON) scripts/gen_admission_values.py
 	$(PYTHON) scripts/check_validation_rules.py
 	$(PYTHON) scripts/check_bump_mirror.py
+	$(PYTHON) scripts/gen_example_blocks.py
+
+# Local only: the from-scratch guide's include files against the adk-examples commit they
+# name. Needs ADK_DOCS_EXAMPLES_ROOT, a checkout holding that commit; the public build has none.
+check-blocks:
+	$(PYTHON) scripts/gen_example_blocks.py --check
 
 build:
 	$(SPHINXBUILD) -b html $(SPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html

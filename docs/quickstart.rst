@@ -76,6 +76,11 @@ This scaffolds ``/work/heterogenic-designs/my_design`` with the reference
 design's directory layout, which is what the rest of the flow expects, and
 prints the next three steps with absolute paths.
 
+The scaffold is the board-first layout: a KiCad project, the dies' folders and
+an outputs folder. A design that starts from a system file instead, with no
+board yet, continues with :doc:`/from_scratch`, which writes that file from
+an empty folder and runs it to the verdict.
+
 Where to go next
 ----------------
 
