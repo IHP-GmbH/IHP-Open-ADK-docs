@@ -8,6 +8,7 @@ IHP Open Assembly Design Kit (ADK)
     :hidden:
 
     quickstart
+    from_scratch
     intro
     install
     examples

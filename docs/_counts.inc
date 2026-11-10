@@ -6,5 +6,6 @@
 .. |interposer-layer-names| replace:: 29
 .. |interposer-layer-entries| replace:: 158
 .. |interposer-rule-decks| replace:: 20
+.. |interposer-slit-free-width| replace:: 30
 .. |adk-test-count| replace:: 395
 .. |adk-test-files| replace:: 18

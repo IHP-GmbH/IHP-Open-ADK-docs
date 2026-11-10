@@ -28,15 +28,10 @@ import os
 import re
 import sys
 
-from _common import DOCS_DIR, REPO_ROOT, SRC_DIR
+from _common import DOCS_DIR, REPO_ROOT, SRC_DIR, included as includes, own_files as site_files
 
 OWN_SUFFIXES = (".rst", ".md", ".svg", ".sh", ".csv", ".inc", ".txt", ".yaml")
-SKIP_DIRS = {"_build", "_repos", ".git", "__pycache__"}
 REPO_PAGES = "_repos/*/docs/**"
-
-# reStructuredText and MyST include directives, and the path each names.
-RST_INCLUDE = re.compile(r"^\s*\.\. (?:literal)?include::\s+(\S+)", re.MULTILINE)
-MYST_INCLUDE = re.compile(r"^\s*[`:]{3,}\{(?:literal)?include\}\s+(\S+)", re.MULTILINE)
 
 # Upstream files allowed to carry dashes, each with the date the exemption was
 # recorded. Remove an entry once the file is fixed upstream and the pin moves.
@@ -75,23 +70,13 @@ def relative(path):
 
 
 def own_files():
-    files = []
-    for root, dirs, names in os.walk(DOCS_DIR):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
-        files += [os.path.join(root, n) for n in sorted(names) if n.endswith(OWN_SUFFIXES)]
-    return files
+    return site_files(OWN_SUFFIXES)
 
 
 def included(page):
     """The files page includes, resolved as Sphinx resolves them."""
-    with open(page, encoding="utf-8") as handle:
-        text = handle.read()
     found = []
-    for target in RST_INCLUDE.findall(text) + MYST_INCLUDE.findall(text):
-        if target.startswith("/"):
-            path = os.path.join(DOCS_DIR, target.lstrip("/"))
-        else:
-            path = os.path.join(os.path.dirname(page), target)
+    for target, path in includes(page):
         if not os.path.isfile(path):
             sys.exit("error: {} includes {}, which does not exist".format(relative(page), target))
         found.append(path)

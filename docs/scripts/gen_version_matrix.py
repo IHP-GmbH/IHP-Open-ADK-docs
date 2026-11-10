@@ -54,6 +54,7 @@ from _common import (
     SRC_DIR,
     TOOLS,
     fail,
+    format_number,
     git,
     git_or_fail,
     pinned_commit,
@@ -583,6 +584,24 @@ def main():
     if not decks:
         fail("no interposer rule decks found under {}".format(deck_dir))
 
+    # The widest track that needs no slits, rule Slt.c of the metal slit deck. The
+    # interposer routing technologies draw no slits, so it is also the widest track
+    # they draw, which is what the from-scratch guide says; hold them to it.
+    if "fetch_rule(drc_rules, 'Slt_c')" not in read_text(os.path.join(deck_dir, "7_3_metalslits.drc")):
+        fail("7_3_metalslits.drc no longer reads Slt_c. The slit rule moved.")
+    slit_free = read_json(os.path.join(deck_dir, "interposer_tech_default.json"))["rules"].get("Slt_c")
+    if not isinstance(slit_free, (int, float)):
+        fail("interposer_tech_default.json has no numeric Slt_c")
+    routing = glob.glob(os.path.join(INTERPOSER, "libs.tech", "adk", "routing", "*.routing_tech.json"))
+    if not routing:
+        fail("no interposer routing technology found under libs.tech/adk/routing")
+    for path in sorted(routing):
+        for layer in read_json(path).get("routing_layers", []):
+            if layer.get("max_width_um") != slit_free:
+                fail("{}: {} draws up to {} um, not Slt_c, {} um".format(
+                    os.path.basename(path), layer.get("emitter_name"),
+                    layer.get("max_width_um"), slit_free))
+
     # Count every test function under tests/, including helpers defined in
     # conftest.py, which is what "the suite has N tests" means to a reader.
     adk_tests = 0
@@ -605,6 +624,7 @@ def main():
     facts += ".. |interposer-layer-names| replace:: {}\n".format(len(layer_names))
     facts += ".. |interposer-layer-entries| replace:: {}\n".format(len(blocks))
     facts += ".. |interposer-rule-decks| replace:: {}\n".format(len(decks))
+    facts += ".. |interposer-slit-free-width| replace:: {}\n".format(format_number(slit_free))
     facts += ".. |adk-test-count| replace:: {}\n".format(adk_tests)
     facts += ".. |adk-test-files| replace:: {}\n".format(adk_test_files)
     write_text(os.path.join(DOCS_DIR, "_counts.inc"), facts)
