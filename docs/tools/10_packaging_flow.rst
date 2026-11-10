@@ -2,6 +2,7 @@ packaging-flow
 ==============
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``packaging-flow`` runs an assembly from one ``system.chiplet`` to a verdict.
 It admits each ready die from its contract (or builds it with
@@ -12,7 +13,7 @@ for a person's signature at four checkpoints on the way. Everything it does is
 recorded in a manifest that ``packaging-flow verify`` recomputes from the files
 on disk.
 
-Version 0.1.0 ships in the ADK-Tools image as the ``packaging-flow`` command.
+Version |packaging-flow-version| ships in the ADK-Tools image as the ``packaging-flow`` command.
 It is licensed GPL-3.0-or-later.
 
 .. warning::
@@ -82,8 +83,11 @@ runs one stage again: the way on is a new run.
 
 ``--tier`` is ``hermetic``, ``smoke`` or ``full`` (the default). The examples
 run ``full``; the shorter tiers are for testing the flow itself.
-``--view-store`` names the store of die views a run admits from; for a
-``system.chiplet`` it defaults to ``$ADK_DIE_VIEWS``. ``--admitted-by`` names
+``--view-store`` names the store of die views the co-simulation check reads
+(chiplet-cosim's ``select`` and the ``sim`` check kind), pinned with its tree
+digest. Dies are admitted from their contracts, not from this store. For a
+``system.chiplet`` it defaults to ``$ADK_DIE_VIEWS`` when that is set, and
+otherwise to an empty store under the verification root. ``--admitted-by`` names
 the role that admits a die built elsewhere, never a person's name. ``--skip
 CHECK`` leaves a check out, for iteration only: ``verify`` then exits 17 and
 the run is not green.
@@ -96,6 +100,11 @@ The run is a fixed list of stages. The ones you see in ``status`` include
 each checkpoint. A design finding before a checkpoint does not stop the run:
 it is recorded on its row, and the run is not green.
 
+Placement works to the registry's ``ASM_b`` and ``ASM_g``, so a run that
+dispatches the assembly DRC deck refuses an interposer adapter that overrides
+either to a different value (:ref:`placement and adapter overrides
+<adk_placement_overrides>`).
+
 Checkpoints and signatures
 --------------------------
 
@@ -106,7 +115,8 @@ with a ``GatePending`` line that names the gate and the command that signs it.
 A halt is not a failure. A later run of the same design reuses a gate's
 signature while what it signed is unchanged: ``map`` names each gate it reused
 and the run that signed it, and the run halts at the first gate whose signature
-no longer holds.
+no longer holds. The external gate keys the terminal map by its content, not
+its raw bytes, so a run in another folder keeps that gate's key.
 
 .. code-block:: bash
 
@@ -154,20 +164,24 @@ After the last signature, ``resume`` writes the verdict. Then:
     packaging-flow review-levels $WD $RUN/review
 
 ``status`` prints one row per stage. ``verify`` recomputes the manifest from
-the files and prints one word, the tier, the dies built and admitted, then one
-line per level. The words are:
+the files and prints its verdict, the tier, the dies built and admitted, then
+one line per level. ``verify --json`` carries the verdict as one word, in
+``verdict``. The verdicts are:
 
 - ``OK``: every check held, and every die was built in this run. It is not a
   fabrication qualification.
-- ``NOT_ALL_DIES_BUILT_IN_RUN``: every check that applies held, but the run
-  placed dies it did not build, so the all-dies-built verdict does not apply.
-  It exits 1 and is not a failed run. It is the word a run of ready dies
-  expects: ``two_die_echo_shifted_gf180`` expects ``verify:
-  NOT_ALL_DIES_BUILT_IN_RUN (tier full; built none; admitted U1, U2)``.
+- ``not every die was built in this run`` (the word
+  ``NOT_ALL_DIES_BUILT_IN_RUN`` in ``--json``): every check that applies held,
+  but the run placed dies it did not build, so the all-dies-built verdict does
+  not apply. It exits 1 and is not a failed run. It is what a run of ready dies
+  expects: ``mixed_gf180`` expects ``verify: not every die was built in this
+  run (tier full; built none; admitted U1, U2)``.
 - ``FAILED``: at least one check did not hold on the files; each reason
   names one. It exits 1.
-- ``NOT EVALUATED``: ``verify`` did not complete, and says nothing about the
-  run (exit 7).
+- ``NOT EVALUATED``, in ``--json`` only: ``verify`` did not complete, and the
+  document says nothing about the run. Text ``verify`` prints no verdict then,
+  only its one error line on stderr. It exits with the code of the refusal, 7
+  for an internal error.
 
 ``review-levels`` fills ``$RUN/review/`` by level, ``1-chiplet/<die>/``,
 ``2-interposer/``, ``3-assembly/`` and ``4-external/``, with ``levels.txt``
@@ -189,19 +203,11 @@ Assembly LVS in a run
 
 The ``assembly-lvs`` row derives the resolved input from the run's own records,
 writes it to ``out/assembly-lvs/resolved.json``, runs ``assembly-lvs`` on it
-and keeps its report at ``out/reports/assembly_lvs.json``. How the nine
-assembly-lvs states read as the four flow words, and what a match does not
-claim, is in :doc:`/tools/09_assembly_lvs`. Only a ``robust_match`` or
-``robust_match_global`` reads ``PASS``. An assembly the flow cannot
-express as a resolved input reads ``INCONCLUSIVE`` and names the cause.
-
-Out of a run, ``lvs-bundle`` and ``lvs-verify`` do the same on a completed
-run's copies:
-
-.. code-block:: bash
-
-    packaging-flow lvs-bundle $WD --output /tmp/lvs
-    packaging-flow lvs-verify /tmp/lvs
+and keeps its report at ``out/reports/assembly_lvs.json``.
+:ref:`The flow-run mapping <assembly_lvs_flow_run>` on
+:doc:`/tools/09_assembly_lvs` says how the nine assembly-lvs states read as the
+four flow words, what a match does not claim, and how ``lvs-bundle`` and
+``lvs-verify`` repeat the check on a completed run's copies.
 
 Changing the design
 -------------------
@@ -277,7 +283,7 @@ Exit codes are never renumbered:
     * - 5
       - ``resume`` found no recorded halt.
     * - 6
-      - More than one run folder matches.
+      - A die build could not be bound to one result folder.
     * - 7
       - Internal error.
     * - 8, 9

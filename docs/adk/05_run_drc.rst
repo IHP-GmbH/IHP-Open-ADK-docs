@@ -12,13 +12,18 @@ returns an exit code you can branch on in a script.
 This page is about running it. For what the rules actually check, see
 :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
+You need an assembly GDS and its ``<gds-stem>.boundaries.json`` sidecar, which
+the producer writes together: ``hyp_to_gds`` (:doc:`/flow/05_hyp_to_gds`) or
+``blackbox_chiplet``. `Prerequisites`_ lists the rest.
+
 Prerequisites
 -------------
 
 **KLayout 0.29.11 or newer, on ``PATH``.**
-    The runner shells out to ``klayout -b`` and checks the version first. An
-    older KLayout, or none at all, aborts before anything else happens. The
-    container image ships a suitable build; see :doc:`/install/01_container`.
+    The runner shells out to ``klayout -b`` and checks the KLayout version
+    before it touches the layout; only argument and adapter-id validation run
+    earlier. An older KLayout, or none at all, aborts the run. The container
+    image ships a suitable build; see :doc:`/install/01_container`.
 
 **The ``klayout`` Python module.**
     Imported at module load to read the layout's top cells. It is a separate
@@ -50,10 +55,7 @@ The minimal invocation
         --interposer-adapter intm4tm2 \
         --run_dir /tmp/adk_drc
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_drc.inc
 
 That runs the |asm-rule-count| ASM rules and nothing else. The boundary manifest
 is discovered next to ``design.gds``, the top cell is auto-detected, and the
@@ -118,8 +120,9 @@ Flags in detail
     A registry id, as described above.
 
 ``--interconnect-adapter``
-    Optional. Enables the IXN axis. Omit it and the evaluated deck is identical
-    to a run from before the axis existed.
+    Optional. Enables the IXN axis. Omit it, and pass no
+    ``--interconnect-methods``, and none of the axis's parts enter the
+    evaluated deck; see :ref:`adk_ixn_additive`.
 
 ``--interconnect-methods``
     Optional. Per-method IXN scoping. Requires the boundary manifest, and is
@@ -258,12 +261,15 @@ What lands in the run directory
         design_TOP_assembly.lyrdb
 
 The log
-    Named for the UTC timestamp of the run. It carries the full DEBUG-level
-    record: the resolved adapter paths, the manifest path and the number of
-    boundaries loaded, one line per rule as the deck reaches it
-    (``ADK: ASM.a``, ``ADK: IXN.b.<method>``, and so on), the pass or fail
-    banner, the sorted list of violated rules and the elapsed time. The same
-    stream goes to the console.
+    Named for the UTC timestamp of the run. It holds the runner's own
+    DEBUG-level record: the KLayout version, the resolved adapter paths, the
+    KLayout command line (which carries the manifest path), the pass or fail
+    banner, the sorted list of violated rules, the rules not checked and the
+    elapsed time. The same record goes to the console. The deck's own progress
+    lines, such as the number of boundaries loaded and one line per rule as the
+    deck reaches it (``ADK: ASM.a``, ``ADK: IXN.b.<method>``, and so on), are
+    printed by KLayout to the console only and are not in the file; redirect
+    the runner's output to keep them.
 
 The report
     A KLayout results database. The default name is
@@ -448,7 +454,9 @@ to their identifying phrase.
 ``Interconnect adapter (<path>) must set interconnect_rules['IXN_pitch'].``
     An interconnect adapter is a parameter pack and must set all three of
     ``IXN_spacing``, ``IXN_pitch`` and ``IXN_pad_size``. The message names the
-    one that is missing.
+    one that is missing. It appears only when ``config/interconnect.json`` is
+    absent or lacks that key; otherwise a key the adapter omits takes the
+    registry default and nothing is reported (see :ref:`adk_ixn_fail_loud`).
 
 ``Interconnect methods entry '<id>' missing '<key>'``
     A method in the sidecar lacks one of ``IXN_spacing``, ``IXN_pitch``,
@@ -466,6 +474,11 @@ to their identifying phrase.
     that is, a check that can never fail. Fix the numbers in the methods file or
     the adapter.
 
-``Result database not generated: <path>``
-    KLayout exited zero but wrote no report. Check the log for what the deck did
-    before it stopped.
+``ADK DRC engine failure: the deck exited <n> before a verdict``
+    KLayout exited non-zero, usually because the deck raised one of the errors
+    above. The run exits ``2``. The deck's own message is on the console above
+    the runner's ``Assembly DRC failed with exit code <n>`` line.
+
+``ADK DRC engine failure: result database not generated at <path>``
+    KLayout exited zero but wrote no report. The run exits ``2``. Check the
+    console output for what the deck did before it stopped.

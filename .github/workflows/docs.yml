@@ -54,42 +54,10 @@ jobs:
       - name: Check editorial constraints
         # These are factual and legal constraints, not style preferences. The
         # authoring contract that explains each one is the Editorial rules
-        # section of docs/contrib/02_documentation.rst.
-        run: |
-          status=0
-          # The contributing page quotes these rules in order to state them, so
-          # it is the one file exempt from matching them.
-          EXEMPT='docs/contrib/02_documentation.rst'
-          check() {
-            local pattern="$1" message="$2"
-            local hits
-            hits=$(grep -rniE --include='*.rst' --include='*.md' --include='*.tex' \
-                   "$pattern" docs/ | grep -v "^${EXEMPT}:" || true)
-            if [ -n "$hits" ]; then
-              echo "::error::$message"
-              echo "$hits"
-              status=1
-            fi
-          }
-          check 'netgen|run_demo\.py' 'Do not name the tools or scripts of the unreleased connectivity work.'
-          check 'pactech|pac tech' 'Do not name a bumping vendor in the site prose.'
-          check 'signoff.?grade|production.?grade' 'Do not claim signoff-grade or production-grade. This is a preview release.'
-          check '[—–]' 'Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.'
-          # Emoji ranges, checked with a Python pass since grep classes vary.
-          python3 - <<'PY' || status=1
-          import pathlib, re, sys
-          emoji = re.compile('[\U0001F000-\U0001FAFF☀-➿️]')
-          bad = []
-          for path in list(pathlib.Path('docs').rglob('*.rst')) + list(pathlib.Path('docs').rglob('*.md')):
-              for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
-                  if emoji.search(line):
-                      bad.append(f'{path}:{number}: {line.strip()}')
-          if bad:
-              print('::error::Emojis are not allowed in documentation sources.')
-              print('\n'.join(bad))
-              sys.exit(1)
-          PY
-          exit $status
+        # section of docs/contrib/02_documentation.rst. The script reads the
+        # files the site publishes, its own and the upstream ones, and says
+        # which rule covers which.
+        run: python3 docs/scripts/check_editorial.py
 
       - name: Upload built site
         if: always()

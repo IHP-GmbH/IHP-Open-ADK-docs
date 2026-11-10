@@ -14,13 +14,6 @@ __pycache__/
 venv/
 docs_env/
 
-# LaTeX intermediates from the TikZ figure renderer
-docs/_figures/tikz/*.aux
-docs/_figures/tikz/*.fdb_latexmk
-docs/_figures/tikz/*.fls
-docs/_figures/tikz/*.out
-docs/_figures/tikz/*.dvi
-
 # IDE / OS
 .vscode/
 .idea/

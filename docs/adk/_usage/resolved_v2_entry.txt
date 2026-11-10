@@ -1,0 +1,9 @@
+usage: resolved_v2_entry.py [-h] --sidecar SIDECAR --out OUT
+
+ADK-side entry for an assembly-lvs resolved v2 document.
+
+options:
+  -h, --help         show this help message and exit
+  --sidecar SIDECAR  ADK attachment sidecar (<resolved
+                     stem>.adk_attachment.json)
+  --out OUT          fresh output directory

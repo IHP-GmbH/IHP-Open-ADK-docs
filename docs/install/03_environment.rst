@@ -13,8 +13,9 @@ file, which was produced on someone else's machine.
 No tool contains fixed-depth path arithmetic, a ``parents[3]`` or a ``../../..``
 reaching into a sibling repository, because that hard-codes a directory layout
 that only holds on the machine where it was written. Every consumer resolves
-every dependency with the same chain, implemented identically in the Python tools
-and in Chiplet Studio's C++ reader.
+the five shared roots with the same chain, implemented identically in the Python
+tools and in Chiplet Studio's C++ reader. Chiplet Studio reads three more roots
+of its own, listed with the others below.
 
 The discovery chain
 -------------------
@@ -27,16 +28,17 @@ First hit wins:
    read the variable from. Set these under ``Board Setup > Text Variables``.
 #. **Upward walk** from the consumer looking for a conventional sibling
    directory. Each root accepts a small closed set of candidate names. For
-   three of the five roots that set includes the name a default clone of the
-   upstream GitHub repository produces; for ``ADK_ROOT`` and
-   ``GDS_TO_KICAD_ROOT`` it does not. The table below lists them.
+   three of the five shared roots that set includes the name a default clone
+   of the upstream GitHub repository produces; for ``ADK_ROOT`` and
+   ``GDS_TO_KICAD_ROOT`` it does not. The marker tables below list them.
 #. **Loud failure**, naming every location that was probed and the variable to
    set.
 
 A candidate is not accepted merely because the directory exists. Each root has
 a **marker subpath** that must exist under it, and a set-but-invalid
 environment value falls through to the walk rather than winning and then
-failing later.
+failing later. ``CHIPLET_FLOW_TECH`` has no walk: when it is unset or invalid,
+it does not resolve.
 
 The KiCad plugin makes one exception, for ``INTERPOSER_PDK_ROOT``. A set value
 that is not an IntM4TM2 tree no longer falls through to the sibling checkout,
@@ -79,12 +81,29 @@ The variables
       - Base IHP SG13G2 PDK
       - ``hyp_to_gds`` ``via_stack`` PCells, Chiplet Studio
       - ``/opt/adk-tools/IHP-Open-PDK``
+    * - ``GF180MCU_PDK_ROOT``
+      - GF180MCU PDK, holding ``gf180mcuD/``
+      - Chiplet Studio, for ``${GF180MCU_PDK_ROOT}`` paths in a ``.chiplet``
+        file (the GF180MCU layer sheet); GF180MCU die builds
+      - ``/opt/adk-tools/gf180mcu``
+    * - ``CHIPLET_STUDIO_ROOT``
+      - A Chiplet Studio checkout or install
+      - Chiplet Studio, for ``${CHIPLET_STUDIO_ROOT}`` paths to its bundled
+        stackups
+      - ``/opt/adk-tools/chiplet-studio``
+    * - ``CHIPLET_FLOW_TECH``
+      - A project's own technology files (``<id>/layers.lyp``,
+        ``<id>/stackup.yaml``)
+      - Chiplet Studio, for ``${CHIPLET_FLOW_TECH}`` paths; environment only,
+        never walked for
+      - Not set
     * - ``KICAD_CHIPLET_PYTHON``
       - Worker interpreter, not a root
       - Plugin orchestrator
       - ``/opt/adk-tools/venv/bin/python3``
 
-The container sets all of them, which is why nothing inside it needs
+The container sets all of them except ``CHIPLET_FLOW_TECH``, which whoever
+runs the flow sets for a project of their own, so nothing inside it needs
 configuring. It additionally sets ``ADK_TOOLS=/opt/adk-tools`` as the parent of
 all of them, and a ``KLAYOUT_PATH`` that registers the interposer KLayout
 technology.
@@ -92,10 +111,10 @@ technology.
 Marker subpaths and accepted directory names
 --------------------------------------------
 
-The walk and the environment check share one table, reproduced in the KiCad
-plugin's ``layer_map.py`` (which ``hyp_to_gds.py`` and the export dialog
-use), the ADK's ``pads_vs_pillars.py`` and Chiplet Studio's
-``ChipletFormat.cpp``:
+The walk and the environment check share one table for the five roots every
+consumer reads, reproduced in the KiCad plugin's ``layer_map.py`` (which
+``hyp_to_gds.py`` and the export dialog use), the ADK's ``pads_vs_pillars.py``
+and Chiplet Studio's ``ChipletFormat.cpp``:
 
 .. list-table::
     :header-rows: 1
@@ -125,6 +144,25 @@ The plugin's ``INTERPOSER_PDK_ROOT`` marker is the interposer PDK's stack
 descriptor because every KLayout PDK tree has a ``libs.tech/klayout``
 directory, the SG13G2 die PDK included, so that directory cannot tell an
 IntM4TM2 tree from another.
+
+Chiplet Studio's table has three more rows, which only Studio reads:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 30 34 36
+
+    * - Variable
+      - Directory names accepted by the walk
+      - Marker that must exist under the root
+    * - ``GF180MCU_PDK_ROOT``
+      - ``gf180mcu``, ``wafer-space-gf180mcu``
+      - ``gf180mcuD/libs.tech/klayout``
+    * - ``CHIPLET_STUDIO_ROOT``
+      - ``chiplet-studio``
+      - ``configs/stackups``
+    * - ``CHIPLET_FLOW_TECH``
+      - None: the environment is the only source
+      - None: the folder itself
 
 Two consequences are worth stating plainly. First, a development layout where
 all checkouts are siblings in one directory needs almost no environment: the
@@ -205,7 +243,9 @@ walk behind:
 #. The ``ADK_ROOT`` environment variable.
 #. The ``ADK_ROOT`` KiCad project text variable.
 #. ``<plugin_dir>/../adk``, a single conventional sibling rather than a full
-   upward walk.
+   upward walk. ``<plugin_dir>`` is the resolved ``plugins/chiplet_export``
+   directory, so with the repository's layout this leg looks inside
+   ``plugins/`` and does not find a checkout. In practice set ``ADK_ROOT``.
 
 Each candidate is tested by whether ``klayout/drc/run_drc.py`` exists beneath
 it, and the failure message lists every path that was tried.

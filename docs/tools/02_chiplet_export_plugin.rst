@@ -24,12 +24,14 @@ What one run produces
 
     <output-dir>/
       <board>.chiplet                        canonical assembly file
+      <board>.chiplet.exportcontent.sha256   digest of the exporter-owned content
       <board>.hyp                            the HyperLynx netlist that drove the run
       MANIFEST.md                            what was produced this run, ticked
       layout/
         <board>_interposer.gds               interposer layout
         <board>_interposer.boundaries.json   chiplet boundary manifest
         <board>_interposer.pillars.json      as-drawn Cu-pillar centres
+        <board>_interposer.fill_coverage.json  coarse fill coverage map (with fill)
         <board>_complete.gds                 interposer plus placed dies
         <board>_complete.boundaries.json
         <board>_complete.pillars.json
@@ -37,6 +39,7 @@ What one run produces
       reports/
         <board>_assembly_drc.lyrdb           ADK assembly DRC results
         <board>_cupillar_drc.json            Cu-pillar connection DRC summary
+        <board>_fill_density.json            per-metal fill density (with fill)
         assembly_drc/                        DRC scratch directory
       logs/
         <timestamp>_<board>.log              one file per run
@@ -46,6 +49,14 @@ The convention is deliberate and the orchestrator enforces it in one place, the
 drift apart.
 
 - The ``.chiplet`` stays at the **root**, because that is the file a user opens.
+  Its ``.exportcontent.sha256`` sidecar sits beside it: the digest of the
+  exporter-owned content recorded after each successful export. The next
+  export refuses to replace a ``.chiplet`` whose exporter-owned content was
+  edited by hand since. Only a Python caller of ``run_export`` can override
+  that, with ``ExportOptions.force``; neither the dialog nor ``chiplet-export``
+  exposes it.
+  Blocks the exporter does not own, such as ``flow:``, are carried over and
+  never trip it.
 - The GDS layouts go under ``layout/`` **with their sidecars**. Each manifest is
   discovered by its GDS's stem, as a sibling, so a layout and its contract move
   together or not at all. The ``.chiplet`` points at the interposer GDS with a
@@ -58,10 +69,12 @@ drift apart.
   and a counter suffix is appended.
 
 ``MANIFEST.md`` is written at the end of every run. It lists the ``.chiplet``,
-the seven ``layout/`` products and the two DRC reports, each with a checkbox
+the eight ``layout/`` products and the three reports, each with a checkbox
 ticked according to what actually appeared on disk, so a partial run is visible
-without comparing directory listings. Writing it is best effort: a manifest that
-cannot be written never fails the export.
+without comparing directory listings. Optional products, the fill files for
+example, stay unticked when the run did not ask for them. The manifest also
+reports what the previous-export content guard found. Writing it is best
+effort: a manifest that cannot be written never fails the export.
 
 .. tip::
    ``adk-new-project`` in the container scaffolds exactly this layout, with a
@@ -77,29 +90,15 @@ Inside the container the plugin is already registered. It is symlinked into
 image's venv, pre-set as ``KICAD_CHIPLET_PYTHON``. Open pcbnew and go to
 *Tools > External Plugins > Chiplet Export*.
 
-On a host install there are two steps.
-
-**Make it discoverable.** Symlink or copy the plugin directory into KiCad's
-scripting plugins folder:
-
-.. code-block:: bash
-
-    ln -s /path/to/chiplet_kicad_plugin \
-          ~/.config/kicad/9.0/scripting/plugins/chiplet_kicad_plugin
-
-The version segment is the KiCad version whose configuration you are extending,
-``9.0`` for a stock KiCad 9 and ``9.99`` for the ADK fork
-(:doc:`/tools/01_kicad_adk_mod`).
-
-**Give it a worker Python.** The plugin itself runs inside KiCad's bundled
-interpreter, which has neither the KLayout module nor PyYAML. The GDS worker
-therefore runs as a subprocess under a different interpreter:
-
-.. code-block:: bash
-
-    python3 -m venv /path/to/chiplet_kicad_plugin/.venv
-    /path/to/chiplet_kicad_plugin/.venv/bin/pip install -r \
-        /path/to/chiplet_kicad_plugin/requirements.txt
+On a host install there are two steps, with the commands in
+:ref:`host_plugin_install`. First, link the repository's
+``plugins/chiplet_export`` directory, not the repository root, into KiCad's
+scripting plugins folder. The version segment of that folder is the KiCad
+version whose configuration you are extending, ``9.0`` for a stock KiCad 9 and
+``9.99`` for the ADK fork (:doc:`/tools/01_kicad_adk_mod`). Second, give the
+plugin a worker Python: the plugin itself runs inside KiCad's bundled
+interpreter, which has neither the KLayout module nor PyYAML, so the GDS worker
+runs as a subprocess under a venv of its own.
 
 Then restart pcbnew. If the plugin does not appear, use
 *Tools > External Plugins > Refresh Plugins*; a registration failure prints its
@@ -128,9 +127,10 @@ as something missing.
 Output directory
 ~~~~~~~~~~~~~~~~
 
-Where the tree above is written. Defaults to the directory holding the loaded
-``.kicad_pcb``. In a scaffolded project you point it at the sibling
-``outputs/``.
+Where the tree above is written. When the loaded ``.kicad_pcb`` sits in a
+directory named ``kicad`` (in any case) that has a sibling ``outputs/``, as in a
+project ``adk-new-project`` scaffolded, the default is that ``outputs/``.
+Otherwise it is the directory holding the board.
 
 Outputs
 ~~~~~~~
@@ -138,7 +138,7 @@ Outputs
 The canonical ``.chiplet`` and the interposer GDS are **not** toggles. The
 worker writes the GDS on every run regardless, and the ``.chiplet`` is unusable
 until the same run finalises it, so an opt-out could only throw away work
-already done. Two things are optional:
+already done. The extras are optional:
 
 *Complete assembly GDS* (default off)
     The interposer plus every chiplet instance flattened into one layout. This
@@ -147,6 +147,17 @@ already done. Two things are optional:
 
 *Annotate chiplet boundaries* (default off)
     A viewer-only annotation layer, discussed below.
+
+*Insert metal density fill (interposer GDS)* (default off)
+    Stamps dummy metal on the interposer GDS with the interposer PDK's own
+    fill engine, to meet the IntM4TM2 density rules.
+
+*Fill mode* (enabled with the fill)
+    *Single pass (fast)*, the default, or *Density closure (iterative, M4/M5)*.
+
+:ref:`hyp_to_gds_fill_seal_ring` covers what the fill needs, the keep-out
+layers, the files it adds and the seal ring, which the dialog does not offer;
+headless, ``chiplet-export --seal-ring`` draws it.
 
 The HyperLynx ``.hyp`` is always staged into the output directory next to the
 ``.chiplet``, so a downstream tool can consume the exact netlist the layout was
@@ -224,12 +235,16 @@ Pipeline options
     connection is a Cu-pillar stack. A pre-generated GDS can be supplied through
     ``ExportOptions.cupillar_gds``, which disables the auto-extraction.
 
+.. _export_per_die_settings:
+
 Per-die settings
 ~~~~~~~~~~~~~~~~
 
-One row per die footprint. Both columns are initialised from the footprint's
-fields and written back to them on Run, so the board remains the source of
-truth and the choice survives in version control.
+One row per die footprint, with two columns, *Interconnect method* and
+*Outline layer (L/D)*. The die thickness sits in the collapsed *3D / advanced*
+pane below the table. All three are initialised from the footprint's fields and
+written back to them on Run, so the board remains the source of truth and the
+choice survives in version control.
 
 **Interconnect method** maps to the ``CONNECTION`` field. A die left on *(use
 default)* follows the assembly-wide connection stack; an explicit selection
@@ -238,6 +253,28 @@ the current PDK does not declare is kept in the list rather than dropped, so
 pointing at another checkout never silently rewrites a board's selection.
 Unknown method ids fail the export before the worker starts, rather than
 degrading somewhere downstream.
+
+**Outline layer** maps to the ``DIE_OUTLINE_LAYER`` field: the
+``LAYER/DATATYPE`` on which the die's own GDS, the file its ``GDS_FILE`` names,
+draws the die outline. Use ``39/4``, the SG13G2 ``EdgeSeal`` boundary, for an
+SG13G2 die, and ``206/0`` for a black-box die written by gds2kicad's
+``blackbox_chiplet.py``. The worker reads that layer from the die GDS, merges
+it, and takes the die's width and height in the ``.chiplet``, and its boundary
+in the complete GDS, from the one rectangle it finds. It never sizes a die from
+the footprint courtyard. The layer must merge to exactly one axis-aligned
+rectangle under the file's one top cell; anything else is refused.
+
+The field has no default. A die whose field is empty, or is not two integers
+from 0 to 65535 separated by ``/``, refuses the run before any output exists,
+with ``Die outline layer refused:`` followed by every die at fault and the
+cause. Two kinds of footprint need no value, and their row shows a note instead
+of a text box: a die marked with ``CHIPLET_PAD_DOMAINS``, which keeps the size
+archived with its pin list and is passed to the worker as exempt, and a
+footprint the ``.chiplet`` does not export as a die (excluded from the bill of
+materials, an ``IO_CLASS`` pad, or a ``cap_cmim`` capacitor). Every other
+footprint is exported as a die, so it needs a ``GDS_FILE`` and an outline
+layer. gds2kicad can write the field into the library footprint
+(``--die-outline-layer``, :doc:`/tools/03_gds2kicad`).
 
 **Die thickness** maps to the ``DIE_THICKNESS_UM`` field and becomes the
 ``.chiplet``'s ``components[].dimensions.thickness``. This is the z-extent of
@@ -341,14 +378,20 @@ neither wx nor pcbnew at module load, which is what makes its argument
 construction unit-testable on plain host Python, and it exposes three things:
 ``ExportOptions``, ``build_cli_args`` and ``run_export``.
 
+.. _chiplet_export_sequence:
+
 The sequence
 ~~~~~~~~~~~~
 
 ``run_export`` runs this, in order:
 
-1. Read the export report, when one is given, and check the board's carriers
-   against it (:ref:`chiplet_export_report`). A refusal here returns before
-   anything exists on disk.
+1. Preflight the board, before anything exists on disk: a selected
+   interconnect PDK root must hold its manifest, the die footprints marked
+   with ``CHIPLET_PAD_DOMAINS`` must carry usable pad metadata, every other die
+   must declare its ``DIE_OUTLINE_LAYER`` (`Per-die settings`_), and the
+   board's carriers are checked against the export report, when one is given
+   (:ref:`chiplet_export_report`). A refusal here returns with nothing
+   written.
 2. Create the output directory and its ``layout/`` subdirectory. The worker does
    not create parent directories, so this has to happen first.
 3. Resolve the worker Python and ``hyp_to_gds.py``, failing immediately if
@@ -357,8 +400,9 @@ The sequence
 5. Write the HyperLynx ``.hyp`` and the intermediate ``.chiplet`` into the
    workspace using the Python ports of the two C++ exporters.
 6. Auto-extract, from the board, whatever was not supplied explicitly: the I/O
-   pads, the per-die pad locations that drive Cu-pillar generation, the per-die
-   ``CONNECTION`` methods and the per-die ``DIE_THICKNESS_UM`` values.
+   pads, the no-fill keep-outs, the ``cap_cmim`` devices, the per-die pad
+   locations that drive Cu-pillar generation, the per-die ``CONNECTION``
+   methods and the per-die ``DIE_THICKNESS_UM`` values.
 7. Validate the per-die method ids against the interconnect PDK manifest.
 8. Only now stage the intermediate ``.chiplet`` and the ``.hyp`` into the output
    directory, so a validation failure leaves no partial artefact behind.
@@ -381,6 +425,9 @@ Turning a design into runner flags
 ``build_cli_args`` is a pure function from ``ExportOptions`` to the argv handed
 to ``hyp_to_gds.py``. The mapping is direct:
 
+.. Hand-typed from build_cli_args in plugins/chiplet_export/pipeline/
+   orchestrator.py, in its order. Nothing re-checks it: update it with the pin.
+
 .. list-table::
     :header-rows: 1
     :widths: 38 62
@@ -397,16 +444,33 @@ to ``hyp_to_gds.py``. The mapping is direct:
       - ``--with-chiplets --complete-output layout/<board>_complete.gds``
     * - ``annotate_boundaries``
       - ``--annotate-boundaries``
+    * - ``insert_metal_fill`` with ``fill_mode``
+      - ``--insert-metal-fill --fill-mode <mode>``
+    * - ``seal_ring``
+      - ``--seal-ring``
+    * - ``nofill_regions_json``
+      - ``--nofill-regions <path>``
     * - ``emit_chiplet``
-      - ``--update-chiplet-file <output-dir>/<board>.chiplet``
+      - ``--update-chiplet-file <path>``: ``<output-dir>/<board>.chiplet``, or
+        the staging file ``run_export`` passes instead
+    * - ``system_chiplet``
+      - ``--system-chiplet <path>``
+    * - ``die_layouts_json``
+      - ``--die-layouts <path>``
     * - ``connection_type``
       - ``--connection-type <id>``
     * - ``die_connections``
       - ``--die-connections REF=method,...``
     * - ``die_thicknesses``
       - ``--die-thicknesses REF=um,...``
+    * - ``die_outline_layers``
+      - ``--die-outline-layers=REF=L/D,...``
+    * - ``die_outline_exempt``
+      - ``--die-outline-exempt=REF,...``
     * - ``io_pads_json``
       - ``--io-pads <path>``
+    * - ``cmim_devices_json``
+      - ``--cmim-devices <path>``
     * - ``cupillar_gds``
       - ``--cupillar-gds <path>``
     * - ``pad_locations``
@@ -414,6 +478,13 @@ to ``hyp_to_gds.py``. The mapping is direct:
 
 ``export_report`` has no runner flag. The writers apply it in steps 5 and 6,
 so the ``io_pads.json`` the worker reads is already in the planner's names.
+
+The two outline flags carry what the step 1 preflight returned, not the raw
+options: a non-empty ``die_outline_layers`` replaces the board's
+``DIE_OUTLINE_LAYER`` fields wholesale before the preflight checks it, and
+``die_outline_exempt`` is always derived from the ``CHIPLET_PAD_DOMAINS``
+markers, whatever a caller set. Both use the ``--flag=VALUE`` form, because a
+reference may start with ``-``.
 
 The ``-o`` flag is unconditional for a specific reason: without it the worker
 writes the interposer GDS next to the ``.hyp``, which lives in the workspace
@@ -503,7 +574,7 @@ in KLayout and you can see where each die sits.
    That layer is read by **no** rule. It carries no contract, it cannot produce
    a false clean result, and it cannot alias a fabrication layer. The manifest
    remains the sole assembly contract. The option is off by default so the
-   production GDS carries no synthetic geometry, and painting is idempotent: the
+   exported GDS carries no synthetic geometry, and painting is idempotent: the
    layer is cleared in the top cell before each pass, so repeated writes do not
    accumulate duplicate shapes.
 
@@ -517,6 +588,8 @@ re-deriving geometry from the GDS. Bumps that the collision auto-resolve moved
 are flagged. See :doc:`/formats/04_boundary_manifest` and
 :doc:`/formats/05_pillar_manifest`.
 
+.. _chiplet_export_headless:
+
 Headless use
 ------------
 
@@ -526,7 +599,8 @@ Two headless entry points exist.
 and ``chiplet-export`` in the tools image runs it. It must run under an
 interpreter that can ``import pcbnew``, which means the KiCad fork's
 interpreter; the image's command already does. The worker Python for the GDS
-step is resolved separately through the discovery chain.
+step is resolved separately through the discovery chain, and is usually a
+different interpreter.
 
 .. code-block:: bash
 
@@ -578,15 +652,26 @@ the interposer and each die take the technology of the System component with
 the same id. The interposer's technology must be ``intm4tm2``: a System whose
 carrier names another technology is refused with
 ``CARRIER_UNSUPPORTED_TECHNOLOGY``, exit 1, nothing written. IntM4TM2 is the
-only carrier the export models. The plugin's command reference, linked at the
-foot of this page, lists every flag.
+only carrier the export models. ``technologies`` becomes the System's entries
+for exactly the ids bound, copied as written, so ``layer_properties`` and
+``stackup`` paths the System declares reach the exported ``.chiplet``; a
+relative path in either is refused, because it cannot be anchored to the
+exported file. Nothing else is taken from the System: the mount plane still
+comes from the interposer PDK (:ref:`hyp_to_gds_attach_frame`), not from the
+System's ``attachment_surface_z``. The plugin's command reference, linked at
+the foot of this page, lists every flag.
 
-``run_export`` is the Python API the dialog itself calls:
+``run_export`` is the Python API the dialog itself calls. The package is
+``chiplet_export``, so the repository's ``plugins/`` directory has to be on
+``sys.path``:
 
 .. code-block:: python
 
+    import sys
+    sys.path.insert(0, "/path/to/Chiplets-KiCad-Plugin/plugins")
+
     import pcbnew
-    from chiplet_kicad_plugin.pipeline.orchestrator import (
+    from chiplet_export.pipeline.orchestrator import (
         ExportOptions, run_export, describe_assembly_drc,
     )
 
@@ -597,15 +682,16 @@ foot of this page, lists every flag.
         top_cell="INTERPOSER",
     )
     result = run_export(board, options,
-                        plugin_dir="/path/to/chiplet_kicad_plugin",
+                        plugin_dir="/path/to/Chiplets-KiCad-Plugin/plugins/chiplet_export",
                         on_log=print)
     assert result.exit_code == 0 and not result.error
     print(describe_assembly_drc(result))
 
 .. tip::
-   ``tests/regenerate_wirebond_demo.py`` in the plugin repository is a complete
-   worked example, and it is what the container's verify stage runs to
-   regenerate the reference design headless on every image build. See
+   ``plugins/chiplet_export/tests/regenerate_wirebond_demo.py`` in the plugin
+   repository is a complete worked example, and it is what the container's
+   verify stage runs to regenerate the reference design headless on every image
+   build. See
    :doc:`/flow/08_reference_design`.
 
 Writer parity

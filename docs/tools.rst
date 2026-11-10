@@ -1,20 +1,30 @@
-Supported tools
-===============
+Tools and reference PDKs
+========================
+
+.. toctree::
+    :name: tools-pdk-toc
+    :caption: Reference PDKs
+    :maxdepth: 2
+
+    Interposer PDK (OpenIntM4TM2) <tools/05_openintm4tm2>
+    Interconnect PDK <tools/06_interconnect_pdk>
 
 .. toctree::
     :name: tools-toc
-    :caption: Supported tools
+    :caption: Design tools
     :maxdepth: 2
 
     KiCad ADK fork <tools/01_kicad_adk_mod>
     Chiplet export plugin <tools/02_chiplet_export_plugin>
     gds2kicad <tools/03_gds2kicad>
     Chiplet Studio <tools/04_chiplet_studio>
-    Interposer PDK (OpenIntM4TM2) <tools/05_openintm4tm2>
-    Interconnect PDK <tools/06_interconnect_pdk>
-    The ADK-Tools image <tools/07_adk_tools_image>
-    Multiphysics (EM and thermal) <tools/08_multiphysics>
-    Assembly LVS <tools/09_assembly_lvs>
+
+.. toctree::
+    :name: tools-engines-toc
+    :caption: Flow engines
+    :maxdepth: 2
+
+    chiplet-die-flow <tools/12_chiplet_flow>
     packaging-flow <tools/10_packaging_flow>
     interposer-pnr <tools/11_interposer_pnr>
-    chiplet-die-flow <tools/12_chiplet_flow>
+    Assembly LVS <tools/09_assembly_lvs>

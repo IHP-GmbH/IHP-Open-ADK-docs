@@ -72,7 +72,7 @@ The method registry
 
 ``manifest/interconnect_methods.json`` is the single source of truth. Its schema
 is at ``manifest/schema/interconnect_methods.schema.json`` (JSON Schema
-draft-07), and the top-level key is ``schema_version``, currently ``1.0``. The
+draft-07), and the top-level key is ``schema_version``, currently ``1.1``. The
 manifest lives at the repository root rather than under ``libs.tech/<tool>/``
 because it is the cross-tool contract of the whole PDK, not the data of one
 tool.
@@ -152,7 +152,7 @@ Parameters per method
 Each method carries a connection stack (the physical bodies, bottom to top), the
 fabrication parameters it needs from the interposer, and its pitch rules.
 
-.. figure:: /_figures/tikz_cupillar_stack.*
+.. figure:: /_figures/cupillar_stack.*
     :align: center
     :alt: Cross-sections of the cupillar_opt1 and sbump_sac305 connection
           stacks, drawn side by side as alternatives.

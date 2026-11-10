@@ -36,7 +36,7 @@ The repositories
         with their parameters and 3D bodies.
     * - |kicad-repo|
       - GPL-3.0-or-later
-      - The KiCad fork hardened for nanometre-scale layout and carrying the
+      - The KiCad fork hardened for sub-micrometre layout and carrying the
         semiconductor exports.
     * - |plugin-repo|
       - GPL-3.0-or-later
@@ -54,8 +54,7 @@ The repositories
         placement, routing, GDS, DRC and assembly LVS to a verdict, with a
         signature at each checkpoint. See :doc:`/tools/10_packaging_flow`.
     * - interposer-pnr
-      - GPL-3.0-or-later; descriptors taken from Apache-2.0 PDKs keep that
-        license
+      - GPL-3.0-or-later
       - Placement, bumps and interposer routing as a draft KiCad board, a
         proof of concept, and the routing-technology descriptor contract. See
         :doc:`/tools/11_interposer_pnr`.
@@ -68,37 +67,56 @@ The repositories
       - GPL-3.0-or-later
       - Connectivity of a placed assembly against its declared nets. See
         :doc:`/tools/09_assembly_lvs`.
-    * - |tools-repo|
+    * - chiplet-cosim
       - GPL-3.0-or-later
+      - Co-simulation of the dies as the system file connects them, under
+        cocotb with Icarus Verilog and, for mixed-signal blocks, ngspice, with
+        one verdict record per run. This site does not document it yet.
+    * - |tools-repo|
+      - GPL-3.0-or-later; the record schemas under ``formats/`` and most CI
+        and Nix helpers Apache-2.0
       - The container that pins and builds the tools above, plus the
         reference design. It also stages the reference reader of the
         ``.chiplet`` specification that the flow tools read with.
+
+The rows without a link are the flow engines, whose repositories are not
+public yet. ADK-Tools stages them into the image at the commits that
+``staging.pin`` in ADK-Tools names, as "Staged sources and Nix packages" on
+:doc:`/tools/07_adk_tools_image` describes.
+
+For those rows the license column gives the tree's primary license. A staged
+tree can also carry files under another license, such as Apache-2.0 format
+schemas, vendored upstream copies and test fixtures, and ``NOTICE.md`` in
+ADK-Tools names each one.
 
 The base process PDK, |pdk-repo|, sits underneath all of this and is documented
 separately at https://ihp-open-pdk-docs.readthedocs.io.
 
 .. note::
-   The pinned revision of each repository, as documented by this site, is in the
-   version matrix on :doc:`/tools/07_adk_tools_image`. That table is generated
-   from the submodules this documentation is built against, so it always
-   describes the code these pages actually describe.
+   The pinned revision of each submodule repository, as documented by this
+   site, is in the version matrix on :doc:`/tools/07_adk_tools_image`. That
+   table is generated from the submodules this documentation is built against,
+   so it always describes the code these pages actually describe. The staged
+   flow tools are not submodules: ADK-Tools pins each of them by commit in its
+   ``staging.pin``, and :ref:`staged_engines` on the same page lists those
+   commits with the version each one carries.
 
 How they connect
 ----------------
 
-.. figure:: /_figures/tikz_ecosystem.*
+.. figure:: /_figures/ecosystem.*
     :align: center
-    :alt: The tools of the ecosystem arranged around the assembly flow.
+    :alt: Six cards around one hub: the KiCad ADK fork and plugin, gds2kicad, hyp_to_gds, Chiplet Studio, the interposer PDK and the ADK assembly DRC.
     :width: 80%
 
-    The design tools of the ecosystem around the KiCad path. The flow tools
-    in the table above are not drawn.
+    The design tools, the interposer PDK and the assembly rule decks of the
+    ecosystem around one hub. The flow tools in the table above are not drawn.
 
 The same set in data-flow terms, following the files rather than the tools:
 
-.. figure:: /_figures/tikz_ecosystem_dataflow.*
+.. figure:: /_figures/ecosystem_dataflow.*
     :align: center
-    :alt: Data-flow graph running from the base PDK and the chiplet GDS files, through the interposer PDK and gds2kicad, into the KiCad ADK fork, and on to hyp_to_gds, the ADK assembly DRC and Chiplet Studio.
+    :alt: Data-flow graph running from the base PDK and the chiplet GDS files, through the interposer PDK and gds2kicad, into the KiCad ADK fork, and on to hyp_to_gds, the ADK assembly DRC and Chiplet Studio, with the .chiplet export finalised by hyp_to_gds, giving the assembly DRC its adapter flags and read by Chiplet Studio.
     :width: 90%
 
     The ecosystem in data-flow terms. Each repository owns one contract
@@ -108,9 +126,10 @@ Two artefacts hold this together.
 
 The ``.chiplet`` file is the **pivot format**. It records where every component
 sits in one shared frame, how each die is mounted in z, its orientation, and
-which artwork it refers to. Every tool downstream of layout reads it, and it
-remains the authoritative placement source even when a derived view, such as a
-3Dblox assembly, is exported from it.
+which artwork it refers to. Every tool downstream of layout writes it, reads
+it or takes its flags from it, and it remains the authoritative placement
+source even when a derived view, such as a 3Dblox assembly, is exported from
+it.
 
 The ``.lyp`` layer property files are the **shared layer source of truth**. The
 interposer PDK owns them, and the converter, the layout tool and the viewer all
@@ -130,10 +149,10 @@ Who owns which rules
     * - Can these vias and pads be built on the interposer
       - The interposer PDK.
     * - Is this bump pitch achievable by this attachment method
-      - The interconnect PDK provides the numbers, the ADK's IXN axis applies
+      - The interconnect PDK provides the numbers, the ADK's IXN rules apply
         them to the assembly.
     * - May this die sit here, at this spacing
-      - The ADK's ASM axis.
+      - The ADK's ASM rules.
     * - Do the pads of this die land on the pillars actually drawn
       - The ADK's manifest-level check.
 
@@ -150,7 +169,7 @@ Licensing in practice
 The ADK, the format specification and both PDKs are Apache-2.0, so a rule deck,
 an adapter or a reader can be reused with minimal obligation. The tools built on
 KiCad and KLayout are GPL, as their upstreams require, and so are the flow
-tools (packaging-flow, interposer-pnr, chiplet-flow and assembly-lvs).
+engines in the table above, apart from the files ``NOTICE.md`` lists.
 
 The container image is a mere aggregation of independently licensed components.
 Each keeps its own license, and ``NOTICE.md`` in the ADK-Tools repository

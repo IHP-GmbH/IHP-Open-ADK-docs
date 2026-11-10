@@ -26,7 +26,10 @@ contract described in :doc:`/formats/03_coordinate_frames`.
     :doc:`/formats/02_chiplet_components` is the whole of the assembly
     document. The 2026 revisions under ``"1.0"`` wrote down parts of the
     existing schema that had never been documented and added optional fields
-    with backward-compatible fallbacks (``attachment_surface_z`` among them).
+    (``attachment_surface_z`` among them). A later revision withdrew the stand-ins
+    for a missing ``attachment_surface_z``: an interposer that seats dies without
+    it has no mount plane (validation rule 17), and ``format_version`` stays
+    ``"1.0"``.
     Minor 1.1 tagged ``solder_bump`` with its minor and closed
     ``assembly.units`` to ``um``; no later minor changes the assembly
     document. Minors 1.1 to 1.5 otherwise add content to source documents
@@ -134,9 +137,8 @@ and ``unplaced``, exist only in a source document (see `Source documents`_).
     * - ``format_version``
       - yes
       - string
-      - Quoted ``"MAJOR.MINOR"``. An assembly is written ``"1.0"`` unless its
-        content needs ``"1.1"``. A reader accepts a higher minor of its major
-        with a warning and refuses any other major.
+      - Quoted ``"MAJOR.MINOR"``, stamped as described above. What a reader
+        accepts is :ref:`validation rule 1 <chiplet_validation_rules>`.
     * - ``assembly``
       - yes
       - object
@@ -382,16 +384,42 @@ The division of labour is strict:
   byte-identical to each other under the parity gate.
 - **Readers expand on read**, using the discovery chain: environment variable
   first, then an upward walk for a conventional sibling checkout, then loud
-  failure naming the variable. A set-but-invalid environment value (the marker
-  subdirectory is missing) falls through to the walk rather than winning.
+  failure naming the variable.
 
-Expansion is restricted to five known ecosystem roots: ``ADK_ROOT``,
-``INTERPOSER_PDK_ROOT``, ``INTERCONNECT_PDK_ROOT``, ``GDS_TO_KICAD_ROOT`` and
-``PDK_ROOT``. An unknown ``${NAME}`` is treated as a typo and fails, rather
-than as licence to read arbitrary environment variables. A path that silently
-kept a literal ``${VAR}`` component would simply "not exist" downstream and
-mask the real problem, so unresolvable references abort with the variable name
-in the message.
+Expansion is restricted to a fixed set of ecosystem roots, and the readers
+differ in which roots they know and in what they do with a root that is set
+but lacks its marker subdirectory:
+
+.. list-table:: ``${VAR}`` expansion in the reference readers
+    :header-rows: 1
+    :widths: 24 40 36
+    :class: adk-wide-table
+
+    * - Reader
+      - Roots
+      - Set but invalid
+    * - ADK, ``checks/pads_vs_pillars.py`` (the only ADK tool that expands)
+      - ``ADK_ROOT``, ``INTERPOSER_PDK_ROOT``, ``INTERCONNECT_PDK_ROOT``,
+        ``GDS_TO_KICAD_ROOT``, ``PDK_ROOT``
+      - Falls through to the walk.
+    * - KiCad export plugin, ``layer_map.py`` (``hyp_to_gds`` and the
+        orchestrator)
+      - The same five
+      - ``INTERPOSER_PDK_ROOT`` without ``libs.tech/intm4tm2_stack.json`` is
+        refused with ``CARRIER_UNSUPPORTED_ROOT`` and never falls back to a
+        sibling checkout, because another KLayout PDK tree, the SG13G2 die PDK
+        included, would otherwise pass for the interposer.
+    * - Chiplet Studio, ``ChipletFormat.cpp``
+      - The same five, plus ``GF180MCU_PDK_ROOT``, ``CHIPLET_STUDIO_ROOT`` and
+        ``CHIPLET_FLOW_TECH`` (the last from the environment only)
+      - Falls through to the walk.
+
+An unknown ``${NAME}`` is treated as a typo and fails, rather than as licence
+to read arbitrary environment variables, so a file that uses one of Studio's
+extra roots opens in Studio and fails in any ADK tool that has to expand that
+path. A path that silently kept a literal ``${VAR}`` component would simply
+"not exist" downstream and mask the real problem, so unresolvable references
+abort with the variable name in the message.
 
 :doc:`/install/03_environment` lists the variables, what each root must contain
 for the discovery walk to accept it, and how to set them.
@@ -516,6 +544,12 @@ starts with ``CARRIER_UNSUPPORTED_TECHNOLOGY``. IntM4TM2 is the only carrier
 this release models, and the KiCad export plugin refuses a system on another
 carrier with the same id.
 
+The assembly the elaborator writes declares the carrier's mount plane as the
+interposer's ``attachment_surface_z``, with the carrier centred at z 0. No body
+is known at that point, so its ``dimensions.thickness`` is the plane as well.
+
+
+.. _chiplet_validation_rules:
 
 Validation rules
 ----------------
@@ -524,7 +558,14 @@ The reference libraries enforce a small set of structural invariants across the
 whole file, including the component fields defined on
 :doc:`/formats/02_chiplet_components`. Everything that needs the filesystem or
 cross-reference resolution is left to the consuming tool, because the libraries
-never touch the filesystem.
+never touch the filesystem. The shape of the document itself is checked
+separately by the machine-readable schema, ``schemas/chiplet.schema.json``.
+
+The list below follows the numbering of the specification's
+``docs/CHIPLET_FORMAT_SPEC.md`` (section *Validation Rules*), which is
+normative and carries the full text of each rule.
+
+.. validation-rules-begin
 
 Hard errors in the reference validator:
 
@@ -547,25 +588,57 @@ Hard errors in the reference validator:
    intermediate files are explicitly allowed. A source document, one with a
    ``system`` block, is refused by every assembly read path whatever the
    caller allows.
-7. ``assembly.units``, when present, must be ``um``.
+7. Quoting is document semantics. A writer quotes every scalar the format
+   defines as a string (``format_version``, ids, names, dates, technology
+   keys, ``top_cell``, paths, adapter ids) unconditionally, whatever the
+   value, and keeps keys bare. A source document is the one exception for its
+   string values, which go bare by a closed allowlist.
+8. A pad's ``io_class`` must allow the ``type`` of every interface it takes
+   part in, per the usage-class table on
+   :doc:`/formats/02_chiplet_components`. A violation is refused, naming the
+   interface, the pad, the class and the type.
+
+Checked at the assembly stage, by the hosts that hold the interconnect
+manifest; the reference validators state this rule and do not run it:
+
+9. A component's interconnect method, resolved through the interconnect
+   method registry, must declare an ``interface_type`` equal to the ``type``
+   of every interface the component takes part in. The rule spans two
+   artifacts, the ``.chiplet`` and the registry, so a green result from a
+   reference reader says nothing about it. No ADK tool at the documented
+   revision runs it.
 
 Reader behaviour that warns or falls back rather than failing:
 
-8. New files should declare ``anchor`` on every component. A reader defaults an
-   absent ``anchor`` to ``bbox_center`` and warns.
-9. An absent or unresolved ``connection`` falls back to the interposer's
-   ``attachment_surface_z``, or to ``dimensions.thickness`` when that field is
-   absent.
-10. A reader must warn, or reject, when any ``position.x`` or ``position.y``
+10. New files should declare ``anchor`` on every component. A reader defaults
+    an absent ``anchor`` to ``bbox_center`` and warns.
+11. A ``connection``, when present, should name a known interconnect method.
+    An absent or unresolved one mounts on the interposer's
+    ``attachment_surface_z`` with connection height 0. See
+    :ref:`chiplet_mounting_plane`.
+12. A reader must warn, or reject, when any ``position.x`` or ``position.y``
     exceeds 1e5 um in magnitude. This is the leak guard for un-converted
     absolute coordinates.
 
 Consumer-level expectations, not enforced by the reference library:
 
-11. Component ``id`` values are unique.
-12. Component ``type`` is one of the four canonical values.
-13. A ``technology`` reference names a defined technology id.
-14. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+13. Component ``id`` values are unique.
+14. Component ``type`` is one of the four canonical values.
+15. A ``technology`` reference names a defined technology id.
+16. A ``layout`` or ``layer_properties`` path exists at the resolved location.
+17. An interposer that seats dies and declares no ``attachment_surface_z`` has
+    no mount plane. A tool that places dies in z for another tool refuses the
+    file; a viewer may show the dies on ``dimensions.thickness``, with a
+    warning naming the file. See :ref:`chiplet_mounting_plane`.
+
+.. validation-rules-end
+
+The top-level block grammar of the specification adds refusals of its own,
+which the merge tooling and both reference readers implement from one
+definition: a reader refuses a document that repeats a top-level key or
+carries a line break other than LF or CRLF, and a writer refuses to emit a
+top-level key it cannot write as a bare key line at column zero, naming the
+key.
 
 
 Reading and writing .chiplet files
@@ -621,7 +694,14 @@ whitespace. ``chiplet_format_io.sheet_names`` (reader release 1.21.0) holds
 the rule for net, pin and pad names on a sheet: a plain first character, then
 plain characters and ``[N]`` digit subscripts. A bus-style name such as
 ``IO[0].pad`` therefore reads back from a sheet as itself, while a range such
-as ``B[0..3]`` is refused.
+as ``B[0..3]`` is refused. ``chiplet_format_io.technology_package`` (reader
+release 1.22.0) validates a technology package, the tree whose manifest is
+``libs.tech/adk/technology.json`` (schema
+``schemas/technology_package.schema.json``), per capability set A (geometry
+and assembly), B (automated design) and C (analysis).
+``python -m chiplet_format_io.technology_package ROOT`` exits 0 when the
+required sets pass, 1 when one does not, 2 when the package is refused and 3
+when the validator itself fails. It needs the ``strict`` extra.
 
 The output is semantically equivalent to, but not byte-identical to, what the
 GPL host tools write. The KiCad fork exporter and the KiCad plugin writer are

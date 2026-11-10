@@ -38,15 +38,41 @@ explicitly:
         --interconnect-adapter ihp_cupillar \
         --interconnect-methods board_complete.ixn_methods.json
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_drc.inc
 
 Omitting it is a supported configuration: the interconnect axis then runs
 assembly-global with the adapter's numbers, exactly as it did before per-method
 scoping existed. The KiCad export pipeline passes the file automatically when it
 was able to derive one.
+
+Producers and consumers
+-----------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 34 54
+   :class: adk-wide-table
+
+   * - Role
+     - Component
+     - Notes
+   * - Producer
+     - ``derive_interconnect_methods`` in the plugin's
+       ``pipeline/orchestrator.py`` (|plugin-repo|)
+     - One entry per method it recognises, joined from the ``.chiplet``'s
+       per-die connections and the interconnect PDK manifest. See
+       `How the exporter derives the file`_.
+   * - Producer
+     - The ADK's resolved-v2 entry (:doc:`/adk/11_resolved_v2_entry`)
+     - Writes ``<id>_assembled.ixn_methods.json``, version 1.0.0.
+   * - Consumer
+     - ``klayout/drc/run_drc.py``
+     - Takes the file only through ``--interconnect-methods`` and pins
+       ``schema`` and ``version``. See `Version policy`_.
+   * - Consumer
+     - ``adk_assembly.drc`` and ``8_2_interconnect.drc``
+     - Check every method entry, then switch the interconnect axis to
+       per-method mode. See `What the deck does with it`_.
 
 Schema
 ------
@@ -89,9 +115,11 @@ Top level
 Method entries
 ~~~~~~~~~~~~~~
 
-Every entry under ``methods`` must carry all four keys. This is enforced twice:
-by the schema, and again by ``adk_assembly.drc``, which raises by name on the
-first missing key rather than letting a ``nil`` reach a rule.
+Every entry under ``methods`` must carry all four keys. The schema says so,
+and at run time ``adk_assembly.drc`` enforces it, raising by name on the first
+missing key rather than letting a ``nil`` reach a rule. The value constraints
+in the table below are the schema's; of the numbers, only
+``IXN_pitch > IXN_pad_size`` is enforced at run time (see `Version policy`_).
 
 .. list-table::
    :header-rows: 1
@@ -126,41 +154,12 @@ negative spacing that silently checks nothing.
 The schema file
 ~~~~~~~~~~~~~~~
 
-``config/schema/ixn_methods.schema.json``, validated against the shipped
-sidecars in CI so the committed schema cannot drift from the data.
+``config/schema/ixn_methods.schema.json``. The ADK test suite validates the
+sidecar its resolved-v2 entry writes against it. No tool applies it at run
+time.
 
 .. literalinclude:: /../src/IHP-Open-ADK/config/schema/ixn_methods.schema.json
     :language: json
-
-Example
--------
-
-Taken from the two-die reference assembly, where ``U1`` is attached with a Cu
-pillar and ``U2`` with a finer-pitch microbump:
-
-.. code-block:: json
-
-    {
-      "schema": "adk-ixn-methods",
-      "version": "1.0.0",
-      "generator": "chiplet_kicad_plugin/orchestrator",
-      "assembly_gds": "two_die_interposer_complete.gds",
-      "source_chiplet": "two_die_interposer.chiplet",
-      "methods": {
-        "cupillar_opt1": {
-          "dies": ["U1"],
-          "IXN_spacing": 40.0,
-          "IXN_pitch": 75.0,
-          "IXN_pad_size": 35.0
-        },
-        "vendorx_microbump": {
-          "dies": ["U2"],
-          "IXN_spacing": 15.0,
-          "IXN_pitch": 50.0,
-          "IXN_pad_size": 35.0
-        }
-      }
-    }
 
 How the exporter derives the file
 ---------------------------------
@@ -204,8 +203,8 @@ The derivation degrades rather than guesses, at every step:
 * A manifest entry with a missing or malformed number is skipped, again leaving
   it to the adapter.
 * A non-positive number is skipped, because the schema requires values greater
-  than zero and one bad entry would make ``run_drc.py`` reject the whole
-  sidecar.
+  than zero. Nothing downstream would catch it: ``run_drc.py`` does not apply
+  the schema.
 * When nothing is derivable, no file is written at all and the DRC runs exactly
   as it did before this refinement existed.
 
@@ -259,13 +258,55 @@ Version policy
 ``run_drc.py`` pins ``schema`` and ``version`` with exact string matches, the
 same fail-loud policy as the boundary manifest, and for the same reason: the
 deck JSON-parses the file blind, so a stale or foreign sidecar has to be
-rejected by the runner or not at all. Per-method key presence is validated by
-the deck, and the numeric values are validated by the schema.
+rejected by the runner or not at all. That is all the runner checks. The deck
+then checks that every method entry carries the four keys, that every die in
+``dies`` is a boundary-manifest instance and that ``IXN_pitch`` exceeds
+``IXN_pad_size``, and converts each value with Ruby's ``to_f`` without checking
+it further.
+
+.. warning::
+   Nothing at run time checks that ``IXN_spacing`` is greater than zero. A
+   hand-written or edited sidecar with ``IXN_spacing`` set to ``0``, a
+   negative number, ``null`` or a string that does not read as a number runs a
+   spacing check that can never fail, so that method's
+   ``IXN.b.<method>`` passes on any layout, and its ``IXN.x`` pairs fall back
+   to the other method's spacing. Validate a sidecar you did not get from the
+   exporter against the schema before you pass it.
 
 .. tip::
    If the DRC report suddenly shows ``IXN.b`` instead of ``IXN.b.<method>``, the
    methods file was not passed or derived nothing. Check that the ``.chiplet``
    dies carry a ``connection:`` id the interconnect PDK manifest knows.
+
+Example
+-------
+
+Taken from the two-die reference assembly, where ``U1`` is attached with a Cu
+pillar and ``U2`` with a finer-pitch microbump:
+
+.. code-block:: json
+
+    {
+      "schema": "adk-ixn-methods",
+      "version": "1.0.0",
+      "generator": "chiplet_kicad_plugin/orchestrator",
+      "assembly_gds": "two_die_interposer_complete.gds",
+      "source_chiplet": "two_die_interposer.chiplet",
+      "methods": {
+        "cupillar_opt1": {
+          "dies": ["U1"],
+          "IXN_spacing": 40.0,
+          "IXN_pitch": 75.0,
+          "IXN_pad_size": 35.0
+        },
+        "vendorx_microbump": {
+          "dies": ["U2"],
+          "IXN_spacing": 15.0,
+          "IXN_pitch": 50.0,
+          "IXN_pad_size": 35.0
+        }
+      }
+    }
 
 See :doc:`/adk/04_ixn_rules` for the rules themselves and their defaults, and
 :doc:`/tools/06_interconnect_pdk` for the method registry this sidecar is

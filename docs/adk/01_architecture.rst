@@ -16,7 +16,7 @@ The role model
 
 The ADK sits one abstraction layer above all PDKs.
 
-.. figure:: /_figures/tikz_rolemodel.*
+.. figure:: /_figures/rolemodel.*
     :align: center
     :alt: The ADK as a single layer above the chiplet and interposer PDKs, reaching each one only through an adapter.
     :width: 90%
@@ -50,7 +50,7 @@ Rules under ``klayout/drc/rule_decks/`` and templates under
 from an abstract name to a PDK-specific fabrication layer lives in the adapters
 under ``pdk_adapters/``, and nowhere else.
 
-Three abstract inputs exist today.
+Four abstract inputs exist today.
 
 .. list-table::
     :header-rows: 1
@@ -72,6 +72,13 @@ Three abstract inputs exist today.
       - The mechanical outline of each placed chiplet, built from the
         manifest's ``polygon_dbu``. Not a fabrication layer, and not something
         an adapter may declare.
+    * - ``wire_bond_pad_input``
+      - optional, adapter-declared
+      - interposer adapter
+      - A lambda that takes a layout source and returns the interposer's
+        wire-bond pads. The deck calls it on the carrier with every die cell
+        pruned, so a die's own pads are never read. Without it, ASM.g is
+        reported not applicable.
     * - ``interconnect_region``
       - optional
       - interconnect adapter
@@ -83,18 +90,15 @@ IHP IntM4TM2 interposer it is derived from its two attachment mechanisms, the
 Cu pillar and the solder bump, each formed where a passivation opening and a
 final Cu pad overlap:
 
-.. code-block:: ruby
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interposer/intm4tm2.drc
+    :language: ruby
+    :start-at: passiv_pillar =
+    :end-at: chiplet_attachment_input =
 
-    passiv_pillar = polygons(9, 35)
-    dfpad_pillar  = polygons(41, 35)
-    passiv_sbump  = polygons(9, 36)
-    dfpad_sbump   = polygons(41, 36)
-
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
-
-That is the entire executable content of
-``pdk_adapters/interposer/intm4tm2.drc``; the rest of the file is its SPDX
-header and a comment saying which mechanisms the region models. On a
+Together with the optional ``wire_bond_pad_input`` lambda, that is the
+entire executable content of ``pdk_adapters/interposer/intm4tm2.drc``; the
+rest of the file is its SPDX header and a comment saying which mechanisms the
+two inputs model. :doc:`/adk/02_adapter_contract` shows the file in full. On a
 different substrate the same abstract input might be built from a
 hybrid-bonding pad array. The rule never cares which, which
 is what lets one rule deck check assemblies built on substrates the deck has
@@ -174,7 +178,7 @@ adapter to change the substrate. Swap the interconnect adapter to change the
 bumping vendor. Neither touches the other, and the ADK rules are unchanged
 either way.
 
-.. figure:: /_figures/tikz_two_axes.*
+.. figure:: /_figures/two_axes.*
     :align: center
     :alt: The interposer adapter axis and the interconnect adapter axis crossed over an unchanged rule deck, each varying independently of the other.
     :width: 90%
@@ -245,7 +249,7 @@ joined with newlines:
     8_2_interconnect.drc        only if an interconnect adapter and/or a
                                 per-method file was loaded; the IXN rules
 
-.. figure:: /_figures/tikz_eval_chain.*
+.. figure:: /_figures/eval_chain.*
     :align: center
     :alt: The assembly wrapper concatenating layer definitions, the interposer adapter, generated validation, the optional interconnect segments and the rule decks into one Ruby string.
     :width: 90%
@@ -275,7 +279,9 @@ The required list is a single line in the wrapper:
 
 The interconnect validation is built the same way from
 ``['IXN_spacing', 'IXN_pitch', 'IXN_pad_size']``, and checks presence in the
-``interconnect_rules`` dictionary rather than definedness of a local.
+``interconnect_rules`` dictionary rather than definedness of a local. That
+dictionary is already seeded from ``config/interconnect.json``, so an adapter
+that omits a key inherits the registry default; see :ref:`adk_ixn_fail_loud`.
 
 Cross-tool consistency
 ----------------------
@@ -313,6 +319,8 @@ namespace, the assembly contract is PDK-agnostic by construction and no
 ``(190, 0)`` literal survives in the default path.
 :doc:`/formats/04_boundary_manifest` is the normative description.
 
+.. _adk_known_limitations:
+
 Known limitations
 -----------------
 
@@ -341,7 +349,10 @@ The KLayout deck sees only 2D geometry plus the manifest, so it cannot check
 heights at all. The rule "each die's ``position.z`` equals the mounting surface
 plus its connection-stack height" is enforced by the 3Dblox exporter,
 ``openroad/chiplet2dbx.py``, which compares the two to a tolerance of 1e-6 um
-and refuses to export an assembly that does not satisfy it exactly. Downstream,
+and refuses to export an assembly that does not satisfy it exactly. It also
+refuses an assembly whose interposer seats dies but declares no
+``attachment_surface_z``, since without that plane there is no mounting surface
+to measure from. Downstream,
 ``read_3dbx`` in OpenROAD loads the exported model and ``check_3dblox`` lints
 its geometry; the exporter deliberately grounds the substrate so that the
 floating-chip check has a reference. An assembly that is never exported gets no

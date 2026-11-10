@@ -15,7 +15,7 @@ parameter registry the KLayout deck reads, optionally merges the numeric
 overrides an interposer adapter declares, and renders a block of KiCad design
 rules to stdout or to a file.
 
-.. warning::
+.. important::
 
     The KiCad side is a **partial** mirror of the ADK deck, by construction.
     Of the |asm-rule-count| assembly rules exactly one is emitted, and none of
@@ -165,10 +165,7 @@ Running the generator
         --interconnect-adapter ihp_cupillar \
         --out adk_section.txt
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 Both adapter flags take a registry id, resolved through the ADK registry as
 for the DRC runner (:doc:`/adk/02_adapter_contract`); a path is refused. An
@@ -181,12 +178,15 @@ Append the rendered section to the project's ``.kicad_dru``, below its
 ``(version 1)`` line. KiCad reads that file per project, so the rules apply to the board you are placing chiplets on
 and to nothing else.
 
+.. _adk_override_grammar:
+
 How adapter overrides are merged
 --------------------------------
 
-An interposer adapter is Ruby, read by the KLayout deck. The generator does not
-execute it. It reads the overrides with the ADK's own parser,
-``adk_rule_params.py``, which accepts one form per line:
+An interposer adapter is Ruby, read by the KLayout deck, which simply reads the
+``drc_rules`` dictionary the adapter mutated. The generator does not execute it.
+It reads the overrides with the ADK's own parser, ``adk_rule_params.py``, which
+accepts one form per line:
 
 .. code-block:: ruby
 
@@ -212,6 +212,14 @@ deck would apply for anything else, so it refuses rather than guesses:
 - A negative value is a hard error. A spacing or area constraint cannot be
   negative.
 
+The generator merges overrides only when invoked with
+``--interposer-adapter <name>``. The ADK's adapter README lists the exact
+override form.
+
+Placement reads no adapter, so a packaging-flow run can refuse an override the
+generator accepts: :ref:`placement and adapter overrides
+<adk_placement_overrides>` says when.
+
 Lengths are rendered in mm, as fixed-point decimals to 1 nm with trailing zeros
 stripped: 200 um becomes ``0.2mm``. Scientific notation is never emitted,
 because KiCad's DRU length-literal parser cannot read it, and a nonzero length
@@ -229,10 +237,25 @@ directories carry no ``__init__.py``), so put the generator's directory on
 
     import sys
     sys.path.insert(0, "/path/to/adk/kicad/dru")
-    from generate_assembly_dru import load_defaults, render_assembly_rules
+    from generate_assembly_dru import (
+        _apply_overrides, load_defaults, parse_adapter_overrides,
+        render_assembly_rules, resolve_adapter_path,
+    )
 
-    section = render_assembly_rules(load_defaults(), adapter_name="intm4tm2")
+    rules = load_defaults()
+    adapter = resolve_adapter_path("intm4tm2")
+    _apply_overrides(rules, parse_adapter_overrides(adapter), adapter, "Interposer")
+    section = render_assembly_rules(rules, adapter_name="intm4tm2")
 
+``render_assembly_rules`` renders the numbers it is given. ``adapter_name`` is
+only the provenance label in the file's ``Source:`` comment: passing it does not
+merge the adapter's overrides, so merge them yourself, as above, or the file
+claims overrides it does not contain. Merge through ``_apply_overrides``, as
+the CLI does, rather than with ``dict.update``: it refuses an override of an
+unknown key or a negative value before it merges. It is the module's only
+merge-and-validate path today, although its name marks it private.
+``parse_adapter_overrides`` is defined in ``adk_rule_params`` at the ADK root;
+the module re-exports it and puts that root on ``sys.path`` itself.
 ``render_assembly_rules`` returns a string ready to append to a
 ``.kicad_dru``, below its ``(version 1)`` line. Its signature is append-only:
 

@@ -1,0 +1,11 @@
+- id: U1
+  type: die
+  technology: sg13g2
+  anchor: gds_origin
+  orientation: flip_chip
+  connection: cupillar_opt1                          # IHP Cu pillar
+  layout: ./gds/Metal_Test.gds
+  top_cell: Metal_Test
+  position: {x: 1954.121, y: 2332.483, z: 54.8103}   # 10.8103 + 44 (cupillar_opt1)
+  dimensions: {width: 730.0, height: 2566.339, thickness: 750.0}
+  rotation: {z: 0.0}

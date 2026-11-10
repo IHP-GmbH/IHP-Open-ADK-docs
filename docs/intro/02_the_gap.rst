@@ -22,7 +22,7 @@ That splits the design problem in two. Each chiplet is a conventional die design
 against a conventional PDK. The assembly is a new problem, and it is the one
 that had no open tooling.
 
-.. figure:: /_figures/tikz_25d.*
+.. figure:: /_figures/25d.*
     :align: center
     :alt: Two dies from different process nodes mounted on a silicon interposer.
     :width: 95%
@@ -38,17 +38,18 @@ The published open-source flows cover die design thoroughly. Between the
 finished dies and a fabricable assembly there was very little.
 
 **No interposer PDK usable by an open flow.** A full process PDK carries several
-hundred layers, nearly all of them frontend layers an interposer never uses. The
-interposer needs the upper metal stack, the vias between those metals, and the
-attachment structures, presented as a technology an open layout tool can load.
+hundred layer/purpose pairs, and more than half of them serve front-end devices,
+the lower metals and process options an interposer never uses. The interposer
+needs the upper metal stack, the vias between those metals, and the attachment
+structures, presented as a technology an open layout tool can load.
 
 **No path from die GDS into a board-level design tool.** An interposer is
 laid out much like a very small, very dense PCB, but a PCB tool cannot read
 GDSII, and a die's pads are not footprints.
 
 **No board tool that works at these scales.** PCB tools are built around
-millimetres. An interposer is designed in micrometres with features and grids
-down to the nanometre, which stresses assumptions about coordinate precision,
+millimetres. An interposer is designed in micrometres, with features down to
+about 0.2 um on a 5 nm grid, which stresses assumptions about coordinate precision,
 rendering and zone filling that hold comfortably at PCB scale.
 
 **No way back from board-level routing to fabricable geometry.** Routing
@@ -83,7 +84,7 @@ Underneath all of these sits one structural problem. Interposer design lands
 exactly between two mature tool cultures that disagree about almost everything
 operational.
 
-.. figure:: /_figures/tikz_gap.*
+.. figure:: /_figures/gap.*
     :align: center
     :alt: The mismatch between board-level and IC-level tooling.
     :width: 95%
@@ -123,7 +124,7 @@ connectivity axis, closes the rest of the chain.
       - A GDS to KiCad converter for footprints, symbols and pin lists.
         :doc:`/tools/03_gds2kicad`
     * - Board tool at semiconductor scale
-      - A KiCad fork hardened for nanometre-scale work.
+      - A KiCad fork hardened for sub-micrometre work.
         :doc:`/tools/01_kicad_adk_mod`
     * - Assembly interchange
       - The ``.chiplet`` format, published as an open specification.
@@ -165,9 +166,7 @@ To our knowledge, this is the first open assembly design kit tied to a real,
 manufacturable open foundry process. The claim is deliberately narrow.
 
 Other open work is active in this space and is complementary rather than
-competing. While other teams, such as the US-based OpenROAD project, are rapidly
-advancing open tools in this space, the IHP Open ADK offers complementary
-capabilities. The 3Dblox assembly format, on the standards track as IEEE P3537,
+competing. The 3Dblox assembly format, on the standards track as IEEE P3537,
 has a BSD-3 licensed implementation in OpenROAD, and the ADK exports to it
 rather than competing with it. See :doc:`/formats/08_3dblox_interop`.
 

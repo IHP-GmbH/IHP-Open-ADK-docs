@@ -15,97 +15,64 @@ itself, and :doc:`/flow/05_hyp_to_gds` for the converter it drives.
 Running the export
 ------------------
 
-1. Open the assembly board in ``pcbnew``.
-2. *Tools > External Plugins > Chiplet Export*.
-3. Fill in the dialog and click **Run**. Log lines stream into the dialog while
-   the worker runs; **Cancel** terminates the worker subprocess.
+:doc:`/tools/02_chiplet_export_plugin` is the field-by-field reference for the
+dialog. These are the steps in the order you take them:
 
-The fields that matter:
-
-**Output directory.**
-   Where the artefacts land. Point it at your project's ``outputs/``
-   directory, the sibling of ``kicad/``. In a scaffolded project the dialog
-   already does that for you: when the loaded board sits in a directory named
-   ``kicad`` that has a sibling ``outputs/``, that sibling is the default.
-   Anywhere else the default is the directory holding the ``.kicad_pcb``,
-   which is rarely what you want once the project has grown an ``outputs/``
-   tree.
-
-**Complete assembly GDS** (default off).
-   The interposer plus every die instance flattened into one GDS. Enable it:
-   the ADK assembly DRC needs it, and with it off there is no assembly check.
-
-**Annotate chiplet boundaries** (default off).
-   Paints each chiplet boundary and its instance label onto a viewer-only
-   annotation layer, ``1000/0``, for eyeball inspection in KLayout. No rule
-   reads that layer. The assembly contract lives in the boundary manifest, not
-   in the GDS, which is what stops it aliasing a fabrication layer.
-
-**PDK roots.**
-   The interposer, interconnect and ADK checkouts the pipeline will use. Each
-   field is pre-filled by the discovery chain, so the provenance of every
-   dependency is visible rather than implicit. Edit one to export against a
-   different checkout.
-
-**Connection stack (default).**
-   The assembly-wide attachment method, drawn from the interconnect manifest.
-   Each entry is labelled with the numbers it turns on, for example
-   ``cupillar_opt1 - 75um pitch, 44um dia``, and those are the very numbers the
-   interconnect rules will check. Per-die ``CONNECTION`` fields override it.
-
-**Per-die settings.**
-   One row per die footprint, initialised from the board and written back to it
-   on Run. Interconnect method and die thickness, as described in
-   :doc:`/flow/03_interposer_design`.
-
-**Interposer export report.**
-   Only for a board ``interposer-pnr export`` drew against a sheet, or a draft
-   board you updated from its draft sheet. Pick the report export wrote beside
-   the board; the export then names the I/O pad nets as the planner does. A
-   board you drew by hand needs none. The headless equivalent is
-   ``chiplet-export --export-report PATH``, and
+1. Open the assembly board in ``pcbnew`` and start
+   *Tools > External Plugins > Chiplet Export*.
+2. Check that **Output directory** points at your project's ``outputs/``
+   directory, the sibling of ``kicad/``. In a scaffolded project that is the
+   default. Anywhere else the default is the directory holding the
+   ``.kicad_pcb``, which is rarely what you want once the project has grown an
+   ``outputs/`` tree.
+3. Enable **Complete assembly GDS** (default off): the ADK assembly DRC needs
+   it, and with it off there is no assembly check. **Annotate chiplet
+   boundaries** only paints a viewer-only layer, ``1000/0``, for inspection in
+   KLayout; no rule reads it.
+4. Check the **PDK roots**, which the discovery chain pre-fills, and edit one
+   to export against a different checkout. Pick the assembly-wide
+   **Connection stack**. Each entry is labelled with the numbers it turns on,
+   for example ``cupillar_opt1 - 75um pitch, 44um dia``, and those are the
+   numbers the interconnect rules will check.
+5. In **Per-die settings**, give every die its outline layer
+   (``DIE_OUTLINE_LAYER``) and, where it differs from the assembly-wide stack,
+   its interconnect method. The die thickness is in the collapsed
+   *3D / advanced* pane. An empty outline layer stops the run.
+   :doc:`/flow/03_interposer_design` describes the fields and
+   :ref:`export_per_die_settings` has the rules.
+6. Only for a board ``interposer-pnr export`` drew against a sheet, or a draft
+   board you updated from its draft sheet: pick the report export wrote beside
+   the board in **Interposer export report**, so the export names the I/O pad
+   nets as the planner does. A board you drew by hand needs none.
    :ref:`chiplet_export_report` has the rules.
-
-**Worker Python.**
-   The interpreter that runs ``hyp_to_gds.py`` and the ADK DRC. The placeholder
-   shows what the discovery chain resolved, so an empty field reads as
-   provenance rather than as something missing.
+7. **Worker Python** shows the interpreter the discovery chain resolved for
+   ``hyp_to_gds.py`` and the ADK DRC. Set it only to override that.
+8. Click **Run**. Log lines stream into the dialog while the worker runs;
+   **Cancel** terminates the worker subprocess.
 
 What happens when you press Run
 -------------------------------
 
-.. code-block:: text
+The run first preflights the board and refuses, with nothing written, when the
+interconnect PDK manifest, the carrier pad domains, a die outline layer, the
+I/O pad carriers or the export report is at fault. Each refusal is listed under
+`Common failures`_. It then writes the ``.hyp`` and the intermediate
+``.chiplet``, runs ``hyp_to_gds.py``, which builds the GDS layouts and their
+sidecars under ``layout/`` and finalises the ``.chiplet`` in place, and, with
+the complete GDS enabled, runs the ADK assembly DRC into
+``reports/<board>_assembly_drc.lyrdb``. :ref:`The export sequence
+<chiplet_export_sequence>` lists every step.
 
-    0. check the I/O pad carriers and export report      (refuses, nothing written)
-    1. resolve the worker Python and hyp_to_gds.py       (fails early if absent)
-    2. write <board>.hyp                                 (HyperLynx writer)
-    3. write the intermediate <board>.chiplet            (chiplet writer)
-    4. stage both into the output directory
-    5. run hyp_to_gds.py
-         -> layout/<board>_interposer.gds
-         -> layout/<board>_complete.gds        (when enabled)
-         -> layout/*.boundaries.json
-         -> layout/*.pillars.json
-         -> rewrite <board>.chiplet in place, finalised
-    6. run the ADK assembly DRC over the complete GDS    (when enabled)
-         -> reports/<board>_assembly_drc.lyrdb
-
-Step 0 refuses a board whose carriers cannot be named: a carrier on two nets, a
-missing or repeated ``IO_PAD_ID`` on a board export drew, or a missing or wrong
-export report. Steps 2 and 3 are Python ports of the KiCad C++ exporters, and
-they are held byte-exact against them by the plugin's regression tests. Step 5
-is where the geometry is actually built. Step 6 is a check, not a gate: a DRC
-failure does not invalidate the exported artefacts, the dialog's run still
-succeeds, and the verdict is reported separately as
-``assembly DRC: PASSED / FAILED / NOT RUN`` with the report path. The headless
-command, below, exits 3 in that case unless you pass ``--allow-drc-fail``.
+The DRC is a check, not a gate: a DRC failure does not invalidate the exported
+artefacts, the dialog's run still succeeds, and the verdict is reported
+separately as ``assembly DRC: PASSED / FAILED / NOT RUN`` with the report path.
 
 Headless
 --------
 
-The same pipeline runs without the GUI. In the tools image, the end-to-end
-self test exercises it on the two-die test design, copied to ``/work/example``
-as :doc:`/install/01_container` describes:
+The same pipeline runs without the GUI. In the tools image, the end-to-end self
+test exercises it on the reference design, copied to ``/work/example`` as
+:doc:`/install/01_container` describes:
 
 .. code-block:: bash
 
@@ -120,19 +87,11 @@ for. From ``/work``, on the board you drew in a project ``adk-new-project`` made
         --board       heterogenic-designs/my_design/kicad/my_design.kicad_pcb \
         --output-dir  heterogenic-designs/my_design/outputs
 
-It always writes the complete assembly GDS and always runs the assembly DRC.
-Exit 0 means the files were written and the DRC passed, exit 1 that nothing
-trustworthy was written, and exit 3 that the files were written but the DRC
-did not pass. ``--allow-drc-fail`` turns that 3 into 0 when you want the
-geometry regardless; the last line still says how the DRC ended. Add
-``--export-report PATH`` for a board drawn against a sheet.
-:doc:`/tools/02_chiplet_export_plugin` lists the exit codes and the flags.
-
-.. note::
-   Anything headless must run under a Python that can ``import pcbnew``, which
-   means the KiCad build's own interpreter. The worker Python for
-   ``hyp_to_gds.py`` is resolved separately through the discovery chain, and
-   the two are usually different interpreters.
+It always writes the complete assembly GDS and always runs the assembly DRC,
+and its exit status says whether the DRC passed. Add ``--export-report PATH``
+for a board drawn against a sheet. :ref:`The plugin's headless reference
+<chiplet_export_headless>` has the exit table, the flags and the interpreter it
+needs.
 
 The output tree
 ---------------
@@ -145,6 +104,7 @@ parentheses:
 
     outputs/
       two_die_interposer.chiplet                        deliverable
+      two_die_interposer.chiplet.exportcontent.sha256   deliverable
       MANIFEST.md                                       deliverable
       (two_die_interposer.hyp)                          regenerated
       layout/
@@ -166,7 +126,13 @@ interposer GDS by a ``layout/<file>`` relative path, resolved against the
 ``.chiplet``'s own directory. It then auto-detects the ``_complete.gds`` from
 that same directory, and the assembly DRC finds each sidecar next to its GDS.
 So layouts and their sidecars travel together under ``layout/``, reports under
-``reports/``, and only the two index files sit at the root.
+``reports/``, and only the two index files and the ``.chiplet``'s digest
+sidecar sit at the root.
+
+The reference design runs without metal fill. With fill on
+(:ref:`hyp_to_gds_fill_seal_ring`), two more files appear:
+``layout/<board>_interposer.fill_coverage.json`` and
+``reports/<board>_fill_density.json``.
 
 File by file
 ------------
@@ -179,9 +145,9 @@ readable, diffable. It names the assembly, the interposer adapter, every
 technology with a path to its layer-properties file, the expanded connection
 stacks, and one component entry per interposer and per die.
 
-The version written in step 3 is **intermediate**: board coordinates are not
-yet in the canonical frame, and the file carries a
-``_metadata.finalize_required: true`` marker. ``hyp_to_gds.py`` rewrites it in
+The version the plugin writes before ``hyp_to_gds.py`` runs is
+**intermediate**: board coordinates are not yet in the canonical frame, and the
+file carries a ``_metadata.finalize_required: true`` marker. ``hyp_to_gds.py`` rewrites it in
 place once the interposer GDS exists, re-anchors every position to the GDS
 bounding-box corner frame, and strips the marker. Readers refuse a file that
 still carries it, so an aborted export cannot be mistaken for a finished one.
@@ -191,6 +157,18 @@ step failed. Read the dialog log rather than the file.
 
 :doc:`/formats/01_chiplet` and :doc:`/formats/02_chiplet_components` are the
 field reference; :doc:`/formats/03_coordinate_frames` explains the frame.
+
+``<board>.chiplet.exportcontent.sha256``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A digest of the exporter-owned content of the ``.chiplet``, recorded after each
+successful export. The next export compares the file on disk against it before
+replacing the ``.chiplet``: if you edited an exporter-owned field by hand, a
+position for example, the re-export stops instead of overwriting your edit.
+Blocks the exporter does not own, such as ``flow:`` and ``netlist:``, are
+carried over and do not change the digest. ``MANIFEST.md`` reports what the
+check found under *Previous-export content guard*. It says nothing about
+whether the content is correct. Keep it next to the ``.chiplet``.
 
 ``MANIFEST.md``
 ~~~~~~~~~~~~~~~
@@ -363,9 +341,9 @@ The scaffolded project ``.gitignore`` encodes the split. Ignored:
     outputs/reports/assembly_drc/
     outputs/logs/
 
-Everything else under ``outputs/`` is tracked on purpose: the ``.chiplet``, the
-``MANIFEST.md``, the interposer GDS, the boundary, pillar and interconnect
-sidecars, and both DRC reports.
+Everything else under ``outputs/`` is tracked on purpose: the ``.chiplet`` and
+its digest sidecar, the ``MANIFEST.md``, the interposer GDS, the boundary,
+pillar and interconnect sidecars, and the DRC reports.
 
 The obvious split, track sources and ignore all outputs, is not the one used
 here. A fresh clone should open the design in Chiplet Studio and show the
@@ -380,8 +358,12 @@ Checking the export
 ``NOT RUN`` usually means the complete assembly GDS was not enabled, or the
 KLayout command line is unavailable.
 
-**Read ``MANIFEST.md``.** Every file the run intended to produce is listed. A
-file listed there but missing on disk means a stage failed quietly.
+**Read ``MANIFEST.md``.** The ``.chiplet``, every ``layout/`` product and every
+report is listed, ticked ``[x]`` when it is on disk. An unticked ``[ ]`` entry
+is either an output the run did not ask for, such as the fill files without
+fill, the pillar files without a Cu-pillar stack, or the complete GDS, its
+sidecars and the assembly DRC report with the complete GDS off, or a stage that
+failed quietly. Compare the unticked entries against the options you ran with.
 
 **Check the ``.chiplet`` was finalised.** No ``_metadata`` block should remain.
 
@@ -396,18 +378,56 @@ visible immediately, and all of them trace back to a board field rather than to
 the export. :doc:`/flow/07_view_and_inspect` covers the inspection workflow.
 
 **Re-run the DRC on its own** when you want to change adapters or scoping
-without re-exporting:
+without re-exporting. To repeat what the export ran, pass the interconnect
+adapter the ``.chiplet`` declares under ``interconnect.adapter``
+(``vendorx_microbump`` in the reference design) and the per-method sidecar:
 
 .. code-block:: bash
 
     adk-drc --path outputs/layout/<board>_complete.gds \
             --interposer-adapter intm4tm2 \
+            --interconnect-adapter vendorx_microbump \
+            --interconnect-methods outputs/layout/<board>_complete.ixn_methods.json \
             --run_dir outputs/reports/assembly_drc
 
+Both interconnect flags are optional. Leave them out and the run checks the
+placement rules only: the interconnect checks are dropped without an error,
+and the report is clean of IXN violations because none were looked for.
 :doc:`/adk/05_run_drc` documents every flag.
 
 Common failures
 ---------------
+
+``Interconnect PDK source refused: the resolved interconnect PDK root at ... does not contain manifest/interconnect_methods.json``
+    The interconnect PDK root in the dialog, or ``INTERCONNECT_PDK_ROOT``,
+    points at a directory that is not a complete interconnect PDK checkout.
+    Point it at one.
+
+``Carrier pad domains refused: ...``
+    A die footprint marked with ``CHIPLET_PAD_DOMAINS`` carries pad metadata
+    the export cannot render as carrier copper. The message names the
+    footprint and the cause.
+
+``Die outline layer refused: U1, U2: ...``
+    The message names every footprint at fault and its cause, so one run
+    reports them all. A missing or malformed ``DIE_OUTLINE_LAYER`` is fixed in
+    the dialog's *Outline layer* column or on the footprint (``39/4`` for an
+    SG13G2 die). A part that is not a die, such as a resistor or a connector,
+    has no ``GDS_FILE`` and no dialog row: set *Exclude from bill of materials*
+    on its symbol, or give it a ``GDS_FILE`` if it is a die. A reference two
+    parts share is fixed by renaming one. :ref:`export_per_die_settings` has
+    the rules.
+
+``Attach frame refused: ...``
+    The worker could not read the mount plane from the interposer PDK, which
+    every export needs. Set ``INTERPOSER_PDK_ROOT`` to an IntM4TM2 checkout;
+    :ref:`hyp_to_gds_attach_frame` explains why there is no fallback.
+
+``Die outline refused: U1: ...``
+    The worker found the declared layer in the die GDS empty, or not one
+    axis-aligned rectangle, or the GDS has more than one top cell. Nothing is
+    written. Check the layer in KLayout against the ``GDS_FILE`` the footprint
+    names.
 
 ``Hyperlynx writer aborted``
     Most commonly the board has no closed ``Edge.Cuts`` outline. The writer
@@ -428,6 +448,11 @@ No Cu pillars in the rendered assembly
 A die exported with ``thickness: 0.0``
     ``DIE_THICKNESS_UM`` was never set on that die. The export names every die
     that ships a zero in its warnings.
+
+``Export report refused: export report ...``
+    The file given as the export report cannot be read, or is not a report
+    ``interposer-pnr export`` writes. Give the report written with this board;
+    see :ref:`chiplet_export_report`.
 
 ``IO pad carriers refused: carrier pad J1 is linked to a sheet symbol, ...``
     The board was drawn by ``interposer-pnr export`` against a sheet, or is a

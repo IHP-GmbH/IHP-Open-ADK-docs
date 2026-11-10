@@ -68,10 +68,7 @@ Ask first:
 
     python3 gds_to_kicad.py die.gds --scan-layers
 
-In the tools image these scripts sit under ``$GDS_TO_KICAD_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_gds2kicad_scripts.inc
 
 That reports the candidate pad and text layers with their shape counts. To see
 how a layer-properties file names those layers:
@@ -183,9 +180,20 @@ The converter reads the top cell, flattens it, pulls box and polygon shapes off
 the pad layer and names each pad from the nearest text label. Rectangular pads
 become ``smd rect``; anything else becomes ``smd custom`` carrying a
 ``gr_poly`` primitive, so the real pad shape survives into KiCad rather than
-being approximated by a rectangle. A courtyard is drawn around the die outline,
-which matters later: the design-time assembly spacing check is expressed as a
+being approximated by a rectangle. A courtyard is drawn around the pads, which
+matters later: the design-time assembly spacing check is expressed as a
 courtyard clearance.
+
+Add ``--die-outline-layer N/D`` when the GDS you convert carries the die
+outline, ``39/4`` on an SG13G2 die. The courtyard then follows the die outline
+instead of the pads, and the footprint records the layer as its
+``DIE_OUTLINE_LAYER`` property, the field the export sizes the die from (see
+:ref:`export_per_die_settings`). A curated pad-review GDS keeps the outline
+when it was generated with the flag. The export reads the outline from the GDS
+that ``GDS_FILE`` names. In the reference design the stripped GDS carries only
+the pad and text layers, so its footprint is converted without the flag; its
+``GDS_FILE`` names the full ``Metal_Test.gds``, which does carry ``39/4``, and
+the board sets the field to that.
 
 ``--flip-chip`` mirrors the X coordinates, producing the footprint as seen from
 the interposer side. Use it for any die that mounts face down, which is every
@@ -270,8 +278,11 @@ coordinates. Without an explicit die size the outline is taken from the pad
 extents plus a margin.
 
 Pads, labels and outline are stamped on the canonical generic layers
-(``205/0``, ``205/25``, ``206/0``), so the output feeds the converters above
-with no layer flags at all. Alongside the GDS the generator writes a
+(``205/0``, ``205/25``, ``206/0``), so the converters above find the pads and
+their names with no layer flags at all. The outline is the exception: the
+export needs ``DIE_OUTLINE_LAYER`` set to ``206/0`` on this die and refuses the
+run without it. Pass ``--die-outline-layer 206/0`` to ``gds_to_kicad.py``, or
+set the field on the board. Alongside the GDS the generator writes a
 ``<stem>.boundaries.json`` manifest carrying the die outline as the chiplet
 boundary for the assembly DRC, which is what lets a black-boxed die be checked
 for overlap and spacing exactly like a real one. Suppress the manifest with
@@ -332,10 +343,12 @@ Prefer them over absolute paths: a relative ``GDS_FILE`` such as
 portable and the export reads the die geometry from the project itself rather
 than from wherever the tools happen to be installed.
 
-Two further fields are set later, on the board rather than on the library
-footprint, and are documented in :doc:`/flow/03_interposer_design`:
-``CONNECTION`` (the attachment method for this die) and ``DIE_THICKNESS_UM``
-(the physical z extent of the silicon body).
+Three further fields are documented in :doc:`/flow/03_interposer_design`.
+``DIE_OUTLINE_LAYER`` (the GDS layer that carries the die outline) and
+``DIE_THICKNESS_UM`` (the physical z extent of the silicon body) can be written
+into the library footprint by ``--die-outline-layer`` and
+``--die-thickness-um``, or set on the board. ``CONNECTION`` (the attachment
+method for this die) is set on the board only.
 
 Checking the result
 -------------------

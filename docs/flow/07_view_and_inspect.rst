@@ -43,32 +43,22 @@ from that same ``layout/`` directory when it is present. Paths written as
 ``${INTERPOSER_PDK_ROOT}/...`` or ``${GDS_TO_KICAD_ROOT}/...`` are expanded on
 read through the discovery chain; see :doc:`/install/03_environment`.
 
-What the panels give you
-~~~~~~~~~~~~~~~~~~~~~~~~
+Inspecting the assembly
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The **Hierarchy** dock on the left lists the assembly's components with their
-type and technology, plus the interconnect method rows: an assembly-level row
-for the bumping method and, under each die, the method that die actually uses.
-Selection is synchronised with the 3D view in both directions.
+:doc:`/tools/04_chiplet_studio` is the reference for the docks, render modes and
+toolbars. For a first look at an exported assembly:
 
-The **Properties** tab, docked beside *2D Layout*, shows the selected
-component's geometry with unit conversion. Selecting an interconnect row shows
-the method's stack instead.
-
-The render mode is per component. Right-click a hierarchy row and pick from
-*Render Mode*: ``Wireframe``, ``Transparent``, ``Detailed (with Si bulk)`` and
-``Detailed (no Si bulk)``. The last two tessellate the component's real GDS,
-which is how you see routing and pads as bodies rather than as a box. The
-interposer starts in an opaque ``Solid`` mode and dies start ``Transparent``.
-Hiding a component is the checkbox on its hierarchy row, not a render mode.
-:doc:`/tools/04_chiplet_studio` lists what each mode draws.
-
-The toolbar carries two controls worth knowing. **Filter** hides polygons below
-an area threshold for the selected component, which makes a detailed die
-readable by dropping fill and small shapes. **Layer Z** spreads a stackup apart
-vertically for inspection; it is a visualisation aid only, does not change the
-saved model, and is enabled only for a single imported die, because fanning out
-a multi-component assembly would interleave the stacks.
+1. Select a component in the **Hierarchy** dock or in the 3D view. The two stay
+   in sync, and the **Properties** tab shows the component's geometry. Under
+   each die, the hierarchy also shows the interconnect method that die uses.
+2. Right-click a die and set its *Render Mode* to ``Detailed (with Si bulk)``
+   or ``Detailed (no Si bulk)`` to see its routing and pads as bodies rather
+   than as a box. Raise **Filter** to drop fill and small shapes from a
+   detailed die.
+3. Double-click a component to open its real layout in the **2D Layout** dock,
+   and use **Back** to return to the assembly layout.
+4. Open *View > Net Graph* to check the declared connectivity.
 
 .. figure:: /_figures/screenshots/chiplet-inteposer-assembly-lateral-view.png
     :align: center
@@ -78,37 +68,6 @@ a multi-component assembly would interleave the stacks.
     A lateral view: the die sits on its Cu pillars above the interposer body,
     with the wire-bond I/O pads and the traces fanning out to them at the
     interposer edge.
-
-Drilling down into a component's layout
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Double-click a component, in the hierarchy or in the 3D view, to open its
-layout in the **2D Layout** dock. Studio loads the component's ``layout`` file
-with the layer properties declared by the component's ``technology``, and
-navigates to its ``top_cell``. This is a real KLayout view: the layer panel on
-the left is the technology's layer table with the usual visibility toggles, the
-cell hierarchy is on the right, and the status bar tracks the cursor in microns.
-
-The **Back** button is context dependent. From an individual die's layout it
-returns to the assembly layout; from the assembly layout it resets to the full
-top-level view, undoing any hierarchy navigation you did in place. Closing the
-dock returns you to the 3D view alone.
-
-.. tip::
-    If a die opens without colours, its technology is missing a
-    ``layer_properties`` entry, or the ``.lyp`` that entry points at did not
-    resolve. The reference design declares two technologies, ``intm4tm2`` for
-    the interposer and ``sg13g2`` for the dies, each with its own ``.lyp``.
-
-Other panels
-~~~~~~~~~~~~
-
-*View > Net Graph* inspects the assembly connectivity. *View > Flow Pipeline*
-runs the build steps declared in the ``.chiplet``'s ``flow:`` block against the
-assembly, which is how the 3Dblox export and its linter can be driven from the
-GUI. *View > Python Console*, or ``Ctrl`` and the backtick key, opens an
-embedded interpreter with a ``chiplet_studio`` module for scripting the
-assembly. *File > Export PNG* renders the current 3D view.
 
 Opening the GDS in KLayout with named layers
 ---------------------------------------------
@@ -192,10 +151,7 @@ From the command line:
     python3 klayout/macros/boundaries_to_rdb.py \
         outputs/layout/two_die_interposer_complete.gds
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 Pass the assembly GDS and the sidecar is auto-discovered next to it by the same
 rule the runner uses; pass the manifest ``.json`` directly if it lives

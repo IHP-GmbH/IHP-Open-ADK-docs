@@ -2,6 +2,7 @@ Assembly LVS (assembly-lvs)
 ===========================
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``assembly-lvs`` checks the connectivity axis of assembly-level verification,
 the one :doc:`/intro/01_what_is_the_adk` calls assembly LVS. It reads the layout
@@ -11,7 +12,7 @@ vias and contacts its input declares. It then compares the nets it extracted
 with the logical nets the input declares, and reports every open and every
 short it finds.
 
-Version 0.8.0 ships in the ADK-Tools image as the ``assembly-lvs`` command.
+Version |assembly-lvs-version| ships in the ADK-Tools image as the ``assembly-lvs`` command.
 packaging-flow runs it as one stage of a flow run, and you can also run it on
 its own. It is licensed GPL-3.0-or-later.
 
@@ -270,6 +271,8 @@ Open it over an assembly layout whose top cell has the interposer's top-cell
 name, with ``klayout <assembly layout> -mn <report stem>.lvsdb``. The ``-mn``
 option loads a netlist database; ``-m`` is for marker databases.
 
+.. _assembly_lvs_flow_run:
+
 In a flow run
 -------------
 
@@ -291,16 +294,40 @@ reads the nine states as four words:
       - ``definite_open``, ``definite_short``, ``unavoidable_mismatch``
     * - INCONCLUSIVE
       - ``ambiguous``, ``placement_dependent``, ``inconclusive``, and an
-        assembly the flow could not express as a resolved input
+        assembly the flow could not express as a resolved input, for which
+        the flow names the cause
     * - ERROR
       - ``invalid``, a report the flow refuses, or a tool failure
 
 Only a FAIL can be waived; a run whose every FAIL is covered exits 16
 (:doc:`/tools/10_packaging_flow`). The flow passes a placement bound of zero for every
 component, so its verdict is at the nominal placement, and it does not claim die
-LVS. ``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
+LVS. The flow also maps only dies at rotation 0: a die at another right angle,
+which the engine itself accepts, is an assembly the flow cannot express, and
+the check reads INCONCLUSIVE with the cause ``unsupported_orientation``.
+``packaging-flow lvs-bundle`` writes the assembly-LVS input of one
 completed run into a directory, and ``packaging-flow lvs-verify`` derives it
-again from those copies and runs assembly-lvs on it.
+again from those copies and runs assembly-lvs on it. Here ``$WD`` is the run's
+working directory, the ``run/`` folder inside the run folder
+(:doc:`/tools/10_packaging_flow`):
+
+.. code-block:: bash
+
+    packaging-flow lvs-bundle $WD --output /tmp/lvs
+    packaging-flow lvs-verify /tmp/lvs
+
+The ADK view of a resolved document
+-----------------------------------
+
+The ADK can build its own files for the assembly a ``resolved/v2`` document
+describes: an assembly GDS, the boundary and pillar manifests, the per-method
+IXN sidecar and a ``.chiplet``, ready for the ADK DRC and the pad to pillar
+check. :doc:`/adk/11_resolved_v2_entry` describes that entry and the subset of
+v2 it accepts. On the ``.chiplet`` side, whether each placed die is the one its
+die contract describes is a separate gate, :doc:`/adk/10_assembly_admission`.
+Run it on the accepted ``.chiplet`` that carries the ``die_contract``
+references, not on the ``.chiplet`` the entry writes: the entry writes none, so
+strict admission refuses every die in it.
 
 What it does not check
 ----------------------

@@ -70,13 +70,13 @@ Each rule is given below with the deck source that implements it. The five
 panels of the figure show, in plan view, the case each rule is meant to catch
 and the neighbouring case it is meant to leave alone.
 
-.. figure:: /_figures/tikz_asm_rules.*
+.. figure:: /_figures/asm_rules.*
     :align: center
     :alt: Five plan-view panels showing what ASM.a, ASM.b, ASM.e, ASM.f and ASM.g each flag and which nearby cases stay legal.
     :width: 90%
 
     What each ASM rule fires on. The marker geometry is shown in red;
-    the cases that are deliberately legal are shown in green.
+    the cases that are deliberately legal carry no marker.
 
 ASM.a: chiplet boundaries must not overlap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -287,26 +287,11 @@ one.
 Single-tier limitation
 ----------------------
 
-``chiplet_boundary`` is a flat 2D region. The boundary manifest records
-placement polygons with no z coordinate, and ``layers_def.drc`` inserts every
-polygon into one region with no per-die identity retained.
-
-The consequence is that **ASM.a flags any XY overlap between chiplet
-boundaries**, including the case of two dies legally stacked at different
-heights in a multi-tier assembly. The assumption is baked into the manifest data
-model, not just into the rule, so lifting it would need all of: a z-aware
-manifest schema and therefore a schema version bump, per-die identity carried
-through ``layers_def.drc``, and a tier-aware ASM.a. The KiCad-side mirror,
-native courtyard collision, is equally 2D.
-
-This is not a practical constraint today: nothing in the toolchain produces
-multi-tier assemblies. It is recorded here so that the day someone does, the
-failure is understood rather than debugged.
-
-A second, related boundary: per-die z consistency is not an ASM rule at all. It
-is enforced at export time by ``openroad/chiplet2dbx.py`` and re-verified by
-OpenROAD's ``check_3dblox``, so an assembly that is never exported gets no
-automated z check. See :doc:`/adk/07_chiplet2dbx`.
+``chiplet_boundary`` is a flat 2D region, so **ASM.a flags any XY overlap
+between chiplet boundaries**, including two dies legally stacked at different
+heights, and per-die z consistency is checked at export rather than by any ASM
+rule. :ref:`The known limitations <adk_known_limitations>` give the reasons and
+what lifting the limit would take.
 
 Where the numbers come from
 ---------------------------
@@ -338,19 +323,12 @@ rule, not a relaxation of the default:
     # in pdk_adapters/interposer/<your_interposer>.drc
     drc_rules['ASM_b'] = 250.0   # this interposer's own chiplet spacing rule
 
-The deck and the KiCad DRU generator both apply the override. Write it as one
-literal number per line, above any other code in the adapter: the ADK reads
-overrides for the generator with its own parser, which refuses a computed value
-or any form it cannot read rather than guess. The adapter README in the ADK
-lists the exact form. See :doc:`/adk/06_kicad_dru`.
-
-Placement does not read adapters. interposer-pnr legalizes to ``ASM_b`` and the
-packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
-from ``config/rule_params.json``. So that placement and the deck never work to
-two different numbers, a packaging-flow run that dispatches the deck refuses an
-interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
-the registry's, and says the deck would check a different value than placement
-used.
+The deck and the KiCad DRU generator both apply the override; write it as a
+plain literal so the generator can read it (:ref:`the override grammar
+<adk_override_grammar>`). Placement reads no adapter, so a packaging-flow run
+that dispatches the deck refuses an override of ``ASM_b`` or ``ASM_g`` that
+differs from the registry (:ref:`placement and adapter overrides
+<adk_placement_overrides>`).
 
 The shipped ``intm4tm2`` adapter overrides no value; an IntM4TM2 run therefore
 checks the registry defaults.

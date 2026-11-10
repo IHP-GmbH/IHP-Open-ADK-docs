@@ -13,10 +13,13 @@ What goes in and what comes out
 The flow takes three kinds of input:
 
 **Die layouts.**
-   One GDSII per chiplet you intend to place. Only the external pad layer and
-   the text layer that names those pads are actually consumed, so a stripped
-   or black-boxed die works as well as a full one. The dies keep their own
-   PDKs, and the flow never checks their internals.
+   One GDSII per chiplet you intend to place. The flow reads three of its
+   layers: the external pad layer, the text layer that names those pads, and
+   the layer that carries the die outline, which sizes the die. Nothing else is
+   interpreted, so a die stripped down to those layers, or a black-boxed one,
+   works as well as a full one; the complete assembly GDS places whatever the
+   die GDS contains. The dies keep their own PDKs, and the flow never checks
+   their internals.
 
 **An interposer technology.**
    A KLayout technology describing the substrate the dies are mounted on:
@@ -58,7 +61,7 @@ It produces:
 The flow at a glance
 --------------------
 
-.. figure:: /_figures/tikz_designflow.*
+.. figure:: /_figures/designflow.*
     :align: center
     :alt: Three phase panels side by side. Design in KiCad takes die GDS
           files, an interposer technology and an interconnect technology
@@ -76,7 +79,7 @@ The flow at a glance
 
 The same pipeline, seen as the files each stage consumes and writes:
 
-.. figure:: /_figures/tikz_artifact_pipeline.*
+.. figure:: /_figures/artifact_pipeline.*
     :align: center
     :alt: A vertical pipeline in which die GDS files and an interposer
           technology feed gds2kicad, the KiCad ADK build and the export
@@ -86,6 +89,8 @@ The same pipeline, seen as the files each stage consumes and writes:
 
     The flow in artefact terms. Each stage names the tool that runs
     it and the files it writes.
+
+.. _flow_stages:
 
 The stages
 ----------
@@ -150,9 +155,10 @@ separately because they consume and produce different artefacts, and because
 The pivot artefact: ``.chiplet``
 --------------------------------
 
-The ``.chiplet`` file is the one artefact every tool reads, and it is what makes
-the pipeline a pipeline rather than a chain of one-off converters. It is YAML,
-human-readable and diffable, and carries four groups of information:
+The ``.chiplet`` file is the one artefact every tool downstream of layout
+writes, reads or takes its flags from, and it is what makes the pipeline a
+pipeline rather than a chain of one-off converters. It is YAML, human-readable and diffable, and carries four
+groups of information:
 
 ``assembly`` and ``interposer``
     The design name, the working units, and the interposer adapter the

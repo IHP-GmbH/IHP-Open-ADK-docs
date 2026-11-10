@@ -2,6 +2,7 @@ interposer-pnr
 ==============
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``interposer-pnr`` places the dies of a 2.5D assembly on the interposer, puts
 a bump on every die pad, routes the nets between them with OpenROAD and writes
@@ -10,9 +11,13 @@ Each step is one subcommand that reads files and writes one, so
 :doc:`/tools/10_packaging_flow` runs the steps in turn and stops at the first
 refusal. You can also run them by hand.
 
-Version 0.5.0 ships in the ADK-Tools image as the ``interposer-pnr`` command.
-It is licensed GPL-3.0-or-later; the schema of the record ``signoff --check``
-writes is Apache-2.0.
+Version |interposer-pnr-version| ships in the ADK-Tools image as the ``interposer-pnr`` command.
+A version with a ``.dev0`` suffix is a development version, not a release:
+between two releases the engine reports the next minor with that suffix, and
+reports that name the engine carry the same value.
+It is licensed GPL-3.0-or-later. The shipped routing descriptors, the vendored
+``.chiplet`` reader and the schema of the record ``signoff --check`` writes are
+Apache-2.0.
 
 .. warning::
    Automated 2.5D place and route in the ADK is a proof of concept, at alpha
@@ -41,6 +46,10 @@ The steps
   ``interposer_pnr.placement`` 1.0 document, or the refusals ``not_legal`` and
   ``kept_overlap`` in place of the dies. It reads only the provisional source
   that ``packaging-flow place`` writes, so you call it through that command.
+  For a source whose ``external`` block names a profile, that command passes
+  ``--rotations 0`` and refuses a placement that turns a die, so every die
+  stays at rotation 0. The flow's assembly-LVS input maps no other rotation in
+  any case (:doc:`/tools/09_assembly_lvs`).
 - ``bumps`` puts one bump on each die pad, from each die's pin list, and
   binds pads to nets by name and by position. It lists the pads no net claims,
   so "every net routed" is never read as "every pad accounted for".
@@ -107,7 +116,7 @@ interposer-pnr reads no PDK kit files. An interposer enters as a
 routing-technology descriptor, a small JSON file checked against a schema, and
 ``--tech`` takes its path or the name of a shipped one. The descriptor is the
 one place the engine couples to a process, and the engine's ``PDK_CONTRACT``
-document says how to write one for a new interposer. Version 0.5.0 ships three:
+document says how to write one for a new interposer. The engine ships three:
 
 .. list-table::
     :header-rows: 1
@@ -167,7 +176,8 @@ board.
 What it does not verify
 -----------------------
 
-The engine states these limits in its own documentation:
+The engine states these limits in its own documentation, except the one on
+the image's verify stage, which ADK-Tools sets:
 
 - Routed traces are idealized centrelines. ``rdl_route`` has no DRC of its
   own, and on one layer a design can stay partly open: on the ADK-Tools
@@ -178,15 +188,20 @@ The engine states these limits in its own documentation:
   geometric and is not fabrication DRC. On a net widened by a requirement,
   ``detailed_route`` can report 0 violations while leaving the net closer to
   other copper than the technology allows. The engine's own copper spacing
-  check fails such a route (exit 3) and names the net.
+  check fails such a route (exit 3) and names the net. The refusal also
+  quotes drt's own ``check_drc``, run in the same OpenROAD session right after
+  the route, and suggests carrying a declared power or ground rail as a mesh
+  instead of a widened trace.
 - Routing is not impedance-driven, and no parasitics are carried for the IHP
   interposer.
 - ``place`` seeds on a grid as wide as the largest die plus ASM_b, so dies of
   very different sizes sit further apart than they need to, and a carrier the
   dies fit by hand can still be refused. It never flips a die and does not
   read the carrier's pad rows. Minimum area is detected, never fixed.
-- The OpenROAD in the image is not the build the engine's routing tests ran
-  on, so a route made there is not backed by those tests.
+- The image's verify stage runs three of the engine's live single-layer
+  route cases on the image's OpenROAD. The multi-layer backend's live tests do
+  not run there, so a multi-layer route made in the image is not backed by
+  them.
 - An acknowledgment binds the board bytes; it does not read the die layouts
   the footprints name again.
 

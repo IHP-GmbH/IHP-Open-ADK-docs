@@ -2,6 +2,7 @@ Reference design
 ================
 
 .. include:: /common.inc
+.. include:: /_frame_values.inc
 
 ``two_die_interposer`` is the reference design of the |tools-repo| image: the
 design the image build regenerates and checks itself against. Its assembly DRC
@@ -30,8 +31,8 @@ is the recommended one for your own designs.
     checkout when you want it back. The container starts in ``/work``, so the
     ``example/`` paths on this page name that copy.
 
-What the demo assembles
------------------------
+What the reference design assembles
+-----------------------------------
 
 .. list-table::
     :header-rows: 1
@@ -42,29 +43,42 @@ What the demo assembles
       - Description
     * - ``interposer``
       - ``intm4tm2``
-      - 6492.312 x 5602.001 um, 300 um thick. Four routed metals, Cu-pillar
+      - |refdesign-interposer-width| x |refdesign-interposer-height| um,
+        |refdesign-interposer-thickness| um thick. Four routed metals, Cu-pillar
         landing pads under each die, 35 wire-bond I/O pads of 100 x 100 um on
         ``TopMetal2`` around the edge.
     * - ``U1``
       - ``sg13g2``
-      - 770 x 2606.339 um, 750 um thick, ``orientation: flip_chip``, attached
-        with ``cupillar_opt1`` (44 um body, 75 um pitch, 40 um spacing).
+      - |refdesign-die-width| x |refdesign-die-height| um,
+        |refdesign-die-thickness| um thick, ``orientation: flip_chip``,
+        attached with |refdesign-u1-connection|
+        (|refdesign-u1-stack-diameter| um body, |refdesign-u1-pitch| um
+        pitch, |refdesign-u1-spacing| um spacing).
     * - ``U2``
       - ``sg13g2``
-      - The same die layout, attached with ``vendorx_microbump`` (40 um body,
-        50 um pitch, 15 um spacing). A demo, non-IHP method.
+      - The same die layout, attached with |refdesign-u2-connection|
+        (|refdesign-u2-stack-diameter| um body, |refdesign-u2-pitch| um
+        pitch, |refdesign-u2-spacing| um spacing). A demo, non-IHP method.
 
 Both dies are instances of the same ``Metal_Test`` layout, an SG13G2 test die
 whose 58 external I/O pads sit on ``TopMetal2`` (134/0) with their names on the
-text layer 134/25.
+text layer 134/25. Its GDS origin sits |refdesign-die-origin-offset-y| um
+off its outline centre in y. ``chiplet2dbx`` reads a die's ``position`` as the
+outline centre (:doc:`/formats/08_3dblox_interop`), so it shifts the ``U1``
+and ``U2`` outlines in the ``.3dbx`` by that much, while the bumps still land
+where they should.
 
-The two connection stacks are what make the demo interesting, because they are
-what forces every per-method mechanism in the flow to actually do something. The
-die z values follow from them directly. The interposer's attachment surface is
-at 13.83 um; ``cupillar_opt1`` is a 28 um Cu pillar plus a 16 um SnAg cap, so
-``U1`` sits at 57.83 um; ``vendorx_microbump`` is 18 um plus 6 um, so ``U2``
-sits at 37.83 um. That arithmetic is not decoration: the 3Dblox exporter
-verifies it exactly and refuses assemblies that do not satisfy it.
+The two connection stacks are what make the reference design interesting,
+because they are what forces every per-method mechanism in the flow to actually
+do something. The die z values follow from them directly. The interposer's
+attachment surface is at |interposer-attachment-z| um
+(:ref:`chiplet_mounting_plane`); |refdesign-u1-connection| is
+|refdesign-u1-stack-layers|, so ``U1`` sits at |refdesign-u1-z| um;
+|refdesign-u2-connection| is |refdesign-u2-stack-layers|, so ``U2`` sits at
+|refdesign-u2-z| um (:ref:`chiplet_z_worked_case` walks the same sums). That
+arithmetic is not decoration: the 3Dblox exporter checks each die's z against
+the plane plus its stack to within |chiplet2dbx-z-tol| um and refuses an
+assembly that does not satisfy it.
 
 Directory tree
 --------------
@@ -176,18 +190,12 @@ Walking the flow
 Step 0: open what is already there
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From the host, using the launcher in the ADK-Tools checkout:
-
-.. code-block:: bash
-
-    "$ADK_TOOLS_ROOT/run.sh" chiplet-studio example/outputs/two_die_interposer.chiplet
-    "$ADK_TOOLS_ROOT/run.sh" kicad          example/kicad/two_die_interposer.kicad_pro
-
-Or from a shell inside the container, where both tools are on the path. Expect
-Chiplet Studio to show the interposer slab with two dies standing off it on
-their pillars, and the wire-bond pads with their fan-out traces around the edge;
-switch a
-die to a detailed render mode to see its actual artwork as geometry. See
+Open the copy in Chiplet Studio and in KiCad as step 3 of :doc:`/quickstart`
+does, from the host through ``run.sh`` or from a shell inside the container,
+where both tools are on the path. Expect Chiplet Studio to show the interposer
+slab with two dies standing off it on their pillars, and the wire-bond pads
+with their fan-out traces around the edge; switch a die to a detailed render
+mode to see its actual artwork as geometry. See
 :doc:`/flow/07_view_and_inspect`.
 
 Step 1: the gds2kicad prior steps
@@ -244,15 +252,15 @@ Step 2: author the board
 
 The board is drawn in the KiCad fork, with the physical stackup naming the
 copper layers after the process metals and a closed ``Edge.Cuts`` outline. That
-is covered by :doc:`/flow/03_interposer_design`; the demo's ``.kicad_pcb`` is
-the finished result.
+is covered by :doc:`/flow/03_interposer_design`; the reference design's
+``.kicad_pcb`` is the finished result.
 
 Step 3: export and generate the GDS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Normally this is the Chiplet Export plugin inside pcbnew, with its output
-directory pointed at the sibling ``outputs/``. The demo's headless equivalent,
-the same export the image build runs, is:
+directory pointed at the sibling ``outputs/``. The reference design's headless
+equivalent, the same export the image build runs, is:
 
 .. code-block:: bash
 
@@ -296,16 +304,18 @@ auto-discovers ``two_die_interposer_complete.boundaries.json`` next to the GDS.
 The runner logs a pass or fail banner and the report path; a violation leaves
 items in the ``.lyrdb`` under the rule that flagged them.
 
-Step 5: checks the demo does not run for you
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 5: checks the reference design does not run for you
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Only stage 3, the KLayout assembly DRC of step 4, is part of the demo pipeline.
-The other three of the four :doc:`verification stages
-</flow/06_verification_stages>` are not. Two of them you can run yourself
-against the shipped artefacts, and they are given below. The third, the KiCad
-design-time check, cannot be run here at all: the demo ``kicad/`` tree ships no
-generated ``.kicad_dru``, so there is nothing for pcbnew to enforce. Generate
-one as :doc:`/adk/06_kicad_dru` describes for a board of your own.
+Of the four geometric checks in :doc:`/flow/06_verification_stages`, only the
+KLayout assembly DRC, step 4 here and stage 6 of the :ref:`flow overview
+<flow_stages>`, is part of the reference design's pipeline. The other three are
+not. Two of them you can run yourself against the shipped artefacts, and they
+are given below. The third, the KiCad
+design-time check, cannot be run here at all: the reference design's ``kicad/``
+tree ships no generated ``.kicad_dru``, so there is nothing for pcbnew to
+enforce. Generate one as :doc:`/adk/06_kicad_dru` describes for a board of your
+own.
 
 Pad-to-pillar alignment, which needs the ``.chiplet``, the pillar manifest and a
 pad source per die:
@@ -335,24 +345,15 @@ carrying the 3Dblox commands. See :doc:`/flow/06_verification_stages`.
 Step 6: the one-command self test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
-
-    adk-smoke /work/example/kicad/two_die_interposer.kicad_pcb
-
-``adk-smoke`` takes one board and has no default, because the runtime image
-carries no demo; without a board it exits 2 and says where to copy this design
-from. It verifies that the ``intm4tm2`` KLayout technology is registered and
-its layer properties resolve, then exports the board end to end into a
-throwaway directory and fails unless the assembly DRC passed. It is the
-fastest way to tell whether a container is wired correctly. On success it ends
-with the line ``adk-smoke: PASS (export + assembly DRC green)``; any failure
-exits non-zero before that.
+``adk-smoke`` on this board is step 2 of :doc:`/quickstart`. It is the fastest
+way to tell whether a container is wired correctly, and :ref:`the self test's
+reference <adk_smoke>` says what it checks and how it fails.
 
 What the committed reports say
 ------------------------------
 
-Two result files are tracked, so you can read the demo's verification outcome
-without running anything.
+Two result files are tracked, so you can read the reference design's
+verification outcome without running anything.
 
 ``reports/two_die_interposer_cupillar_drc.json`` records the producer-side
 Cu-pillar checks: version 2 of the report format, the per-die method assignment
@@ -386,12 +387,12 @@ wire-bond pads, so the rule ran on them and found none closer than 200 um to a d
 Reproducibility
 ---------------
 
-The demo outputs are not decorative. The image build regenerates them headless
-from the board and then compares the fresh regeneration against the committed
-tree, failing the build on any semantic difference: a committed deliverable a
-fresh run no longer produces, a new sidecar a fresh run emits that is not
-committed, or a change in the ``.chiplet``, the manifests, the reports or the
-GDS geometry.
+The reference design's outputs are not decorative. The image build regenerates
+them headless from the board and then compares the fresh regeneration against
+the committed tree, failing the build on any semantic difference: a committed
+deliverable a fresh run no longer produces, a new sidecar a fresh run emits
+that is not committed, or a change in the ``.chiplet``, the manifests, the
+reports or the GDS geometry.
 
 The comparison is not a naive byte diff. GDS files are hashed with the
 ``BGNLIB`` and ``BGNSTR`` timestamps zeroed, so a real geometry, layer or cell
@@ -405,8 +406,8 @@ build's regeneration, so a tracked set that had drifted from what the current
 board and toolchain produce could ship on a green build. A stale ``.chiplet`` and
 a missing pillar manifest reached a release candidate that way.
 
-What the demo demonstrates
---------------------------
+What the reference design demonstrates
+--------------------------------------
 
 - A die layout becoming a KiCad symbol and footprint, reproducibly, from
   shipped inputs.
@@ -427,8 +428,8 @@ What it does not demonstrate
 ----------------------------
 
 - **Two different dies.** ``U1`` and ``U2`` are two instances of the same
-  layout. Nothing in the flow requires that, but the demo does not exercise a
-  genuinely heterogeneous die set.
+  layout. Nothing in the flow requires that, but the reference design does not
+  exercise a genuinely heterogeneous die set.
 - **A stacked or multi-tier assembly.** Everything sits on one tier. The
   assembly rules assume that, and ``ASM.a`` would flag legally stacked dies as
   overlapping.

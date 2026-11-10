@@ -5,8 +5,8 @@ Designing the interposer
 
 The interposer is authored as a KiCad board: a few metal layers, vias between
 them, pads at the top for the dies and pads at the edge for the outside world,
-and routing in between, at feature sizes three orders of magnitude below a PCB.
-That scale is why the flow uses the ADK KiCad build rather than upstream KiCad.
+and routing in between, at feature sizes nearly three orders of magnitude below
+a PCB. That scale is why the flow uses the ADK KiCad build rather than upstream KiCad.
 This page covers setting up the board,
 placing the dies, routing, and running the design-time assembly checks.
 :doc:`/tools/01_kicad_adk_mod` describes the fork itself.
@@ -157,10 +157,11 @@ the die.
 Place the dies
 --------------
 
-Place each die footprint on the board and set two fields per die instance.
-These are per-instance fields on the board, not properties of the library
-footprint, and the export dialog reads and writes them, so the board remains
-the source of truth.
+Place each die footprint on the board and set three fields per die instance.
+These are per-instance fields on the board, and the export dialog reads and
+writes them, so the board remains the source of truth. A footprint gds2kicad
+generated with ``--die-outline-layer`` or ``--die-thickness-um`` already
+carries the matching field.
 
 .. list-table::
     :header-rows: 1
@@ -174,9 +175,16 @@ the source of truth.
         z position, the 3D bodies rendered downstream, and the pitch and
         spacing numbers the interconnect rules will check. Left unset, the die
         follows the assembly-wide default chosen in the export dialog.
+    * - ``DIE_OUTLINE_LAYER``
+      - The ``LAYER/DATATYPE`` on which the die's own GDS draws its outline,
+        ``39/4`` for an SG13G2 die. The export sizes the die from it and
+        refuses a die without it.
     * - ``DIE_THICKNESS_UM``
       - The physical z extent of the silicon die body, in micrometres. It lands
         in the ``.chiplet`` as ``components[].dimensions.thickness``.
+
+:ref:`export_per_die_settings` has the full rules for ``DIE_OUTLINE_LAYER``,
+including the dies that are exempt from it.
 
 ``DIE_THICKNESS_UM`` deserves a moment. It is **not** the interconnect
 thickness: the stack height of the attachment method comes from the

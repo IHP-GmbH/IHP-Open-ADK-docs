@@ -106,9 +106,11 @@ deliberate: the imported layout is validated by the same ``format_version`` gate
 as any other assembly, and the synthesised file is a real artefact you can keep
 and edit.
 
-The import dialog asks for the technology. Naming one of the supported ids
-(``sg13g2``, ``sg13cmos5l``, ``sky130``, ``gf180``, ``intm4tm2``) is enough:
+The import dialog asks for the technology. Picking one of the supported ids
+(``sg13g2``, ``sg13cmos5l``, ``sky130``, ``gf180mcu``, ``intm4tm2``) is enough:
 the studio resolves that id to a shipped stackup and colour scheme on its own.
+Files imported by earlier versions name GF180MCU ``gf180``, which still
+resolves.
 Leaving it empty produces a ``custom_imported`` technology that carries whatever
 layer-properties file and stackup YAML you supply.
 
@@ -120,6 +122,31 @@ band selects. ``Ctrl+B`` toggles the base plane and ``Ctrl+M`` the scene
 mini-map. ``File > Export PNG`` (``Ctrl+E``) renders the current view offscreen
 at a chosen resolution, which is how you get a figure out of it.
 
+The hierarchy and properties docks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The **Hierarchy** dock lists the assembly's components with their type and
+technology, plus the interconnect method rows: an assembly-level row for the
+bumping method and, under each die, the method that die actually uses. The
+**Properties** tab is docked beside *2D Layout*. It shows the selected
+component's identity, position, dimensions and technology, with unit
+conversion; selecting an interconnect row shows the method's stack instead.
+
+Selection is synchronised across the 3D view, the hierarchy panel, the properties
+panel and the net graph.
+
+Viewing notes
+~~~~~~~~~~~~~
+
+A line above the views, ``N viewing notes`` with an information icon, lists
+what the views could not show the way the files describe it: among others, a
+layer sheet or stackup that could not be read, a technology id Studio has no
+stackup for, an interconnect fragment left out, a plane the stackup puts
+elsewhere than the file, a guessed mount plane, and a die placed off its
+bumps. Clicking the line opens the list, and the line is hidden while there is
+nothing to say. A guessed mount plane opens the list by itself, once per
+document; a list you close stays closed.
+
 Render modes
 ~~~~~~~~~~~~
 
@@ -129,8 +156,11 @@ full detail while its neighbours stay as cheap solids.
 Each mode has two names. The first column below is the name the C++ enumeration
 and the scripting surface use; the second is the abbreviation the hierarchy
 panel prints in its Mode column, which is the one you read off a screenshot. The
-right-click **Render Mode** menu spells the two detailed modes out again as
-``Detailed (with Si bulk)`` and ``Detailed (no Si bulk)``.
+right-click **Render Mode** menu on a component's hierarchy row offers
+``Wireframe``, ``Transparent`` and the two detailed modes, which it spells out
+again as ``Detailed (with Si bulk)`` and ``Detailed (no Si bulk)``. The
+interposer starts in an opaque ``Solid`` mode and dies start ``Transparent``.
+Hiding a component is the checkbox on its hierarchy row, not a menu entry.
 
 .. list-table::
     :header-rows: 1
@@ -208,12 +238,18 @@ order of specificity.
 * An explicit ``stackup:`` path on the technology in the ``.chiplet`` file. This
   wins, and it is resolved through the same ``${VAR}`` and relative-path chain as
   every other path in the file.
-* A shipped stackup for a supported PDK id. ``configs/stackups/`` carries
-  ``ihp-sg13g2.yaml``, ``ihp-sg13cmos5l.yaml``, ``intm4tm2.yaml``,
-  ``sky130.yaml`` and ``gf180mcu.yaml``.
-* A GDS3D techfile sitting beside the technology's ``.lyp``, at
-  ``<dir>/techfile/<stem>.txt``, which is auto-loaded when present.
-* A default stacking derived from the ``.lyp`` itself, as a last resort.
+* A shipped stackup for a technology id Studio knows. ``configs/stackups/``
+  carries ``ihp-sg13g2.yaml``, ``ihp-sg13cmos5l.yaml``, ``intm4tm2.yaml``,
+  ``sky130.yaml`` and ``gf180mcu.yaml``. The id is matched exactly, case
+  included: ``sg13g2`` or ``ihp-sg13g2``, ``sg13cmos5l`` or ``ihp-sg13cmos5l``,
+  ``sky130``, ``gf180mcu`` or ``gf180``, and ``intm4tm2``. An id that only
+  contains one of these or spells it in another case (``IntM4TM2``,
+  ``IHP_SG13G2``) resolves to no shipped stackup, and the viewing notes say
+  that Studio has no stackup for that id and what 3D draws instead.
+* A stacking derived from the technology's ``.lyp``, each layer at a default
+  thickness.
+* A generic interposer stackup, as a last resort, when there is neither a
+  stackup nor a ``.lyp``.
 
 The YAML dialect is the BlenderGDS one: top-level keys are layer names, each
 carrying ``index`` (GDS layer), ``type`` (datatype), ``z`` and ``height`` in
@@ -228,12 +264,15 @@ micrometres.
       height: 0.49
 
 .. note::
-   The shipped stackups render the silicon bulk at 50 um and say so in a comment,
-   although the real SG13G2 wafer is 750 um. A true-scale substrate dwarfs a
-   14 um back end and a 48 um pillar stack and makes the assembly view unusable.
-   Restore ``height: 750.0`` in the ``Substrate`` entry if you need the physical
-   proportion, for example when preparing geometry for a thermal or mechanical
-   study.
+   The ``ihp-sg13g2`` and ``ihp-sg13cmos5l`` stackups render the silicon bulk
+   at 50 um and say so in a comment, although the real SG13 wafer is 750 um. A
+   true-scale substrate dwarfs a 14 um back end and a 48 um pillar stack and
+   makes the assembly view unusable. Set ``z: -750.0`` and ``height: 750.0``
+   in their ``Substrate`` entry if you need the physical proportion, for example when
+   preparing geometry for a thermal or mechanical study. The ``intm4tm2``
+   stackup renders the interposer carrier at 250 um, the thickness the
+   interposer PDK's stack key gives it. The ``sky130`` and ``gf180mcu``
+   stackups have no ``Substrate`` entry.
 
 Attachment bodies
 ~~~~~~~~~~~~~~~~~
@@ -243,13 +282,19 @@ either layout, and they do not belong to the interposer PDK. They come from the
 interconnect PDK as stackup fragments, one per method id, and are merged into
 the render at load time.
 
-The join is explicit rather than positional. An interposer stackup declares
-``attachment_surface_z``, the surface it offers to attachment bodies, which is
-the exposed pad top rather than the maximum z of the stack (the passivation
-around the opening rises above the real mounting surface). Each interconnect
-fragment declares ``z_reference: attachment_surface``, so its own z values are
-relative and get offset by whatever the interposer declared. That is what lets
-the same ``cupillar_opt2`` fragment sit correctly on a different interposer.
+The join is explicit rather than positional. The interposer component in the
+``.chiplet`` file declares ``attachment_surface_z``, the surface it offers to
+attachment bodies, which is the exposed pad top rather than the maximum z of
+the stack (the passivation around the opening rises above the real mounting
+surface). Each interconnect fragment declares ``z_reference:
+attachment_surface``, so its own z values are relative and get offset by the
+file's plane. That is what lets the same ``cupillar_opt2`` fragment sit
+correctly on a different interposer. A plane in the interposer's technology
+stackup never stands in for the file's: when the two differ, a viewing note
+says so and the dies seat on the file's plane. A fragment that does not
+declare ``z_reference: attachment_surface`` carries one interposer's plane
+inside it, so it is left out: its bodies are not drawn, a viewing note names
+it, and a die using it seats on the mount plane plus its connection height.
 
 Resolution of which fragments to use is one function, ``resolveInterconnectKeys``.
 Method ids that resolve to a fragment win, so per-die methods render with their
@@ -264,6 +309,16 @@ share layers 500 and 501, so an assembly mixing them gives the merged render two
 different heights for one layer and datatype. The studio draws the taller body
 and warns which fragment it came from. Seating is unaffected, because each die
 is seated from its own resolved fragment rather than from the merged view.
+
+.. important::
+   When the interposer declares no ``attachment_surface_z``, Studio takes its
+   ``dimensions.thickness`` as the mount plane: the bodies are drawn there and
+   dies without a z are seated there. That plane is a guess. When any die has a
+   connection, the viewing notes say so, naming the file, and open their list
+   on their own. If a die was seated on the guess at open, the load also logs
+   the same text as a warning, because the seated z is written back on save.
+   Declare ``attachment_surface_z`` in the file; for ``intm4tm2`` it is the
+   interposer PDK's ``beol.attachment_surface_z_um``.
 
 Without the interconnect PDK on disk, the bodies simply do not render. See
 :doc:`/tools/06_interconnect_pdk`.
@@ -289,24 +344,34 @@ otherwise ``*_complete`` is appended). If no merged layout exists on disk it
 falls back to the interposer's own GDS and labels the view to say so, because in
 that state the dies are genuinely not in the picture.
 
-In **drill-down** mode you are inside one component's layout. Selecting a
-component in the 3D view or in the hierarchy panel drills into it; the header
-shows the component name and technology, a combo box selects the cell, and the
-status line gives live coordinates. The mapping between GDS cells and assembly
-components is kept by a dedicated ``CellComponentMapper``, which is what makes
-selection sync work in both directions instead of only from the tree down.
+In **drill-down** mode you are inside one component's layout. Double-clicking a
+component in the 3D view or in the hierarchy panel drills into it: the studio
+loads the component's ``layout`` file with the layer properties declared by the
+component's ``technology`` and navigates to its ``top_cell``. The header shows
+the component name and technology, a combo box selects the cell, and the status
+line gives live coordinates in microns. The mapping between GDS cells and
+assembly components is kept by a dedicated ``CellComponentMapper``, which is
+what makes selection sync work in both directions instead of only from the tree
+down.
 
-Selection is synchronised across the 3D view, the hierarchy panel, the properties
-panel and the net graph. The properties panel shows the selected component's
-identity, position, dimensions and technology, with unit conversion.
+The **Back** button is context dependent. From an individual die's layout it
+returns to the assembly layout; from the assembly layout it resets to the full
+top-level view, undoing any hierarchy navigation you did in place. Closing the
+dock returns you to the 3D view alone.
+
+.. tip::
+    If a die opens without colours, its technology is missing a
+    ``layer_properties`` entry, or the ``.lyp`` that entry points at did not
+    resolve. The reference design declares two technologies, ``intm4tm2`` for
+    the interposer and ``sg13g2`` for the dies, each with its own ``.lyp``.
 
 The net graph
 -------------
 
-``Ctrl+G`` opens the net graph. It draws the assembly's connectivity as
-components (nodes) joined by nets (edges), with a hub node inserted for nets that
-have more than two endpoints so a power net does not turn into a mesh of
-pairwise edges.
+*View > Net Graph* (``Ctrl+G``) opens the net graph. It draws the assembly's
+connectivity as components (nodes) joined by nets (edges), with a hub node
+inserted for nets that have more than two endpoints so a power net does not
+turn into a mesh of pairwise edges.
 
 Nets are classified, and the classification drives both colour and filtering:
 ``Signal``, ``Power``, ``Ground``, ``DiffPair``, ``NC`` and ``Interface``, the
@@ -333,8 +398,7 @@ button, and the captured output of whichever step you select.
 .. note::
    The dock has no menu entry on purpose. It reveals itself when the loaded
    assembly defines a ``flow:`` and stays hidden otherwise, so it never presents
-   an empty panel. The project ``README.md`` still lists it under
-   ``View > Flow Pipeline``; the code is the accurate description.
+   an empty panel.
 
 A step is one subprocess invocation:
 
@@ -391,7 +455,7 @@ edits, so a script drives the live assembly rather than a copy of it.
     die = asm.create_component("my_die", "Die",
                                width=5000.0, height=5000.0, thickness=100.0)
     die.set_position(1000.0, 2000.0, 50.0)
-    die.set_technology("ihp-sg13g2")
+    die.set_technology("sg13g2")
 
     for comp in asm.components():
         print(f"{comp.id}: {comp.position}")
@@ -448,7 +512,7 @@ Three ways to get a runnable binary, in increasing order of independence from
 the host. What each of them has to provide is the bottom row of the
 application's own structure:
 
-.. figure:: /_figures/tikz_studio_architecture.*
+.. figure:: /_figures/studio_architecture.*
     :align: center
     :width: 80%
     :alt: Three stacked tiers. A UI tier of ui/Qt6 Widgets and
@@ -550,3 +614,8 @@ Known limits
   extraction, so it shows declared connectivity, not verified connectivity.
 * Assembly-mode 2D falls back to the interposer's own layout when no merged
   assembly GDS exists, which is a labelled fallback rather than a complete view.
+* Studio does not add the interposer's ``position.z`` when it seats a die or
+  draws the interposer's body box, so dies on an interposer placed above z 0
+  are seated as if it sat at z 0. The contract formula includes it.
+* With more than one interposer, seating and the drawn attachment bodies both
+  use the first interposer in the file.

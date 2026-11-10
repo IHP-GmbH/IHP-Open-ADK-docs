@@ -6,7 +6,7 @@ IHP Open Assembly Design Kit documentation
    :target: https://github.com/IHP-GmbH/IHP-Open-ADK
 
 Documentation source for the IHP Open Assembly Design Kit (ADK) and the open
-flow for 2.5D/3D heterogeneous chiplet integration built around it.
+flow for 2.5D heterogeneous chiplet integration built around it.
 
 .. image:: docs/_static/IHP_logo.png
    :align: center
@@ -41,42 +41,60 @@ repositories pinned as submodules under ``src/``:
 - `chiplet-system-spec <https://github.com/IHP-GmbH/chiplet-system-spec>`__, the ``.chiplet`` interchange format
 - `OpenIntM4TM2 <https://github.com/IHP-GmbH/OpenIntM4TM2>`__, the interposer PDK
 - `IHP-Interconnect-IntM4TM2 <https://github.com/IHP-GmbH/IHP-Interconnect-IntM4TM2>`__, the attachment method registry
-- `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__, the KiCad fork
 - `Chiplets-KiCad-Plugin <https://github.com/IHP-GmbH/Chiplets-KiCad-Plugin>`__, the export plugin and GDS generation
 - `gds2kicad <https://github.com/IHP-GmbH/gds2kicad>`__, die GDS to KiCad conversion
 - `chiplet-studio <https://github.com/IHP-GmbH/chiplet-studio>`__, the 3D assembly viewer
 - `ADK-Tools <https://github.com/IHP-GmbH/ADK-Tools>`__, the container that pins and builds them all
 
+The KiCad fork, `KiCad-ADK-MOD <https://github.com/IHP-GmbH/KiCad-ADK-MOD>`__,
+is not a submodule here: ADK-Tools pins it. Nor are the flow engines, such as
+packaging-flow and assembly-lvs: ADK-Tools stages them from pinned commits, and
+they are not public yet.
+
 
 Building locally
 ================
 
-.. code:: bash
+.. build-steps-start
 
-   git clone --recurse-submodules https://github.com/IHP-GmbH/IHP-Open-ADK-docs.git
-   cd IHP-Open-ADK-docs
+.. code-block:: bash
 
-   python3 -m venv .venv
-   .venv/bin/pip install -r docs/requirements.txt
+    git clone https://github.com/IHP-GmbH/IHP-Open-ADK-docs.git
+    cd IHP-Open-ADK-docs
+    git submodule update --init
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -r docs/requirements.txt
+    make -C docs preprocess
+    sphinx-build -b html -W --keep-going docs docs/_build/html
 
-   # Regenerate the tables and command transcripts from the pinned sources,
-   # then build. The build must be warning free.
-   make -C docs preprocess
-   .venv/bin/sphinx-build -b html -W --keep-going docs docs/_build/html
+Initialise the direct submodules only, as CI and Read the Docs do.
+``--recurse-submodules`` would also pull the submodules of ADK-Tools and
+chiplet-studio, which this site never reads. The generators need Python 3.11 or
+later. The result is in ``docs/_build/html/index.html``.
 
-Open ``docs/_build/html/index.html``. ``make -C docs docs`` runs the whole chain
-and opens the result.
+``make -C docs docs`` runs the whole chain, generators included, and opens the
+result. It installs the requirements with ``python3 -m pip`` and calls
+``sphinx-build`` from ``PATH``, so run it with the venv activated.
+
+.. build-steps-end
 
 Generated content
 =================
 
-Nothing normative on this site is typed by hand. ``docs/scripts/`` reads the
-pinned submodules and writes the rule tables, adapter tables, version matrices
-and command line transcripts. The generators fail the build when the source
+``docs/scripts/`` reads the pinned submodules (and, for the staged engines,
+``staging.pin`` in the pinned ADK-Tools) and writes the rule and parameter
+tables, the adapter tables, the version and schema matrices, the staged engine
+and interposer stack tables, the image build and update recipes and the
+``--help`` transcripts of the ADK command line tools. None of those is typed by
+hand. Everything else is written by hand: the prose, the other tables and the
+command outputs not listed here. Where one of those and a generated table
+differ, the generated table describes the pinned code. The generators fail the build when the source
 drifts from what is documented, for example when a rule is added to a deck
 without a matching description. Continuous integration re-runs them and fails if
-the working tree is then dirty, which is what proves the published tables match
-the pinned revisions.
+the working tree is then dirty, which is what proves the generated tables match
+the pinned revisions. The staged engine versions are the exception: their
+commits are local-only, so only a run with the engine checkouts verifies them.
 
 Contributing
 ============

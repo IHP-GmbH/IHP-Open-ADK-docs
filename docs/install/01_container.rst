@@ -1,5 +1,5 @@
-The ADK-Tools image
-===================
+Building and running the image
+==============================
 
 .. include:: /common.inc
 
@@ -23,12 +23,12 @@ This page takes you from a clone to a green end-to-end self test. If you cannot
 use Docker, :doc:`/install/02_host` derives a host installation from the same
 recipe, but it is a best-effort route.
 
-.. note::
-    No image is published, to a registry or otherwise: you build the image you
-    run, locally, from the pinned sources with ``build.sh``. What that pins,
-    and why the build gates itself on a full regeneration of a reference
-    design, is described in :doc:`/tools/07_adk_tools_image`. To run the
-    examples of the alpha release, :doc:`/install/00_release` gives the order.
+.. note:: No image is published, to a registry or otherwise: you build the
+    image you run, locally, from the pinned sources with ``build.sh``. What
+    that pins, and why the build gates itself on a full regeneration of a
+    reference design, is described in :doc:`/tools/07_adk_tools_image`. To run
+    the examples of the preview release, :doc:`/install/00_release` gives the
+    order.
 
 Prerequisites
 -------------
@@ -41,10 +41,11 @@ Prerequisites
   each one is there. Running an image built this way needs no Nix.
 - **git** and **python3**, for the clone and the build scripts.
 - **The staged sources.** A checkout of each sibling repository that
-  ``staging.pin`` lists, at the commit it pins, beside the clone or in the
+  ``staging.pin`` lists, holding the commit it pins and any extra commit it
+  names, beside the clone or in the
   directory ``STAGE_SIBLINGS`` names, and the die records the image carries:
-  the ``die-views/`` folder of an adk-examples checkout at the same release
-  tag.
+  the ``die-views/`` folder of an adk-examples checkout, whose records have to
+  match ADK-Tools' ``die-views.sha256``.
 - **Network access** to github.com, gitlab.com and the Ubuntu snapshot archive
   during the build. The build fetches the KiCad libraries, the PDK slices and
   the pinned Ubuntu packages directly.
@@ -61,28 +62,11 @@ Prerequisites
 Build the image
 ---------------
 
-The ADK-Tools README, section Build, gives the whole sequence:
+The ADK-Tools README, section Build, gives the sequence, up to reading the ID
+of the image you built:
 
-.. code-block:: bash
-
-    # the clone lives at ADK_TOOLS_ROOT, outside ADK_WORK; the
-    # adk-examples checkout at ADK_EXAMPLES_ROOT is at the same v2026.11 tag
-    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
-    git clone --branch v2026.11 --recurse-submodules https://github.com/IHP-GmbH/ADK-Tools.git \
-        "$ADK_TOOLS_ROOT"
-    cd "$ADK_TOOLS_ROOT"
-    ./stage-sources.sh --check && ./stage-die-views.sh --check
-    nix build .#openroad .#librelane .#librelane-python .#sg13g2-pdk \
-        .#cosim-devshell .#mixsim-ngspice .#mixsim-iverilog .#sg13g2-osdi \
-        .#gtkwave .#gaw .#xschem .#vams-devshell
-    # ~1 h the first time, cached afterwards; JOBS=N overrides the default 8
-    # parallel compile jobs
-    ./build.sh
-
-    # run.sh takes the image by its ID (sha256:<64 hex>), never a tag, and has no
-    # default: read the ID of the image you just built once
-    export ADK_TOOLS_IMAGE="$(docker image inspect --format '{{.Id}}' adk-tools:dev)"
+.. literalinclude:: /install/_recipe/build.sh
+    :language: bash
 
 The submodules under ``tools/`` are part of the version lockfile, so a clone
 without ``--recurse-submodules`` cannot build; ``git submodule update --init
@@ -280,12 +264,12 @@ subdirectory are the usual layout:
     /work/<example>            an example copied in from /examples, as its page says
     /work/heterogenic-designs  your persistent designs (survives image rebuilds)
 
-The runtime image carries no examples and no demo design. The worked examples
-come from an adk-examples checkout that ``run.sh --examples`` mounts at
-``/examples``, and each example's first block copies it into ``/work``. Inside
-the container, ``adk-example`` prints the ``run.sh`` line that starts it that
-way. ``/work/heterogenic-designs`` is made by ``adk-new-project`` the first
-time you use it.
+The runtime image carries neither the examples nor the reference design. The
+worked examples come from an adk-examples checkout that ``run.sh --examples``
+mounts at ``/examples``, and each example's first block copies it into
+``/work``. Inside the container, ``adk-example`` prints the ``run.sh`` line
+that starts it that way. ``/work/heterogenic-designs`` is made by
+``adk-new-project`` the first time you use it.
 
 The entrypoint copies KiCad's global configuration templates into the runtime
 ``HOME`` when they are absent, so neither the library table dialog nor the
@@ -301,7 +285,7 @@ Scaffold a project
     adk-new-project my_design
 
 This creates ``/work/heterogenic-designs/my_design`` with the same layout as
-the two-die test design in the clone's ``examples/two_die_interposer``, which
+the reference design in the clone's ``examples/two_die_interposer``, which
 is what the rest of the flow expects. The three directories are created empty,
 with a ``.gitkeep`` each so they survive a commit; the annotations below say
 what you put in them:
@@ -425,13 +409,15 @@ assembly GDS files open with named, coloured layers:
 
 You can also pick ``intm4tm2`` in KLayout's technology selector.
 
+.. _adk_smoke:
+
 Run the self test
 -----------------
 
 ``adk-smoke`` takes one board and has no default, because the runtime image
-carries no demo. The board it is written for is the two-die test design in the
-clone's ``examples/two_die_interposer``. Copy it into the work directory once,
-on the host, then run the test:
+carries no copy of the reference design. The board it is written for is the
+reference design in the clone's ``examples/two_die_interposer``. Copy it into
+the work directory once, on the host, then run the test:
 
 .. code-block:: bash
 
@@ -456,8 +442,8 @@ exits 1.
 
 If it fails, the failing stage names itself. A failure in the first step points
 at KLayout's search path; later failures are the pipeline itself, and since the
-test design is a known good input the fault is in the image or the environment
-rather than in a design.
+reference design is a known good input the fault is in the image or the
+environment rather than in a design.
 
 Calling the flow from the host
 ------------------------------
@@ -521,7 +507,7 @@ Where to go next
 
 - :doc:`/install/00_release` and :doc:`/examples` to run the worked examples.
 - :doc:`/flow/01_overview` for what the pipeline actually does.
-- :doc:`/flow/08_reference_design` for a walk through the two-die test design.
+- :doc:`/flow/08_reference_design` for a walk through the reference design.
 - :doc:`/install/03_environment` if you need to point a tool at a checkout of
   your own.
 - :doc:`/tools/07_adk_tools_image` for the pin, build and release model.

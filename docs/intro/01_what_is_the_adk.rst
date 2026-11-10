@@ -20,35 +20,29 @@ open answer.
     comes from its own PDK, and the interposer is the attachment surface they
     share.
 
-The role model
---------------
+One layer above every PDK
+-------------------------
 
-The ADK sits one abstraction layer above all PDKs.
-
-.. figure:: /_figures/tikz_rolemodel.*
-    :align: center
-    :alt: The ADK as a single layer above chiplet PDK A, the interposer PDK and chiplet PDK B, reaching each one through an adapter.
-    :width: 90%
-
-    The role model. The ADK sits one abstraction layer above every PDK
-    and reaches each one only through an adapter.
+The ADK sits one abstraction layer above all PDKs and reaches each one only
+through an adapter.
 
 Each PDK owns its own fabrication rules for metal, vias and pads. The ADK
 governs only the interactions between chiplets and the interposer, never the
-internal manufacturing of any single PDK. The consequence that matters most is
-the middle box: from the ADK's point of view **the interposer is just another
-PDK**, so nothing in the assembly rule set is specific to IHP's IntM4TM2
+internal manufacturing of any single PDK. The consequence that matters most
+concerns the interposer: from the ADK's point of view **the interposer is just
+another PDK**, so nothing in the assembly rule set is specific to IHP's IntM4TM2
 interposer, or to any interposer.
 
-The abstraction boundary
-------------------------
+Why the rules never name a layer
+--------------------------------
 
 Rules reference **abstract input names only**. The mapping from an abstract name
 to a PDK-specific fabrication layer lives in a small adapter file, and nowhere
 else. The central one is ``chiplet_attachment_input``, the region an interposer
-offers for chiplet attachment: on IntM4TM2 the adapter derives it from Cu
-pillars, on another substrate it might be solder-bump openings or a
-hybrid-bonding pad array, and the rule never asks which. That is what lets one
+offers for chiplet attachment: on IntM4TM2 the adapter derives it from where
+the Cu-pillar and solder-bump openings overlap their final Cu pads, on another
+substrate it might be a hybrid-bonding pad array, and the rule never asks
+which. That is what lets one
 rule deck check assemblies built on substrates the deck has never heard of.
 
 :doc:`/adk/01_architecture` lists the abstract inputs and gives the reasoning;
@@ -71,8 +65,9 @@ checks it with ``assembly-lvs``, an engine in the ADK-Tools image that
 packaging-flow runs as one stage of a flow run.
 
 Neither question subsumes the other. Legal geometry can implement the wrong
-netlist, and correct connectivity can be drawn illegally. An assembly is signed
-off only when both answers are yes.
+netlist, and correct connectivity can be drawn illegally, so an assembly needs a
+yes on both. In this preview release a yes on both is evidence for review, not
+a sign-off.
 
 The geometric axis: assembly DRC
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,7 +93,7 @@ technology, and no PDK deck sees two dies at once. The space between the dies,
 and the attachment geometry that lands them on the interposer, belongs to a
 third level that no PDK owns. That level is what the ADK ships.
 
-.. figure:: /_figures/tikz_drc_levels.*
+.. figure:: /_figures/drc_levels.*
     :align: center
     :alt: The three levels of DRC in a 2.5D assembly, per-die, interposer and assembly, with the assembly level marked as the one the ADK ships in this release.
     :width: 90%
@@ -143,7 +138,7 @@ routing between those landings. This is the level at which chiplet assemblies
 fail in practice: a mirrored die, a swapped pad, a placement shifted far enough
 that a bump misses its pad.
 
-.. figure:: /_figures/tikz_verification_levels.*
+.. figure:: /_figures/verification_levels.*
     :align: center
     :alt: The three levels of LVS in a 2.5D assembly, per-die, interposer and assembly, laid out like the DRC figure above, with the assembly level marked as checked by assembly-lvs in this release.
     :width: 90%

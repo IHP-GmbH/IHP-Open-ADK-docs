@@ -7,7 +7,7 @@ Verification stages
 Assembly-level verification has two axes, set out in
 :doc:`/intro/01_what_is_the_adk`, and this preview release ships a check for
 each. Most of this page is about the geometric axis. The connectivity axis has
-one stage, assembly LVS, described in `Stage 5: assembly LVS`_.
+one stage, described in `Assembly LVS`_.
 
 Within the geometric axis an assembly passes through four complementary checking
 stages.
@@ -19,7 +19,7 @@ others structurally cannot see.
 one of them and concluding the assembly is checked is the single most likely way
 to ship a mistake through this flow.
 
-.. figure:: /_figures/tikz_verification_stages.*
+.. figure:: /_figures/verification_stages.*
     :align: center
     :alt: The four checking stages hung off the artefact spine that runs from the KiCad board to the 3Dblox model, each card stating what its stage proves and what it is blind to.
     :width: 90%
@@ -59,8 +59,14 @@ to ship a mistake through this flow.
 The first four rows are the geometric axis and the last is the connectivity
 axis.
 
-Stage 1: KiCad design-time rules
---------------------------------
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
+.. _stage-1-kicad-design-time-rules:
+
+KiCad design-time rules
+-----------------------
 
 **Runs on** the KiCad board, continuously, while you place and move chiplet
 footprints.
@@ -76,10 +82,7 @@ a rules file without one without saying so:
         --interposer-adapter intm4tm2 \
         --out adk_section.txt
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 **What it proves.** That no two die footprints are closer than the assembly
 spacing rule, enforced as a ``courtyard_clearance`` constraint, plus overlap,
@@ -103,8 +106,14 @@ bounding box and knows nothing about the reservation you drew around it.
 
 See :doc:`/adk/06_kicad_dru`.
 
-Stage 2: the 3Dblox export and ``check_3dblox``
-------------------------------------------------
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
+.. _stage-2-the-3dblox-export-and-check-3dblox:
+
+The 3Dblox export and ``check_3dblox``
+--------------------------------------
 
 **Runs on** a geometric model derived from the finalised ``.chiplet``, not on
 any layout file.
@@ -128,7 +137,8 @@ represent faithfully rather than rounding or guessing: a die whose
 height, to within 1e-6 um; a rotation that is not a multiple of 90 degrees; a
 non-canonical orientation token; a die anchored ``bbox_center``, or with no
 declared anchor; an unresolvable connection stack; a pin that falls outside the
-die's declared outline; more or fewer than one interposer component.
+die's declared outline; more or fewer than one interposer component; an
+interposer that seats dies and declares no ``attachment_surface_z``.
 
 ``check_3dblox`` then lints the loaded database. The open implementation in
 OpenROAD runs seven checks: floating components, 3D overlap, connection-region
@@ -156,8 +166,14 @@ is reported by the linter as an invalid connection.
 
 See :doc:`/adk/07_chiplet2dbx` and :doc:`/formats/08_3dblox_interop`.
 
-Stage 3: the KLayout assembly DRC
-----------------------------------
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
+.. _stage-3-the-klayout-assembly-drc:
+
+The KLayout assembly DRC
+------------------------
 
 **Runs on** the assembly GDS, with the chiplet boundaries injected from the
 ``<gds-stem>.boundaries.json`` sidecar next to it.
@@ -167,9 +183,11 @@ Stage 3: the KLayout assembly DRC
     python3 klayout/drc/run_drc.py \
         --path outputs/layout/two_die_interposer_complete.gds \
         --interposer-adapter intm4tm2 \
-        --interconnect-adapter ihp_cupillar \
+        --interconnect-adapter vendorx_microbump \
         --interconnect-methods outputs/layout/two_die_interposer_complete.ixn_methods.json \
         --run_dir /tmp/adk_drc
+
+.. include:: /_image_adk_drc.inc
 
 This is the full rule set: the |asm-rule-count| placement rules on one axis and
 the |ixn-rule-count| interconnect rule forms on the other. The placement axis is
@@ -192,8 +210,8 @@ vendor method is not checked against a coarse Cu-pillar pitch.
 - **Connectivity.** The deck compares polygons against rules, never nets against
   a netlist. An assembly whose dies are placed and attached legally but wired to
   the wrong nets is clean here. Reconciling the placed assembly against the
-  system netlist is the connectivity axis of assembly-level verification, which
-  is Stage 5.
+  system netlist is the connectivity axis of assembly-level verification,
+  covered under `Assembly LVS`_.
 - **z.** The deck sees a flat 2D region. ``ASM.a`` therefore flags any XY
   overlap between chiplet boundaries, including dies that a multi-tier assembly
   would legally stack at different heights. Nothing in the current toolchain
@@ -218,8 +236,14 @@ notion of a spacing rule between two dies' bump fields.
 
 See :doc:`/adk/05_run_drc`, :doc:`/adk/03_asm_rules` and :doc:`/adk/04_ixn_rules`.
 
-Stage 4: the pad-to-pillar alignment check
--------------------------------------------
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
+.. _stage-4-the-pad-to-pillar-alignment-check:
+
+The pad-to-pillar alignment check
+---------------------------------
 
 **Runs on** the finalised ``.chiplet``, the assembly's pillar manifest, and a
 pad source per die.
@@ -268,8 +292,14 @@ assembly does not connect. Only this check compares pads against pillars.
 
 See :doc:`/adk/08_pads_vs_pillars`.
 
-Stage 5: assembly LVS
----------------------
+..
+   Legacy label: keeps an old URL fragment only. Never :ref: it; the stage
+   numbers live in the flow/01 table.
+
+.. _stage-5-assembly-lvs:
+
+Assembly LVS
+------------
 
 **Runs on** the placed component layouts, the interposer layout and each die's
 layout, together with the declared nets. All of them are named in one resolved
@@ -320,8 +350,12 @@ checks over two dies.
 
 The converter also refuses several classes of malformed output outright: more
 than half the routing on layers the PDK layer table does not map, a
-``--with-chiplets`` run in which no die GDS loaded, a pillar request with no
-reachable pillar generator, and a ``.chiplet`` that could not be finalised.
+``--with-chiplets`` run in which no die GDS loaded, a die whose outline layer
+does not give one rectangle, a pillar request with no reachable pillar
+generator, and a ``.chiplet`` that could not be finalised. Finalising one needs
+a readable interposer PDK whatever the attachment method; without it the run
+stops with ``Attach frame refused:`` and writes nothing
+(:ref:`hyp_to_gds_attach_frame`).
 
 Where each stage sits in the flow
 ----------------------------------

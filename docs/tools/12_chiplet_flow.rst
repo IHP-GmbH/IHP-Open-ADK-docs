@@ -2,6 +2,7 @@ chiplet-die-flow
 ================
 
 .. include:: /common.inc
+.. include:: /tools/_staged_engines.inc
 
 ``chiplet-die-flow``, the die flow, builds one die of a multi-die system and
 hands it over as a **ready die**: the layout, its pin list and a contract that
@@ -14,8 +15,9 @@ It is for whoever designs a die that goes into an assembly. You keep authoring
 your LibreLane project as usual; the die flow adds the step that turns a
 finished run into something the rest of the flow can check.
 
-Version 0.1.0 of chiplet-flow ships in the ADK-Tools image as the
-``chiplet-die-flow`` command. It is licensed GPL-3.0-or-later.
+chiplet-die-flow |chiplet-flow-version| ships in the ADK-Tools image as the
+``chiplet-die-flow`` command, staged as
+``/opt/adk-tools/staging/chiplet-flow``. It is licensed GPL-3.0-or-later.
 
 .. warning::
    The die flow is part of the |current-status|. A ready die records the
@@ -25,6 +27,16 @@ Version 0.1.0 of chiplet-flow ships in the ADK-Tools image as the
 This page covers ``build-die``, ``die-view``, ``emit-ready-die``,
 ``derive-padring-die`` and ``pad-frame``. ``chiplet-die-flow <command>
 --help`` lists every option of a command.
+
+Three commands are not covered here. ``prepare-die`` makes the die project
+``build-die`` builds for a bondpad-only die, a pad frame around a core: it
+stages and builds the core, then stages the die project around it.
+``check-die-project`` reads that project back without changing anything and
+says whether it is still as prepared. ``emit-eda-views`` copies a built
+die's EDA views (DEF, SDC, LEF, Liberty, SPEF, pins and gate-level Verilog)
+from its LibreLane run into a record bound by digest. For a bondpad-frame
+die, start from the template in ``templates/chiplet-full/README.md`` of the
+staged tree.
 
 The ready die
 -------------
@@ -67,12 +79,21 @@ A contract is not a qualification of the die, not a fabrication approval, and
 not a claim that the die is compatible with any assembly. It carries no die
 LVS verdict either: that stays in the record of the run that built the die.
 
-The die flow writes contract version 1.1. A contract is read by a strict
-reader, ``chiplet_format_io`` from the reference readers of |spec-repo|,
-which versions its own boundary as a reader revision. The image
-stages reader revision 4, the one packaging-flow 0.1.0 requires; the die flow
-accepts revisions 3 and 4. A reader the die flow cannot use stops it with
-exit 11 before anything is read.
+The die flow writes contract version 1.1, or 1.2 when ``--supply-volts FILE``
+(on ``emit-ready-die``, and on ``build-die``, which forwards it) states the
+die's supply voltages. ``FILE`` is a JSON object of supply domain to nominal
+volts, for example ``{"VDD": 1.2, "VSS": 0}``. Its keys must be exactly the
+domains the power and ground terminals name, a ground domain is 0 and a power
+domain is above 0. A 1.2 contract carries them as ``supply_domains``, and the
+build record binds the file by name and digest.
+
+A contract is read by a strict reader, ``chiplet_format_io`` from the
+reference readers of |spec-repo|, which versions its own boundary as a reader
+revision. The image stages reader revision 4, the one packaging-flow 0.1.0
+requires; the die flow accepts revisions 3 and 4. Revision 4 admits a 1.2
+contract and its ``supply_domains``; revision 3 reads one and ignores them,
+and the die flow then will not package it. A reader the die flow cannot use
+stops it with exit 11 before anything is read.
 
 Building a die
 --------------

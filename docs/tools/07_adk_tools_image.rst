@@ -1,5 +1,5 @@
-The ADK-Tools image
-===================
+How ADK-Tools is built and pinned
+=================================
 
 .. include:: /common.inc
 
@@ -21,7 +21,7 @@ instructions rather than the design of the image, read
 :doc:`/install/01_container`.
 
 .. note::
-    ADK-Tools is a |current-status|. The tool pages in this section describe
+    ADK-Tools is a |current-status|. The pages under :doc:`/tools` describe
     the individual repositories; this page describes how they are pinned,
     built and shipped together.
 
@@ -83,7 +83,8 @@ into the image's own ``/nix/store``; the image needs no Nix to run them.
 Last, it pins the die views: ``die-views.sha256`` lists every file of the die
 records the image carries under ``/opt/adk-tools/die-views``, and
 ``staging.pin`` holds the sha256 of that listing. The records come from the
-``die-views/`` folder of an adk-examples checkout at the same release.
+``die-views/`` folder of an adk-examples checkout, and
+``stage-die-views.sh --check`` says whether they match the listing.
 
 ``ci/pin-set.json`` records every pinned commit in one file. ``build.sh``
 writes its sha256 on the image as the ``org.ihp.adk-tools.pin-set`` label,
@@ -233,31 +234,42 @@ include, in this order:
    tree reads back, the pin set the image is labelled with, the vendored
    ``.chiplet`` readers against the staged chiplet-spec, and the plane the
    dies mount on in every IntM4TM2 ``.chiplet`` the image carries.
+#. Three checks before the tool suites: the tracked-tree digest test
+   (``nix/test_tracked_tree.py``), KLayout's date stamp (its commit's day, not
+   the build day), and
+   interposer-pnr's live single-layer route cases on the image's OpenROAD,
+   where a skip counts as a failure.
 #. ADK suite: boundary manifest validation, DRC regressions through the KLayout
-   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs first
-   of the suites.
+   CLI wrapper, and the DRU generator. Cheap and fail-fast, so it runs before
+   the other tool suites.
 #. gds2kicad suite: footprint and symbol writers, blackbox chiplets, and the
    GUI pieces under the offscreen Qt platform.
 #. The reference design's gds2kicad prior steps: its footprints and symbols are
    reproduced from the shipped die GDS and pin list and diffed against the
-   committed library, so an upstream change that silently alters the demo
-   artefacts fails before they reach the board.
+   committed library, so an upstream change that silently alters its artefacts
+   fails before they reach the board.
 #. Interposer PDK suite (bump mirror PCell regressions) and interconnect PDK
    suite (manifest contract, schema, 3D body generator). ``jsonschema`` is in
    the verify venv, so the schema check actually executes.
-#. The tracked demo outputs are snapshotted and the output tree is then
-   cleared, so the regeneration writes into an empty directory. Without the
-   clear, a regeneration would overwrite in place and any tracked file the
+#. The reference design's tracked outputs are snapshotted and the output tree
+   is then cleared, so the regeneration writes into an empty directory. Without
+   the clear, a regeneration would overwrite in place and any tracked file the
    current pipeline no longer emits would survive unnoticed.
-#. The two-die interposer design is regenerated headless: ``pcbnew`` to the
-   writers to ``hyp_to_gds`` to the assembly DRC. The DRC is required by
-   default, so a combination that breaks assembly DRC fails the image build.
+#. The reference design is regenerated headless: ``pcbnew`` to the writers to
+   ``hyp_to_gds`` to the assembly DRC. The DRC is required by default, so a
+   combination that breaks assembly DRC fails the image build.
 #. Reproducibility gate: the shipped deliverables must equal the fresh
    regeneration, compared on die geometry, pillar manifests, boundary geometry
-   and a timestamp-normalised geometry digest of the interposer GDS. The
-   clone ships the tracked tree, not the regeneration, so without this check
-   a stale demo could ship on a green build. It also guards determinism
+   and a timestamp-normalised geometry digest of the interposer GDS. The clone
+   ships the tracked tree, not the regeneration, so without this check a stale
+   reference design could ship on a green build. It also guards determinism
    between the GUI and headless paths.
+#. Carrier foundry DRC: the interposer PDK's own DRC deck runs on the
+   regenerated carrier, and its findings are compared against a committed
+   baseline.
+#. chiplet-die-flow's die-view XOR tests under the image's KLayout, which also
+   check that the ``klayout`` binary is the version of the Python ``klayout``
+   module.
 #. Chiplet Studio full suite through ``ctest``, with the regenerated
    ``.chiplet`` handed to the gated tests.
 #. Plugin suite, with ``pcbnew`` present so the env-gated byte-exact writer
@@ -290,6 +302,23 @@ nothing on this site is generated from it. The image does pin it, at
 ``tools/kicad``. And the pins above are the documentation pins, which are not
 required to equal the pins of any particular image tag. The authoritative
 answer for a running image is the manifest baked into it.
+
+.. _staged_engines:
+
+Staged engines
+~~~~~~~~~~~~~~
+
+The flow engines are not submodules of this site either. This table takes the
+commit of each one from ``staging.pin`` in the pinned ADK-Tools, and the
+distribution and version from the ``pyproject.toml`` at that commit. The engine
+pages quote these versions. The chiplet specification is staged too, but it is
+a submodule here, so it is in the matrix above, and the build fails unless
+``staging.pin`` stages it at the commit this site pins.
+
+.. csv-table:: Staged engines
+   :file: tables/staged_engines.csv
+   :header: "Staged tree", "Distribution", "Version", "Commit"
+   :class: adk-wide-table
 
 The version story
 -----------------
@@ -347,25 +376,20 @@ Updating a clone
 
 To run a newer release, check out its tag and build it.
 
-
 A release clone sits on its tag, not on a branch, so fetch the tags and check
-out the new one rather than pulling:
+out the new one rather than pulling. This is the recipe of the ADK-Tools
+README, with the ``nix build`` step of its build recipe added before
+``./build.sh``: ``build.sh`` copies OpenROAD, LibreLane and the other Nix
+packages from the host's store, and they have to be realised at the commit you
+build.
 
-.. code-block:: bash
-
-    # the quickstart's exports, again in a fresh shell
-    export ADK_TOOLS_ROOT=~/adk-tools ADK_EXAMPLES_ROOT=~/adk-examples
-    export STAGE_DIE_VIEWS_DIR="$ADK_EXAMPLES_ROOT/die-views"
-    cd "$ADK_TOOLS_ROOT"
-    git fetch --tags
-    git checkout vYYYY.MM    # a release clone sits on a tag, so there is nothing to pull
-    git submodule update --init --recursive
-    ./stage-sources.sh --check && ./stage-die-views.sh --check
-    ./build.sh    # cached stages rebuild only what changed
+.. literalinclude:: /install/_recipe/update.sh
+    :language: bash
 
 The sibling checkouts have to hold the new pins (a ``git fetch`` in each), and
-the adk-examples checkout has to be at the new tag; the two ``--check`` calls
-say which one does not.
+the adk-examples checkout has to hold die records that match the new
+``die-views.sha256`` (update it until they do); the two ``--check`` calls say
+which one does not.
 
 Depending on how old the clone is, one of these one-time cleanups may apply:
 
@@ -377,8 +401,8 @@ Depending on how old the clone is, one of these one-time cleanups may apply:
   rebuild once, because ``JOBS`` keys those layers. After that the cache
   behaves normally again.
 - A ``/work/example`` from an older image stays as it is. Older images seeded
-  it with the demo; the runtime image now carries no demo, and the worked
-  examples come from adk-examples.
+  it with the reference design; the runtime image now carries none, and the
+  worked examples come from adk-examples.
 
 Testing one tool at a different revision
 ----------------------------------------
@@ -388,7 +412,7 @@ variable and hold the other six fixed.
 
 .. code-block:: bash
 
-    # follow the branch tracked in .gitmodules (usually main)
+    # follow the branch .gitmodules names (dev for every tool at this release)
     git submodule update --remote tools/adk
     git add tools/adk
     python3 -B ci/pin_set.py    # the pin set records every staged gitlink
@@ -454,10 +478,9 @@ branch, where submodule bumps and new tools land first and are verified.
 
 A release is this repository at its tag. No image is published: whoever runs
 a release builds the image from the tag, as :doc:`/install/01_container`
-describes, and gets an image ID of their own. The adk-examples checkout of the
-same release names, in its ``release-lock.json``, the reference image its
-examples were checked on and the pin set it was built from, and ``run.sh``
-runs any image of that pin set under the lock (:doc:`/install/00_release`).
+describes, and gets an image ID of their own. An adk-examples checkout names,
+in its ``release-lock.json``, the reference image its examples were checked on
+and the pin set it was built from, and ``run.sh`` runs any image of that pin set under the lock (:doc:`/install/00_release`).
 
 Licensing
 ---------

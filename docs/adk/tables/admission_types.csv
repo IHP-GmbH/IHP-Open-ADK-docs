@@ -1,0 +1,4 @@
+"``die``","Checked against its die contract."
+"``interposer`` and ``substrate``","Recognized and excluded. A die contract does not describe them."
+"``die_array``","Refused by name. A die contract binds one layout and one top cell, so it cannot speak for the several instances such a component places."
+"anything else","Unclassified. The assembly cannot be decided, even when every die in it was admitted."

@@ -85,15 +85,18 @@ target and are dropped deliberately, not by accident.
       - def thickness
       - **Always** the physical thickness. Never derived from a visualisation
         stackup.
-    * - ``position`` (geometric centre)
+    * - ``position`` (the anchor reference point)
       - instance placement
-      - 3Dblox places by corner. Convert centre to corner through the outline
-        before emitting.
+      - 3Dblox places by corner. Convert the anchor point to the outline's
+        lower-left corner before emitting: half the outline back from a
+        ``bbox_center`` position, the die's GDS bbox offset from a
+        ``gds_origin`` one. See the exporter section below for what
+        ``chiplet2dbx`` does.
     * - ``orientation: face_up`` (default)
       - ``R0``
       -
     * - ``orientation: flip_chip``
-      - ``MZ``, the flipped mounting
+      - ``MZ`` unrotated, else ``MZ_R90`` / ``MZ_R180`` / ``MZ_R270``
       - See the flip section below.
     * - ``orientation: face_down``
       - none
@@ -135,11 +138,12 @@ the target vocabulary lacks the combination it needs.
 What does not map, and why
 --------------------------
 
-Dropped by declaration
-~~~~~~~~~~~~~~~~~~~~~~
+Reduced or dropped on export
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These exist in ``.chiplet`` and have no 3Dblox target, because 3Dblox sits at
-the P&R abstraction and does not reference artwork:
+These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
+3Dblox sits at the P&R abstraction and does not reference artwork. Some survive
+the export only in reduced form:
 
 1. **Per-layer interconnect metallurgy.** ``connection_stacks`` carries a name,
    material, height and diameter per layer, and derives the die z from the
@@ -217,43 +221,46 @@ Connection thickness is the stack height, exactly
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``.chiplet`` z-mounting rule is
-``z_die = mounting_surface + connection.total_height()``, so the stack's
+``z_die = interposer.position.z + mounting_surface + connection.total_height()``,
+so the stack's
 ``total_height()`` **is** the vertical gap between the attachment surface and
 the die bottom. OpenROAD's linter asserts that a connection's declared
 thickness equals that gap exactly. So emit
 ``thickness := connection.total_height()``, never a rounded or nominal value,
 and never a gap re-derived from body outlines.
 
-Two caveats follow from the frame contract's fallback rules. First, the
+Three caveats follow from the frame contract's edge cases. First, the
 equality is only guaranteed when the die's z defers to auto-calculation. A
 ``.chiplet`` may carry an explicit ``position.z``, which readers honour as-is,
 so an exporter must verify that
-``z_die == mounting_surface + total_height()`` and fail loudly on a mismatch
+``z_die == interposer.position.z + mounting_surface + total_height()`` and
+fail loudly on a mismatch
 rather than emit a thickness inconsistent with the actual gap. Second, when a
 die's ``connection`` id does not resolve to a stack, there is no thickness
-source at all, and the export must likewise fail loudly.
+source at all, and the export must likewise fail loudly. Third, a file whose
+interposer seats dies and declares no ``attachment_surface_z`` has no mount
+plane, and the export refuses it (:ref:`chiplet_mounting_plane`).
 
 The attachment surface is not the maximum z
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``mounting_surface`` resolves to the technology's attachment surface, the pad
-top through the passivation opening, which is generally **not** the substrate's
-maximum z. Passivation can rise above it: on the reference interposer stackup
-the attachment surface sits at 13.83 um while the passivation top lies above
-that.
-
-A converter that derives the die-to-substrate gap from an outline maximum z
-instead of the attachment surface disagrees with ``total_height()`` by the
-passivation height, and fails the exact-equality check. Use the
-attachment-surface and stack semantics of the contract, always. See
-:doc:`/formats/03_coordinate_frames`.
+``mounting_surface`` resolves to the file's attachment surface, the
+interposer's ``attachment_surface_z`` (:ref:`chiplet_mounting_plane`), the pad
+top through the passivation opening,
+which is generally not the substrate's maximum z
+(:ref:`chiplet_passivation_trap`). On export the error is not silent: a gap
+taken from the outline fails the linter's exact-equality check. Use the
+attachment-surface and stack semantics of the contract, always.
 
 Flip is a mounting intent, not a shared mirror convention
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``orientation: flip_chip``, a die mounted with its active side toward the
-substrate, corresponds to the 3Dblox flipped orientation ``MZ``. The **intent**
-maps cleanly. The 2D **realisation** does not: this ecosystem realises the flip
+substrate, corresponds to the 3Dblox flipped orientations. For a die without
+an eda-views record ``chiplet2dbx`` emits ``MZ`` when the die is not rotated
+and ``MZ_R90``, ``MZ_R180`` or ``MZ_R270`` when it is; a flipped die exported
+with a record is placed ``MZ_MY`` instead (see below). The **intent** maps
+cleanly. The 2D **realisation** does not: this ecosystem realises the flip
 as a layout mirror when it emits 2D views, while 3Dblox composes a formal 3D
 orientation with a corner anchor.
 
@@ -338,11 +345,44 @@ build provenance. The only proposed schema hook is the component-level
 The exporter in the ADK
 -----------------------
 
-``chiplet2dbx`` implements this mapping. It emits dies as black-box
-``ChipletDef`` entries (design area, thickness, and full-outline front and back
-bond regions, with no cell LEF, DEF or Verilog), the interposer as a
-``substrate`` def, and each die's connection stack as a ``Connection`` whose
-thickness is the stack's exact total height.
+``chiplet2dbx`` implements this mapping. By default it emits dies as
+black-box ``ChipletDef`` entries (design area, thickness, and full-outline
+front and back bond regions, with no cell LEF, DEF or Verilog), the interposer
+as a ``substrate`` def, and each die's connection stack as a ``Connection``
+whose thickness is the stack's exact total height.
+
+A die given an eda-views record (``--views``) is exported with its recorded
+views instead: its def names the record's LEFs, Liberty files and DEF, and its
+bump map lists the DEF pad instances in the DEF frame. Such a die declares
+``anchor: bbox_center``, because the DEF frame is the die outline, and a
+flipped one is placed ``MZ_MY``: the target's ``MZ`` mirrors z only, so the
+flip's x mirror goes into the orientation and the bump map stays in the DEF
+frame. A flipped die with a record and a quarter turn is refused.
+
+Every instance is placed at ``position`` minus half its outline, with the
+spans swapped for a quarter turn: the exporter reads ``position`` as the
+outline centre. That is the contract's reading for ``bbox_center``. A
+``gds_origin`` die, which every die without a record must declare, has its
+GDS origin at ``position``, so its outline lands where it should only when
+that origin sits at the outline centre. Its bumps land right either way: the
+bump map adds each pin's GDS offset, mirrored in x for a flip, to the
+outline centre of the def, and the
+instance puts that centre at ``position``.
+
+The interposer is placed the same way, at ``position`` minus half its
+``dimensions``. The contract makes the interposer's ``position`` the centre of
+its full GDS bbox while ``dimensions`` is the board outline
+(:doc:`/formats/03_coordinate_frames`), so the two agree only when no copper
+leaks past the outline. When some does, the substrate in the ``.3dbx`` is
+shifted by half the leak.
+
+.. warning::
+
+    For a black-box ``gds_origin`` die whose GDS origin is not its outline
+    centre, the ``.3dbx`` outline of the instance is off by that offset while
+    its bumps are not, and the export reports nothing. With a pin list, a large
+    enough offset pushes pins outside the outline and the export aborts, but a
+    small one does not.
 
 The technology LEF the mapping lists as an external input is the one thing
 ``chiplet2dbx`` supplies itself rather than asking for: it generates one

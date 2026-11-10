@@ -9,7 +9,7 @@ truth for pin names in the human-in-the-loop symbol and footprint workflow, and
 two ADK tools consume it: the 3Dblox exporter uses it to emit bump maps, and the
 pad-to-pillar alignment check uses it as a pad source.
 
-.. warning::
+.. important::
    The ADK does not specify the pin list formally. There is no JSON Schema for
    it in the ADK's ``config/schema/``, no version check in either ADK reader,
    and no validator beyond the handful of keys each consumer happens to need.
@@ -133,9 +133,14 @@ Coordinate frame
 ~~~~~~~~~~~~~~~~
 
 Pin coordinates are **die-local**, y-up, relative to the die GDS origin, which is
-the ``gds_origin`` anchor of the frame contract. Both ADK consumers reject a die
-that declares ``bbox_center``, or no ``anchor`` at all, rather than silently
-misplacing its pads by the bounding-box corner offset.
+the ``gds_origin`` anchor of the frame contract, so the die's ``position``
+is where that origin lands in the assembly. Both ADK consumers reject a die
+that comes with a pin list and declares ``bbox_center``, or no ``anchor`` at
+all, rather than silently misplacing its pads by the offset between its GDS
+origin and its bbox centre. ``chiplet2dbx`` has one case the other way round:
+a die exported with an eda-views record (``--views``) is placed in the DEF
+frame of its outline and must declare ``bbox_center``
+(:doc:`/adk/07_chiplet2dbx`).
 
 The coordinates are also **unmirrored**: they describe the die as drawn, not as
 placed. Flip-chip handling belongs to the consumer, and each one applies it.
@@ -159,11 +164,7 @@ From a die GDS
         --lyp-file pdk.lyp --pad-layer TopMetal2.drawing \
         --extract-pins die.pins.json
 
-In the tools image the gds2kicad scripts sit under ``$GDS_TO_KICAD_ROOT`` and
-the ADK ones under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_gds2kicad_scripts.inc
 
 Pads are extracted from the pad layer, names are paired to pad polygons by
 proximity to text labels, and ``classify_pin`` assigns an initial symbol side
@@ -215,7 +216,7 @@ a later edit round trip through the editor.
    Take ``dbu_um`` from the die layout it was extracted from, not from a
    default. gds2kicad resolves the database unit per GDS, and a die drawn at
    0.005 um DBU with ``0.001`` recorded would place every bump 5 times too far
-   from the die centre.
+   from the die origin.
 
 What the ADK consumers read
 ---------------------------
@@ -246,6 +247,8 @@ Consumer 1: bump maps for the 3Dblox export
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
 
+.. include:: /_image_adk_scripts.inc
+
 Supplying a pin list for a die turns its export bump-aware. The die's
 ``ChipletDef`` gains a ``.bmap`` bump map plus a per-method bump macro LEF
 rendered by the interconnect PDK's generator, which is what activates the
@@ -254,7 +257,9 @@ is purely a black-box geometric view.
 
 The transform into the def-local frame is a translation and, for flip-chip
 dies, a mirror. The def-local frame is the outline rectangle
-``(0, 0)..(width, height)`` with the die centre at ``(width/2, height/2)``:
+``(0, 0)..(width, height)``, and the exporter takes the die's GDS origin to
+sit at its centre, ``(width/2, height/2)``
+(:doc:`/formats/08_3dblox_interop` describes what that assumption costs):
 
 .. code-block:: text
 

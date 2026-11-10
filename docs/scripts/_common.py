@@ -3,13 +3,14 @@
 """Shared helpers for the documentation generators.
 
 Every generator in this directory reads the pinned submodules under ``src/``
-and writes into ``docs/``. Nothing normative on this site is typed by hand, so
-a change in the source repositories shows up as a diff in the generated files,
+and writes into ``docs/``. What they write is not typed by hand anywhere, so a
+change in the source repositories shows up as a diff in the generated files,
 which is what the CI drift gate checks.
 """
 
 import json
 import os
+import subprocess
 import sys
 
 DOCS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -38,11 +39,121 @@ def fail(message):
     raise SystemExit(1)
 
 
+def run_git(repo, *args, strip=True):
+    """Run a git command in repo. Returns (returncode, stdout, stderr), with
+    returncode None when git could not be run at all. stdout is decoded as
+    UTF-8, and stripped unless strip is False."""
+    try:
+        result = subprocess.run(
+            ["git"] + list(args),
+            cwd=repo,
+            capture_output=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return None, "", str(error)
+    out = result.stdout.strip() if strip else result.stdout
+    return result.returncode, out, result.stderr.strip()
+
+
+def git(repo, *args):
+    """The stripped stdout of a git command in repo, or "" if it fails."""
+    code, out, _ = run_git(repo, *args)
+    return out if code == 0 else ""
+
+
+def git_or_fail(repo, *args, strip=True):
+    """The stdout of a git command that must succeed, stripped unless strip is
+    False."""
+    code, out, err = run_git(repo, *args, strip=strip)
+    if code != 0:
+        fail("git {} failed in {}: {}".format(" ".join(args), repo, err or "no output"))
+    return out
+
+
+# Published release tags start with "v" and a digit. Clones may also carry
+# local tags (not release tags) that are never published, and none of them may
+# reach a page.
+RELEASE_TAG_GLOB = "v[0-9]*"
+
+
+def release_tags(repo):
+    """The v-prefixed tags pointing exactly at HEAD of repo.
+
+    Exact, not the nearest tag: a commit past a release is not that release.
+    """
+    return git(repo, "tag", "--points-at", "HEAD", "--list", RELEASE_TAG_GLOB).split()
+
+
+def pinned_commit(path, name):
+    """The commit this repository pins the submodule at, from the index.
+
+    The index rather than HEAD, so that a pin move can be regenerated before
+    it is committed: check out the new commit, ``git add`` the submodule, then
+    run the generators.
+    """
+    relative = os.path.relpath(path, REPO_ROOT)
+    entries = git_or_fail(REPO_ROOT, "ls-files", "--stage", "--", relative).splitlines()
+    # "<mode> <sha> <stage>\t<path>"; a submodule's mode is 160000 and an
+    # unconflicted entry has stage 0.
+    fields = [entry.split() for entry in entries]
+    if any(len(f) >= 3 and f[2] != "0" for f in fields):
+        fail("the pin of {} is conflicted in the index. Resolve it first".format(name))
+    if len(fields) != 1 or len(fields[0]) < 3 or fields[0][0] != "160000":
+        fail(
+            "{} is not a submodule in this repository's index. Check the path, "
+            "or restore the gitlink with: git checkout HEAD -- {}".format(name, name)
+        )
+    return fields[0][1]
+
+
+def git_text(repo, *args):
+    """The raw stdout of a git command in repo, or a failure in git's own words.
+
+    For reading a file or a listing out of a commit, where a silent "" would
+    read as an empty file.
+    """
+    return git_or_fail(repo, *args, strip=False)
+
+
 def require_submodule(path, name):
+    """Fail unless the submodule is checked out exactly at its pin, clean.
+
+    A checkout that has drifted from its pin writes tables for code the site
+    does not pin; committed, they would then fail the CI drift gate, which
+    builds from the pins. Local changes inside the submodule, tracked or not,
+    are refused for the same reason: the generators glob directories, so an
+    untracked deck or test file would change a count. Ignored files, such as
+    the __pycache__ a captured --help leaves, do not count.
+    """
     if not os.path.isdir(path):
         fail(
             "submodule {} is not checked out at {}. "
             "Run: git submodule update --init".format(name, path)
+        )
+    pinned = pinned_commit(path, name)
+    # An empty or uninitialised submodule directory makes git answer for the
+    # enclosing repository instead, so check whose HEAD this is first.
+    toplevel = git(path, "rev-parse", "--show-toplevel")
+    if not toplevel or os.path.realpath(toplevel) != os.path.realpath(path):
+        fail(
+            "submodule {} is not initialised at {}. "
+            "Run: git submodule update --init".format(name, path)
+        )
+    checked_out = git_or_fail(path, "rev-parse", "HEAD")
+    if checked_out != pinned:
+        fail(
+            "submodule {} is checked out at {} but pinned at {}. To build the "
+            "pin, run: git submodule update --init {}. To move the pin to the "
+            "checkout, run: git add {}, then rerun".format(
+                name, checked_out[:12], pinned[:12], name, name
+            )
+        )
+    if git_or_fail(path, "status", "--porcelain", "--ignore-submodules=all"):
+        fail(
+            "submodule {} has local changes (see git -C {} status). "
+            "Commit, stash or remove them first".format(name, name)
         )
     return path
 

@@ -19,7 +19,7 @@ than add rules to the deck.
 
 In this release the placement and routing step can be run by tools, as a proof
 of concept. ``interposer-pnr`` (:doc:`/tools/11_interposer_pnr`) places the
-dies a source leaves open and legalizes them against the assembly rules, puts
+dies a source leaves open and legalises them against the assembly rules, puts
 a bump on every die pad, routes the interposer with OpenROAD, and writes the
 copper as a draft on a KiCad board. ``packaging-flow``
 (:doc:`/tools/10_packaging_flow`) runs those steps in order and halts for a
@@ -46,16 +46,18 @@ The direction of work from here:
   impedance needs the constraint contract described in the next section.
 - **Congestion by layer.** The route report states routed length; it does not
   yet report overflow per routing layer.
-- **Placement.** Legalization runs only inside the placer, with no command of
+- **Placement.** Legalisation runs only inside the placer, with no command of
   its own, and the placer seeds every die on one grid, so dies of very different
   sizes sit further apart than they need to.
 
 Extraction and signal integrity
 -------------------------------
 
-The shipped checks are geometric. They confirm that dies are placed legally and
-that attachment structures respect the density their method allows. They say
-nothing about what a signal experiences crossing the interposer.
+The shipped checks are geometric and connective. The assembly rules confirm
+that dies are placed legally and that attachment structures respect the density
+their method allows, and ``assembly-lvs`` checks the extracted connectivity of
+the placed assembly against its declared nets (:doc:`/tools/09_assembly_lvs`).
+None of them says what a signal experiences crossing the interposer.
 
 Two levels are in scope, and they are worth separating because the first is
 largely a reuse problem and the second is not.
@@ -83,9 +85,11 @@ is one of inputs: a simulation needs a meshed geometry with materials, and the
 assembly artefacts this flow already produces are a reasonable starting point
 for building one.
 
+:doc:`/tools/08_multiphysics` documents the method and its current status.
+
 The interconnect PDK already carries a three-dimensional stackup fragment per
-attachment method, which exists precisely so that a pillar or bump has a body a
-solver can mesh rather than only a two-dimensional footprint. See
+attachment method, which Chiplet Studio (:doc:`/tools/04_chiplet_studio`) uses
+to render each pillar or bump at its elevation. The same z data is a starting point for a solver geometry. See
 :doc:`/tools/06_interconnect_pdk`.
 
 There is no committed path from the ADK into a solver in this release, and no

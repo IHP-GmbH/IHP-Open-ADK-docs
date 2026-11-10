@@ -82,7 +82,7 @@ Shipped interposer adapters
 
 .. csv-table:: Interposer adapters shipped with the ADK
     :file: tables/interposer_adapters.csv
-    :header: "Adapter", "Interposer", "Declares"
+    :header: "Adapter", "Interposer", "Contract inputs declared"
     :widths: 18 42 40
     :class: adk-rule-table
     :align: left
@@ -158,30 +158,21 @@ loads from ``config/rule_params.json`` before the adapter runs:
     drc_rules['ASM_b'] = 250.0  # this interposer's own chiplet spacing rule
 
 An override is the technology's own rule, not a relaxation of the default.
-Both ADK consumers honour it, by different mechanisms. The KLayout deck simply
-reads the mutated dictionary. The KiCad DRU generator does not evaluate Ruby:
-it reads the overrides with the ADK's own parser, ``adk_rule_params.py``, and
-merges them on top of the registry defaults, only when invoked with
-``--interposer-adapter <name>``. The parser cannot know what the deck would
-apply for anything but a plain literal, so it refuses rather than guesses:
+Both ADK consumers honour it, by different mechanisms: the KLayout deck reads
+the mutated dictionary, and the KiCad DRU generator reads the adapter with the
+ADK's own parser, ``adk_rule_params.py``, which accepts plain literals only and
+refuses anything else. :ref:`The override grammar <adk_override_grammar>` is
+the reference for the accepted form.
 
-* write one override per line, ``drc_rules['NAME'] = NUMBER``, at most once per
-  name, above any other code in the adapter (only blank lines, comments and
-  other overrides before it);
-* a computed value, for example ``drc_rules['ASM_b'] = base * 1.5``, exponent
-  or underscore digits, a trailing ``;``, ``store`` or ``merge!``, or a
-  continued line is refused, and so is a comment that names a rule table,
-  on its own line or after an override;
-* an override targeting a key that is not in ``config/rule_params.json``, or a
-  negative value, is refused.
+.. _adk_placement_overrides:
 
 Placement reads no adapter: interposer-pnr legalizes to ``ASM_b`` and the
 packaging flow keeps its wire-bond pads ``ASM_g`` from each die, both straight
-from ``config/rule_params.json``. So a packaging-flow run that dispatches the
-deck refuses an interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a
-value other than the registry's, since the deck would check a different value
-than placement used. The ADK's adapter README lists the exact
-override form. See :doc:`/adk/06_kicad_dru`.
+from ``config/rule_params.json``. So that placement and the deck never work to
+two different numbers, a packaging-flow run that dispatches the deck refuses an
+interposer adapter that overrides ``ASM_b`` or ``ASM_g`` to a value other than
+the registry's, and says the deck would check a different value than placement
+used.
 
 What interposer adapters must NOT do
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,7 +225,10 @@ Shipped interconnect adapters
 
 ``ihp_cupillar`` and ``ihp_sbump`` mirror the corresponding interposer-stage
 rules, so the interposer stage and the assembly stage of the two-stage DRC
-check the same numbers.
+check the same numbers. Pitch is the exception: the interposer DRC deck does
+not emit ``Padc.e`` or ``Padb.e``, so in the two-stage DRC pitch is checked
+only at the assembly stage, by the IXN axis when it is enabled; see
+:ref:`adk_ixn_pitch_as_spacing`.
 ``vendorx_microbump`` is a demonstration adapter for a fictional non-IHP vendor:
 it exists to show that swapping the interconnect axis retightens the checks on
 the *same* interposer geometry without touching the interposer adapter.
@@ -244,7 +238,9 @@ The parameter pack
 
 An interconnect adapter is a **parameter pack**, nothing more. It MUST set these
 three keys on the ``interconnect_rules`` dictionary, whose defaults the deck
-loads from ``config/interconnect.json`` before the adapter runs.
+loads from ``config/interconnect.json`` before the adapter runs. Set all three
+explicitly: a key the adapter leaves out takes the registry default and is not
+reported (see :ref:`adk_ixn_fail_loud`).
 
 .. list-table::
     :header-rows: 1
@@ -260,19 +256,17 @@ loads from ``config/interconnect.json`` before the adapter runs.
       - Representative pad size, in micrometres, used for the pitch-to-spacing
         conversion.
 
-The whole of ``pdk_adapters/interconnect/ihp_cupillar.drc``, comments aside, is:
+The executable content of ``pdk_adapters/interconnect/ihp_cupillar.drc``,
+below its header comment, is:
 
-.. code-block:: ruby
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interconnect/ihp_cupillar.drc
+    :language: ruby
+    :start-at: interconnect_rules['IXN_spacing']
 
-    interconnect_rules['IXN_spacing']  = 40.0   # edge-to-edge between pillar pads
-    interconnect_rules['IXN_pitch']    = 75.0   # centre-to-centre pitch
-    interconnect_rules['IXN_pad_size'] = 35.0   # passivation opening
-
-The deck validates the three keys after the adapter is evaluated, and aborts
-naming the missing key. It also enforces ``IXN_pitch > IXN_pad_size`` at rule
-time, because the pitch check is implemented as a spacing of
-``pitch - pad_size``: KLayout has no native pitch check, so a pitch that does not
-exceed the pad size would produce a non-positive spacing and a meaningless rule.
+The deck enforces ``IXN_pitch > IXN_pad_size`` at rule time, because the pitch
+check is implemented as a spacing of ``pitch - pad_size``: KLayout has no
+native pitch check, so a pitch that does not exceed the pad size would produce
+a non-positive spacing and a meaningless rule.
 :doc:`/adk/04_ixn_rules` explains that conversion and its conservatism.
 
 Optional region narrowing
@@ -360,9 +354,10 @@ in the deck, so adapters that do not declare it still run. This is the pattern
 ``8_2_interconnect.drc`` uses for ``interconnect_region`` and ``layers_def.drc``
 uses for the injected boundary manifest.
 
-**Versioning.** The interconnect axis is additive: runs without an interconnect
-adapter, and interposer adapters written before that axis existed, behave exactly
-as the pre-interconnect deck. ``CHANGELOG.md`` in the ADK is the authoritative
+**Versioning.** The interconnect axis is additive: without an interconnect
+adapter or a per-method file none of its parts enter the eval chain (see
+:ref:`adk_ixn_additive`), and interposer adapters written before that axis
+existed still load unchanged. ``CHANGELOG.md`` in the ADK is the authoritative
 per-release record of the contract; the ``VERSION`` file and the ``version`` keys
 in every ``config/*.json`` track its latest released entry, and a test enforces
 that they agree.
@@ -372,26 +367,10 @@ Writing an adapter for a new interposer
 
 The shipped ``intm4tm2`` adapter is the whole worked example, because a
 conforming adapter really is this small. Here it is in full, comment header
-included:
+included, as the pinned ADK ships it:
 
-.. code-block:: ruby
-
-    # SPDX-License-Identifier: Apache-2.0
-    #
-    # IHP 130-nm IntM4TM2 aluminum BEOL interposer adapter.
-    #
-    # Declares ADK abstract inputs in terms of IHP-specific layers. IntM4TM2
-    # supports two chiplet-attachment mechanisms: the Cu pillar, formed where the
-    # passivation opening (9/35) and the final Cu pad (41/35) overlap, and the
-    # solder bump, formed where the passivation opening (9/36) and the final Cu
-    # pad (41/36) overlap. Both feed the abstract attachment input.
-
-    passiv_pillar = polygons(9, 35)
-    dfpad_pillar  = polygons(41, 35)
-    passiv_sbump  = polygons(9, 36)
-    dfpad_sbump   = polygons(41, 36)
-
-    chiplet_attachment_input = passiv_pillar.and(dfpad_pillar).join(passiv_sbump.and(dfpad_sbump))
+.. literalinclude:: /../src/IHP-Open-ADK/pdk_adapters/interposer/intm4tm2.drc
+    :language: ruby
 
 Line by line:
 
@@ -400,9 +379,10 @@ Line by line:
 
 The comment block
     States the substrate the adapter is for and, more usefully, *what physical
-    mechanism the attachment region models* and which layers encode it. This is
-    the only documentation a reader of the assembly report has for why the
-    region is what it is. Write it.
+    mechanism the attachment region models* and which layers encode it, and
+    which layers make up the wire-bond pads. This is the only documentation a
+    reader of the assembly report has for why the regions are what they are.
+    Write it.
 
 ``passiv_pillar = polygons(9, 35)``
     A KLayout layer expression for the passivation opening, in the interposer's
@@ -423,10 +403,19 @@ The comment block
     rather than the pad layer is the modelling decision: it makes ``ASM.f`` and
     the ``IXN`` rules operate on the geometry that actually forms a joint.
 
+``wire_bond_pad_input = lambda do |src| ... end``
+    The optional abstract input. The PDK derives a wire-bond pad from the
+    passivation opening (9/0), dfpad (41/0) and TopMetal2 (134/0) together, so
+    the lambda returns that intersection. It reads every layer through
+    ``src``, the carrier source the deck passes in, so a die in the assembly
+    that draws its own pads on the same layers is never read. Leave it out and
+    ASM.g is reported not applicable; see `Optional abstract input`_.
+
 Note what is *absent*: no rule, no ``output`` call, no include of another file
 and no parameter override. The four intermediate locals are a readability choice;
 the contract cares only that ``chiplet_attachment_input`` ends up defined and
-non-nil.
+non-nil, and that ``wire_bond_pad_input``, when present, is a lambda that
+returns a layer.
 
 To support a new interposer, a vendor must produce exactly this:
 
@@ -438,6 +427,10 @@ To support a new interposer, a vendor must produce exactly this:
    interposer's own layers, modelling the region where attachment can physically
    land. If the mechanism is not a Cu pillar, say so in the header comment and
    build the region from whatever layers do encode it.
+#. **Optionally, a** ``wire_bond_pad_input`` **lambda** that returns the
+   interposer's wire-bond pads from the source it is given, if the substrate
+   has any. Without it ASM.g is not applicable on that substrate. See
+   `Optional abstract input`_.
 #. **Optionally, numeric overrides** of ``drc_rules`` keys where the substrate
    genuinely demands different assembly numbers than the registry defaults.
    Write them as plain literals so the KiCad generator sees them too.

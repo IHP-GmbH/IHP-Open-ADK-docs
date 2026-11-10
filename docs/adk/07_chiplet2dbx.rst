@@ -2,24 +2,27 @@ OpenROAD 3Dblox export
 ======================
 
 .. include:: /common.inc
+.. include:: /_frame_values.inc
 
 ``openroad/chiplet2dbx.py`` derives a 3Dblox view of a finalised ``.chiplet``
 assembly, so the assembly geometry can be loaded into OpenROAD and linted by
-``check_3dblox``. It is a one-way, geometric export: dies become black-box
+``check_3dblox``. It is a one-way export: by default dies become black-box
 chiplet definitions, the interposer becomes a substrate, and each die's
 connection stack becomes a connection whose thickness is the stack's exact
-total height.
+total height. A die for which you supply its recorded views is exported with
+them instead; see `Exporting a die with its recorded views`_.
 
 3Dblox, originated by TSMC and being standardised as IEEE P3537, describes
 multi-die physical assemblies, and has an open-source implementation in OpenROAD
 under BSD-3 that this exporter writes for.
 
 The two formats describe the same physical assembly at different abstraction
-levels. 3Dblox binds it to the place-and-route abstraction and references no
-artwork. ``.chiplet`` binds it to the mask level: GDS bodies, layer property
-files, per-layer interconnect metallurgy and fab DRC parameters. A design can
-usefully hold both, one for exploration and P&R-level linting, one for
-mask-level assembly and DRC.
+levels. 3Dblox describes it at the place-and-route level: chiplet definitions
+and their LEF, DEF and Liberty views, the stack, and the connections between
+chiplets. ``.chiplet`` describes it at the mask level: GDS bodies, layer
+property files, per-layer interconnect metallurgy and fab DRC parameters. A
+design can usefully hold both, one for exploration and P&R-level linting, one
+for mask-level assembly and DRC.
 
 .. note::
 
@@ -64,8 +67,8 @@ fails ``.chiplet`` validation fails here first.
         minimal routing layer ``BUMP_ATTACH`` when the export is bump-aware,
         so the bump macros' pad ``PORT``\ s resolve in every technology.
     * - ``<def>.bmap``
-      - With ``--pins`` only. Bump centres of one bump-aware def, in the
-        def-local frame, with port and net columns.
+      - With ``--pins``. Bump centres of one bump-aware def, in the def-local
+        frame, with port and net columns.
     * - ``<method>__<technology>.lef``
       - With ``--pins`` only. The bump macro LEF for one connection method in
         one technology, rendered by the interconnect PDK's generator.
@@ -73,6 +76,12 @@ fails ``.chiplet`` validation fails here first.
 ``--name`` overrides the output basename, which otherwise comes from
 ``assembly.name``. ``--out-dir`` defaults to the directory of the input file.
 Every written path is printed on stdout.
+
+These outputs, and the sections below up to the recorded-views section,
+describe the default black-box export. A die exported with ``--views`` differs
+in its def, its technology LEF, its ``.bmap``, its anchor and its flip token;
+`Exporting a die with its recorded views`_ lists every difference in one
+table.
 
 .. tip::
 
@@ -99,10 +108,7 @@ Running the exporter
         --pins U1=chiplets/die_a.pins.json \
         --pins U2=chiplets/die_b.pins.json
 
-In the tools image these scripts sit under ``$ADK_ROOT``; run them with
-``/opt/adk-tools/venv/bin/python3``, which carries the modules they import
-(KLayout, PyYAML); the image's own ``python3`` does not
-(:doc:`/install/01_container`).
+.. include:: /_image_adk_scripts.inc
 
 .. literalinclude:: /adk/_usage/chiplet2dbx.txt
    :language: text
@@ -176,7 +182,8 @@ z consistency, exactly
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The ``.chiplet`` z-mounting rule is
-``z_die = mounting_surface + connection.total_height()``. OpenROAD's linter
+``z_die = interposer.position.z + mounting_surface + connection.total_height()``.
+OpenROAD's linter
 asserts that a connection's declared thickness equals the actual gap between
 the connected surfaces, exactly. The equality is guaranteed only when the die's
 z was auto-calculated; a ``.chiplet`` may carry an explicit ``position.z``,
@@ -185,8 +192,9 @@ which readers honour as written.
 So the exporter recomputes it. For every die it takes the connection stack
 named by ``connection:``, sums the ``height`` of every layer in that stack, and
 compares that total against ``position.z`` minus the mount surface z. The
-tolerance is ``Z_TOLERANCE = 1e-6`` um, well below one database unit at any
-realistic precision, so float noise passes and a real mismatch fails:
+tolerance is ``Z_TOLERANCE``, |chiplet2dbx-z-tol| um, well below one database
+unit at any realistic precision, so float noise passes and a real mismatch
+fails:
 
 .. code-block:: text
 
@@ -199,21 +207,30 @@ layer without a ``height``, is likewise a hard error: there is no thickness
 source, and inventing one would produce a model that loads and lints against
 the wrong geometry.
 
-.. note::
-
-    Do not derive the die-to-substrate gap from outline maximum z: passivation
-    can rise above the attachment plane, so a gap taken from the outline
-    disagrees with the stack total and fails the exact-equality check.
+Take the gap from the attachment plane, never from the outline maximum z
+(:ref:`chiplet_passivation_trap`).
 
 Mounting on ``attachment_surface_z``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The mount surface is the interposer's component-level
 ``attachment_surface_z``: the BEOL-top die-attachment plane, decoupled from the
-physical interposer body. Legacy ``.chiplet`` files that predate the field
-encoded that surface in ``dimensions.thickness``, and the exporter falls back
-to it when ``attachment_surface_z`` is absent. A non-positive
-``attachment_surface_z`` is an error.
+physical interposer body. Nothing stands in for it. An interposer that seats
+dies and declares no ``attachment_surface_z`` is refused, because
+``dimensions.thickness`` is the body, not the plane:
+
+.. code-block:: text
+
+    chiplet2dbx: error: interposer 'interposer' seats dies but declares no
+    attachment_surface_z; declare the plane it mounts them on.
+    dimensions.thickness is the body, not the plane, and is not read in its
+    place
+
+The exporter checks the plane before it judges any die, so this is the error
+you get even when a die would also fail, for example on its anchor. A
+non-positive ``attachment_surface_z`` is an error. An interposer that seats no
+die needs no plane: its substrate def then takes ``dimensions.thickness``,
+unless the file declares a plane anyway.
 
 The die mount z is then the interposer's ``position.z`` plus that reference.
 The same reference is used as the substrate def's thickness, because the
@@ -293,8 +310,9 @@ Other preconditions
   strictly positive. For dies the physical thickness comes from the board's
   ``DIE_THICKNESS_UM`` field, and a zero or missing value says so in the error
   message rather than exporting a zero-height slab. The interposer needs
-  ``width`` and ``height`` on the same terms; it needs ``thickness`` only on
-  the legacy path, where it stands in for ``attachment_surface_z``.
+  ``width`` and ``height`` on the same terms. It needs ``attachment_surface_z``
+  whenever it seats a die, and ``thickness`` only when it seats none and
+  declares no plane.
 - Every component needs a ``technology``: the generated technology LEF is named
   after it.
 - All technologies must declare the same ``dbu``, and it must be an integer
@@ -356,6 +374,123 @@ silently degraded to a bumpless one would lint clean and mean nothing. A
 connection method that is not in the interconnect PDK manifest is likewise a
 hard error. See :doc:`/tools/06_interconnect_pdk`.
 
+Exporting a die with its recorded views
+---------------------------------------
+
+Passing ``--views REF=RECORD`` together with ``--contract REF=DIR`` exports
+that die with its recorded views instead of as a black box. ``RECORD`` is the
+die's eda-views record, ``eda-views.json`` (schema
+``chiplet-flow-eda-views/v1``), which ``chiplet-die-flow emit-eda-views``
+writes. ``DIR`` is the die contract directory the record must be bound to, the
+ready die described in :doc:`/tools/12_chiplet_flow`.
+
+.. code-block:: bash
+
+    python3 openroad/chiplet2dbx.py \
+        --chiplet demo.chiplet \
+        --out-dir build/3dblox \
+        --views U1=views/u1/eda-views.json \
+        --contract U1=contracts/die_a \
+        --top-verilog build/top.v
+
+Both flags are repeatable, and every ``--views`` needs a ``--contract`` for
+the same ``REF`` and the other way round. ``REF`` must name a die in the
+assembly. A die cannot be given both a pin list and a record. Dies without a
+record in the same run are exported as black boxes, as described above.
+
+.. list-table:: Black box and recorded views compared
+    :header-rows: 1
+    :widths: 22 39 39
+    :class: adk-wide-table
+
+    * - Aspect
+      - Black box (default)
+      - Recorded views (``--views``)
+    * - Def contents
+      - ``design_area``, ``thickness`` and full-outline bond regions; no
+        cell LEF, DEF or Liberty
+      - The same, plus the record's cell LEFs as ``LEF_file``, its Liberty
+        files at one corner as ``liberty_file`` and its DEF as ``DEF_file``
+    * - ``APR_tech_file``
+      - A generated ``<technology>.lef``
+      - The record's technology LEF; none is generated for the die
+    * - ``.bmap``
+      - Only with ``--pins``: the pin list, in the def-local frame
+      - Always: every pad of the record's pins view, in the DEF frame
+    * - Bump macro LEF
+      - Generated per connection method, with ``--pins``
+      - None; the pad masters come from the record's cell LEFs
+    * - Required ``anchor``
+      - ``gds_origin``
+      - ``bbox_center``
+    * - ``flip_chip`` token
+      - ``MZ``, or ``MZ_R90`` / ``MZ_R180`` / ``MZ_R270``
+      - ``MZ_MY``; a quarter turn is refused
+    * - Per-die stdout line
+      - ``<ref>: eda views: absent``, only when another die in the run has a
+        record
+      - The kinds read and the unqualified files, described below
+
+The def names the record's files in place, by paths relative to the
+``.3dbv``. Each path, like the ``--top-verilog`` path, must be expressible
+relative to the output directory using only letters, digits and
+``_ . / + -``, so a record file whose path from the output directory has a
+space in it is refused.
+A Liberty file shared by several record dies is listed once, on the first such
+def in name order, because the target does not deduplicate Liberty. The
+``.bmap`` row of a pad gives the DEF component and its master, the pad centre
+in the DEF frame, and the die's own port and net (``-`` in both columns for a
+power or ground pad).
+
+``--corner`` names the corner the records are read at. Without it, the records'
+shared default corner is used, and records whose default corners differ are an
+error until you name one. ``--corner`` or ``--top-verilog`` without any
+``--views`` is an error too.
+
+``--top-verilog FILE`` names a system top Verilog as the ``.3dbx``
+``Design``'s ``verilog_file``. It is checked before anything is written: it
+must be one module
+named after the design, instantiate only dies that have a record, each once,
+by instance name and top cell, and connect only signal ports of their pins
+views. The target would skip a missing file and drop unknown instances and
+ports without a message, which is why the exporter checks. It never writes
+Verilog.
+
+The record is read with the standard library, and nothing is written until all
+of this holds:
+
+- every record row used is re-hashed and must be the bytes its row binds;
+  exactly one DEF, technology LEF and pins row, and at least one cell LEF and
+  Liberty row, must apply at the corner;
+- the record must be bound to the contract: the layout and build record
+  digests match, the contract's top cell is the record's design, and the
+  contract's pin list is the bytes the record's pins row binds;
+- the die's ``top_cell`` is the record's design, the DEF units, the technology
+  LEF units and the export precision are equal, and the DEF ``DIEAREA`` and
+  the contract bbox are both the die's declared outline from (0, 0);
+- every pad is a DEF component placed ``N`` on a whole DBU, at the centre the
+  DEF places it, on a master with one pin, and on the net it states; a signal
+  pad's port is a DEF pin on that net, and no port has two pads;
+- a LEF ``MACRO`` name has one body across every record LEF, since the target
+  binds a master to the first library that defines it; two different
+  technology or LEF files may not share a file stem, since the target loads
+  one library per stem; and two different Liberty files may not share a
+  basename.
+
+The anchor is ``bbox_center`` because the DEF frame's origin is the corner of
+the die outline, so ``gds_origin`` is the hard error here. A flipped die is
+placed ``MZ_MY`` rather than ``MZ`` because the target's ``MZ`` mirrors z only:
+the x mirror of the flip goes into the orientation, and the bump map stays in
+the DEF frame.
+
+After the written paths, the exporter prints one line per die, either
+``<ref>: eda views: def, tech_lef, pins, lef, liberty; unqualified: <files>``
+or ``<ref>: eda views: absent`` for a die exported without a record.
+``unqualified`` lists the files the record itself marks unqualified, or
+``none`` when it marks none. The
+records are read, never qualified: the export says nothing about the timing of
+the assembly.
+
 Loading the result in OpenROAD
 ------------------------------
 
@@ -394,15 +529,29 @@ Importable entry points
 
     load_chiplet(path) -> dict
     load_pinlist(path) -> [{"name", "x_um", "y_um"}, ...]
-    render_3dbv(assembly, *, die_pins=None) -> str
-    render_3dbx(assembly, dbv_filename, *, die_pins=None) -> str
-    render_bmap(assembly, def_name, *, die_pins=None) -> str
+    load_views(record, contract_dir, corner=None) -> dict
+    render_3dbv(assembly, *, die_pins=None, die_views=None,
+                base_dir=None) -> str
+    render_3dbx(assembly, dbv_filename, *, die_pins=None, die_views=None,
+                top_verilog=None) -> str
+    render_bmap(assembly, def_name, *, die_pins=None, die_views=None) -> str
     render_tech_lef(precision, route_layer=None) -> str
-    export_3dblox(assembly, out_dir, name=None, die_pins=None)
+    export_3dblox(assembly, out_dir, name=None, die_pins=None,
+                  die_views=None, corner=None, top_verilog=None)
         -> (dbv_path, dbx_path, [extra_paths])
 
-The three renderers take ``die_pins`` keyword-only; ``export_3dblox`` takes it
-as an ordinary keyword argument.
+The three renderers take their options keyword-only; ``export_3dblox`` takes
+them as ordinary keyword arguments. The renderers take ``die_views`` values as
+``load_views`` results, while ``export_3dblox`` takes each as a
+``(record, contract_dir)`` pair and loads it at ``corner``.
+
+The renderers run the same model checks as the export, but two things only
+``export_3dblox`` (and so the CLI) does. It checks the ``top_verilog`` file
+against the records, whereas ``render_3dbx`` writes the name it is given,
+unchecked. And it names record files relative to the output directory, whereas
+``render_3dbv`` names them by absolute path unless you pass ``base_dir``, the
+directory the ``.3dbv`` will be written to. Call ``export_3dblox`` unless you
+need the text alone.
 
 ``export_3dblox`` accepts ``die_pins`` values as either a path to a
 ``*.pins.json`` or an already-parsed pin list. As everywhere in the ADK, new

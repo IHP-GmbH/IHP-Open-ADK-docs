@@ -12,7 +12,7 @@ normative is hardcoded in a rule deck or in a generator. This page describes eac
 registry, who reads it, and what its values are worth.
 
 Alongside the registries, ``config/schema/`` holds the JSON Schemas: three that
-describe the registries themselves, and three that describe the per-assembly
+describe the registries themselves, and four that describe the per-assembly
 sidecar files the toolchain exchanges.
 
 Version discipline
@@ -28,8 +28,10 @@ The sidecar schemas version independently, because they describe a data contract
 between separate tools rather than the ADK release, and their readers pin them
 **exactly**: a boundary manifest or a per-method interconnect file whose
 ``version`` is not ``1.0.0``, or a pillar manifest whose ``version`` is neither
-``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed. See
-:doc:`/tools/07_adk_tools_image` for the full version matrix.
+``1.0.0`` nor ``1.1.0``, is rejected rather than best-effort parsed, and the
+resolved-v2 attachment sidecar is pinned the same way.
+:doc:`/tools/07_adk_tools_image` carries the version matrix, with the version
+each reader pins.
 
 .. note::
    The registries are also baked into the ADK-Tools container image, which is
@@ -47,7 +49,8 @@ dictionary, which the interposer adapter may then override and which
 file as its defaults. Both consumers apply adapter overrides, which is what makes
 the KLayout and KiCad checks agree. Placement reads it too, without overrides:
 interposer-pnr legalizes to ``ASM_b`` and the packaging flow keeps wire-bond pads
-``ASM_g`` from each die. See :doc:`/adk/02_adapter_contract`.
+``ASM_g`` from each die. See :doc:`/adk/02_adapter_contract`, and :ref:`the
+override grammar <adk_override_grammar>` for the override form.
 
 .. csv-table:: Assembly rule parameters
     :file: tables/asm_params.csv
@@ -98,7 +101,9 @@ the registry's own description: they mirror the IHP Cu-pillar default option in
 the bumping vendor's table, a 35 um passivation opening, 40 um edge-to-edge space
 and 75 um pitch. The interposer PDK's ``Padc_a``, ``Padc_b`` and ``Padc_e`` carry
 the same three numbers, so the interposer stage and the assembly stage of the
-two-stage DRC check the same values.
+two-stage DRC check the same values. The interposer DRC deck does not emit
+``Padc.e``; :ref:`adk_ixn_pitch_as_spacing` explains why, and where pitch is
+checked instead.
 
 Designs using the larger Cu-pillar options are checked against this conservative
 floor, exactly as they are at the interposer stage. Option-specific adapters are
@@ -233,10 +238,11 @@ against the same constraints without requiring a ``jsonschema`` dependency.
 Sidecar schemas
 ---------------
 
-Three further schemas describe per-assembly files that travel next to an
-assembly GDS rather than living in ``config/``. They are data contracts between
-separate tools, so their readers pin the schema string and the version exactly.
-Each is listed on the page that owns it:
+Four further schemas describe per-assembly files rather than anything in
+``config/``. The first three travel next to an assembly GDS; the fourth sits
+beside an assembly-lvs resolved v2 document, for the ADK's resolved-v2 entry.
+They are data contracts between separate tools, so their readers pin the
+schema string and the version exactly:
 
 .. list-table::
     :header-rows: 1
@@ -254,6 +260,9 @@ Each is listed on the page that owns it:
     * - ``ixn_methods.schema.json``
       - ``adk-ixn-methods``
       - :doc:`/formats/06_ixn_methods`
+    * - ``resolved_attachment.schema.json``
+      - ``adk-resolved-attachment``
+      - :doc:`/adk/11_resolved_v2_entry`
 
 Changing a registry
 -------------------

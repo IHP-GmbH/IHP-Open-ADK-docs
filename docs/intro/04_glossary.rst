@@ -82,11 +82,15 @@ Kits and rules
         A name a rule refers to without knowing what layer implements it, such
         as ``chiplet_attachment_input``. Adapters bind these to real layers.
 
-    rule axis
-        One of the two independent groups of assembly checks. The placement axis
-        (``ASM.*``) and the interconnect axis (``IXN.*``) are selected by
-        separate adapters and neither depends on the other. Both are geometric,
-        so both sit inside :term:`assembly DRC`.
+    adapter axis
+        One of the two independent ways the assembly DRC is bound to a
+        technology. The interposer axis, also called the placement axis, runs
+        the ``ASM.*`` rules through the required interposer adapter, so it is
+        always on. The interconnect axis adds the ``IXN.*`` rules only when an
+        interconnect adapter or a per-method ``--interconnect-methods`` file is
+        given. Neither depends on the other. Both are geometric, so both sit
+        inside :term:`assembly DRC`; they are not the geometric and
+        connectivity axes of :term:`assembly-level verification`.
 
     assembly-level verification
         The checking layer whose unit is the whole assembly, above the signoff
@@ -140,7 +144,7 @@ Geometry and attachment
     attachment method
         The concrete mechanism and its parameters: Cu pillar, solder bump,
         microbump. A property of the bumping process, not of the substrate, and
-        therefore a separate adapter axis.
+        therefore a separate :term:`adapter axis`.
 
     Cu pillar
         A copper post attachment method. On the IntM4TM2 interposer the

@@ -3,6 +3,7 @@ Interposer PDK (OpenIntM4TM2)
 
 .. include:: /common.inc
 .. include:: /_counts.inc
+.. include:: /tools/_interposer_stack.inc
 
 OpenIntM4TM2 is the KLayout PDK for the IHP 130 nm **IntM4TM2** aluminium
 back-end interposer. It is the substrate the reference flow assembles onto, and
@@ -34,7 +35,7 @@ localized backside etch (LBE).
     :width: 70%
 
     Cross-section of the IntM4TM2 interposer: four aluminium metals (Metal4,
-    Metal5, TopMetal1, TopMetal2) on a high-resistivity silicon carrier, with the
+    Metal5, TopMetal1, TopMetal2) on a silicon carrier, with the
     thin-film resistor between Metal4 and Metal5, the MIM capacitor between Metal5
     and TopMetal1, and the top passivation. The dielectric constants and layer
     thicknesses are the typical-corner values published in the PDK extraction
@@ -58,59 +59,21 @@ Three consequences follow, and they explain most of the PDK.
 The metal stack
 ~~~~~~~~~~~~~~~
 
-The vertical stack, taken from the electromagnetic and extraction stackups that
-ship with the PDK, with z = 0 at the carrier top surface:
+The vertical stack, from the PDK's ``libs.tech/intm4tm2_stack.json``, which its
+electromagnetic and extraction stackups are checked against, with z = 0 at the
+carrier top surface. Each via spans from the top of the metal below it to the
+bottom of the metal above:
 
-.. list-table::
-    :header-rows: 1
+.. csv-table::
+    :file: tables/interposer_stack.csv
+    :header: "Layer", "GDS layer", "z min (um)", "z max (um)", "Thickness (um)"
     :widths: 24 14 20 20 22
 
-    * - Layer
-      - GDS layer
-      - z min (um)
-      - z max (um)
-      - Thickness (um)
-    * - TopMetal2
-      - 134
-      - 7.8103
-      - 10.8103
-      - 3.000
-    * - TopVia2
-      - 133
-      - 5.0103
-      - 7.8103
-      - 2.800
-    * - TopMetal1
-      - 126
-      - 3.0103
-      - 5.0103
-      - 2.000
-    * - TopVia1
-      - 125
-      - 2.1600
-      - 3.0103
-      - 0.850
-    * - Metal5
-      - 67
-      - 1.6700
-      - 2.1600
-      - 0.490
-    * - Via4
-      - 66
-      - 1.1300
-      - 1.6700
-      - 0.540
-    * - Metal4
-      - 50
-      - 0.6400
-      - 1.1300
-      - 0.490
-
-Above TopMetal2 sit 1.5 um of oxide and 0.4 um of SiN passivation, so the total
-build-up from the carrier surface to the top of the passivation is about
-12.71 um. The inter-metal gaps reproduce the module specification exactly:
-Metal4 to Metal5 is 0.54 um, Metal5 to TopMetal1 is 0.85 um, TopMetal1 to
-TopMetal2 is 2.80 um.
+Above TopMetal2 sit |interposer-passivation-oxide| um of oxide and
+|interposer-passivation-nitride| um of SiN passivation, so the total build-up
+from the carrier surface to the top of the passivation is
+|interposer-passivation-top| um. The gap between two metals is the thickness
+of the via that joins them in the table.
 
 Connectivity for net tracing is declared in the technology file as three
 stacks: ``Metal4-Via4-Metal5``, ``Metal5-TopVia1-TopMetal1`` and
@@ -255,10 +218,10 @@ Twenty-one decks are selectable. Twenty of them run when you pass no
       - Pad recognition consistency, metal exit length, pad to seal ring
     * - ``copperpillar``
       - 6.9.2
-      - Cu-pillar opening size, space, pitch, TopMetal2 enclosure, shape
+      - Cu-pillar opening size, space, TopMetal2 enclosure, shape
     * - ``solderbump``
       - 6.9.1
-      - Solder-bump opening size, space, pitch, enclosure, shape
+      - Solder-bump opening size, space, enclosure, shape
     * - ``ubm_floor``
       - 6.9
       - Passivation-opening width and space floor on the Cu-pillar and
@@ -342,7 +305,7 @@ clean slit ring does not read as a deck that never ran.
    report a violation on every one of them. Its ``DEN.BND.*`` boundary sanity
    rules are separately gated behind ``--density_sanity``.
 
-.. warning::
+.. important::
    Do not read these rule values as a statement of what IHP will accept for a
    tapeout. They are derived from the SG13G2 layout rules revision the JSON
    records, adapted to a stack that has no front end, and some adaptations are
@@ -401,14 +364,16 @@ in its own description:
 are the same for all three.
 
 .. note::
-   Two of these rules are checked here even though the source layout rules mark
-   them "not checked during DRC": ``Padc.e`` (pitch) and ``Padc.f`` (shape).
-   They are checked anyway as safeguards for the assembly flow. KLayout has no
-   native pitch check, so pitch is converted to a spacing as
-   ``min_space = min_pitch - min_pad_size``, which is conservative for pads
-   larger than ``Padc_a``. Several Cu-pillar rules also carry a 10 nm tolerance,
-   because a circle drawn exactly at the minimum measures a few nanometres short
-   after 256-point approximation and nanometre-grid snapping.
+   The source layout rules mark ``Padc.e`` (pitch) and ``Padc.f`` (shape) "not
+   checked during DRC". This deck checks ``Padc.f`` anyway, as a safeguard for
+   the assembly flow. It does not emit ``Padc.e``: at every bump option the
+   pitch minus the pad size equals the ``Padc.b`` space, so the space check
+   already covers it, and carrier pitch is checked per method by the assembly
+   DRC's IXN axis when it is enabled (:ref:`adk_ixn_pitch_as_spacing`). The
+   ``Padc_e`` key stays in the JSON because the Cu-pillar generator's own
+   pre-DRC still checks pitch. Several Cu-pillar rules also carry a 10 nm tolerance, because a
+   circle drawn exactly at the minimum measures a few nanometres short after
+   256-point approximation and nanometre-grid snapping.
 
 Testing
 ~~~~~~~
@@ -483,7 +448,7 @@ way the SG13G2 open PDK serves its own pycell library.
         (TopMetal2 enclosure, default ``7.5u``), ``addFillerEx``
       - TopMetal2 134/0, ``dfpad:pillar`` 41/35 and ``Recog:pillar`` 99/35 at
         pad size; ``Passiv:pillar`` 9/35 at the opening; optional nofill
-        circles. 256-point circles, the discretization the assembly flow and
+        circles. 256-point circles, the discretisation the assembly flow and
         the ``copperpillar`` DRC tolerances assume.
     * - ``cmim``
       - ``w``, ``l`` (default ``6.99u``), ``C`` and ``Calculate`` for
@@ -598,10 +563,37 @@ report.
 
 Auto-resolve is on by default: when the placement produces a DRC collision, the
 generator conservatively shifts pillars within a per-pillar budget
-(``--max-displacement``, default 10 um) rather than failing. ``--no-auto-resolve``
-turns that off and fails on any violation instead;
-``--auto-resolve-best-effort`` emits GDS with warnings even when auto-resolve
-does not converge.
+(``--max-displacement``, default 10 um) instead of dropping the device.
+``--no-auto-resolve`` turns that off, so any device with a violation is dropped.
+``--auto-resolve-best-effort`` only silences the ``auto-resolve FAILED`` line
+when auto-resolve does not converge; a device with collisions left still fails
+DRC and is dropped.
+
+A device that fails DRC is left out of the GDS, and a generate run still writes
+the GDS of the devices that passed. The ``Failed devices:`` line on stdout and the
+``failed_devices`` list in the ``--report`` JSON name the dropped devices.
+
+The exit code reports a failed device:
+
+- 0 when no device failed and, in a generate run, at least one device passed.
+  A device skipped in ``--chiplet`` mode because it has no connection stack is
+  not a failure.
+- 1 when any device failed DRC or had no bump locations. The
+  ``Exiting non-zero: N device(s) failed: ...`` line on stderr names them. Exit
+  1 can come with a partial GDS, because a generate run still writes the
+  devices that passed.
+- 1 also when the input is bad: a malformed ``--pins``, ``--position`` or
+  ``--rotation`` token, a missing pin file, coordinates that are not numbers, a
+  ``--diameter`` that matches no Table 6.1 opening, or no usable
+  ``gds_to_kicad``. The run then prints ``Error: ...`` instead and names no
+  device.
+- 2 when ``argparse`` rejects the command line: ``--pins`` missing, both or
+  neither of ``--position`` and ``--chiplet``, or both ``--auto-resolve`` and
+  ``--no-auto-resolve``.
+
+A generate run in which no device passed, skipped ones included, writes no GDS
+and exits 1. The same input with ``--validate-only`` exits 0 when nothing
+failed.
 
 Two properties of this generator are worth understanding.
 
@@ -845,19 +837,25 @@ separately for the tools that need it:
       - Notes
     * - ``libs.tech/openems/openems_intm4tm2/workflow/INTM4TM2.xml``
       - openEMS
-      - 300 um Si carrier (default)
+      - 250 um Si carrier at 2.0 S/m (default)
     * - ``libs.tech/openems/openems_intm4tm2/workflow/INTM4TM2_nosub.xml``
       - openEMS
       - No lossy substrate, 2 um SiO2 spacer
     * - ``libs.tech/palace/workflow/INTM4TM2.xml``
       - Palace
-      - 300 um Si carrier, backside ground sheet
+      - 250 um Si carrier at 2.0 S/m, backside ground sheet
     * - ``libs.tech/palace/workflow/INTM4TM2_nosub.xml``
       - Palace
       - No substrate
     * - ``libs.tech/parasitics/itf/intm4tm2_typ.itf``
       - RC extraction
       - Typical corner, single stack
+
+The carrier thickness in the substrate variants is ``substrate.thickness_um``
+of ``libs.tech/intm4tm2_stack.json``, and the PDK's own tests fail when the
+two disagree. The carrier conductivity is the public SG13G2 substrate value,
+because the interposer carrier's resistivity is not specified yet. Change the
+``Substrate`` conductivity in the XML if your carrier is high-resistivity.
 
 ``libs.tech/ngspice/models/`` carries the ``cap_cmim`` subcircuit and its
 corners, ported from the SG13G2 open PDK and trimmed to the devices the

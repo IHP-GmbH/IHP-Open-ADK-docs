@@ -25,12 +25,18 @@ build:
 
   jobs:
     pre_build:
-      # Regenerate every table and CLI transcript from the pinned sources under
-      # src/. Nothing normative in this site is hand-typed.
+      # Regenerate the generated tables, includes, recipes and --help
+      # transcripts from the pinned sources under src/.
       - python3 docs/scripts/gen_rule_tables.py
       - python3 docs/scripts/gen_adapter_table.py
       - python3 docs/scripts/gen_version_matrix.py
       - python3 docs/scripts/gen_cli_usage.py
+      - python3 docs/scripts/gen_build_recipe.py
+      - python3 docs/scripts/gen_interposer_stack.py
+      - python3 docs/scripts/gen_frame_values.py
+      - python3 docs/scripts/gen_admission_values.py
+      - python3 docs/scripts/check_validation_rules.py
+      - python3 docs/scripts/check_bump_mirror.py
 
 # The documented sources are pinned submodules under src/. recursive: false
 # because ADK-Tools carries its own submodule set (the toolchain lockfile),

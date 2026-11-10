@@ -1,0 +1,14 @@
+usage: assembly_admission [-h] --chiplet CHIPLET [--profile {legacy,strict}]
+                          [--base-dir PATH] [--json PATH]
+
+strict die-contract admission for a .chiplet assembly
+
+options:
+  -h, --help            show this help message and exit
+  --chiplet CHIPLET     the .chiplet assembly
+  --profile {legacy,strict}
+                        legacy asks nothing and imports nothing; strict
+                        enforces (default: legacy)
+  --base-dir PATH       directory the assembly's own references resolve
+                        against (default: the .chiplet's directory)
+  --json PATH           write the machine-readable report here

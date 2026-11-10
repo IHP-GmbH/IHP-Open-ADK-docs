@@ -14,6 +14,8 @@ The IXN rules implement the second axis. They live in
 ``klayout/drc/rule_decks/8_2_interconnect.drc`` and, like the ASM rules,
 reference no layer number and no PDK name.
 
+.. _adk_ixn_additive:
+
 The axis is optional and additive
 ---------------------------------
 
@@ -22,13 +24,12 @@ rather than by convention.
 
 ``adk_assembly.drc`` builds the rule source as a list of file contents and
 evaluates the concatenation once, so that every local variable is shared across
-decks. The interposer-only chain is::
+decks. :ref:`adk_architecture_eval_chain` lists the interposer-only chain and
+every optional part.
 
-    [ layers_def.drc, <interposer adapter>, <input validation>, 8_1_assembly.drc ]
-
-Nothing is appended to that list unless the axis is switched on, and the two
-appends have different conditions. The interconnect adapter and its
-required-key validation are appended **only** when an interconnect adapter is
+Nothing of this axis is added to the eval chain unless the axis is switched on,
+and the two additions have different conditions. The interconnect adapter and
+its required-key validation are appended **only** when an interconnect adapter is
 supplied. ``8_2_interconnect.drc`` is appended when an interconnect adapter
 **or** a per-method file is present, which is what lets a methods file activate
 the axis on its own:
@@ -38,10 +39,12 @@ the axis on its own:
     parts << File.read(File.join(rule_decks_dir, '8_1_assembly.drc'))
     parts << File.read(File.join(rule_decks_dir, '8_2_interconnect.drc')) if interconnect_adapter || ixn_methods
 
-With neither supplied, the evaluated source, the executed checks and the emitted
-report are identical to a run of the deck as it stood before this axis existed.
-Adding the axis cannot change an ASM verdict, and a project that does not use it
-pays nothing for its existence.
+With neither supplied, none of the axis's parts enter the eval chain: no
+interconnect adapter, no key validation and no ``8_2_interconnect.drc``. The
+evaluated source, the executed checks and the report are then exactly those of
+the interposer-only chain in :ref:`adk_architecture_eval_chain`. Adding the
+axis cannot change an ASM verdict, and a project that does not use it pays
+nothing for its existence.
 
 .. note::
 
@@ -140,7 +143,7 @@ definition names die instances, and only the manifest knows where those dies
 are. It cannot be combined with ``--legacy-exchange0``, which carries no per-die
 instance names, and the runner rejects that combination before spawning KLayout.
 
-.. figure:: /_figures/tikz_ixn_regions.*
+.. figure:: /_figures/ixn_regions.*
     :align: center
     :alt: The attachment region cut into two method regions by the die boundary polygons, with per-method spacing and pitch checks inside each region, a cross-method spacing check across the gap between them, and an unclaimed remainder outside both.
     :width: 90%
@@ -209,6 +212,8 @@ Three families of check then run.
     method demands; the adapter provides the fallback floor for everything the
     methods file does not claim, so no attachment geometry escapes checking.
 
+.. _adk_ixn_pitch_as_spacing:
+
 Why pitch is checked as a spacing
 ---------------------------------
 
@@ -238,11 +243,17 @@ names the pitch that produced it.
 
 .. note::
 
-    This conversion is not an ADK invention. It mirrors what the interposer
-    technology already does for its own pitch rule, ``Padc.e`` in
-    ``6_9_copperpillar.drc``, down to the same subtraction and the same
-    conservatism note. Both stages of the two-stage DRC therefore agree on the
-    method, not only on the number.
+    The interposer DRC deck does not emit its own pitch rules, ``Padc.e`` in
+    ``6_9_copperpillar.drc`` and ``Padb.e`` in ``6_9_solderbump.drc``. There,
+    pitch minus pad size equals the matching space rule (``Padc.b`` at every
+    Table 6.1 option, ``Padb.b`` for the solder bump), so a pitch-as-spacing
+    check would duplicate the space check marker for marker. In the two-stage
+    KLayout DRC, pitch is therefore checked only at the assembly stage, by the
+    IXN axis when it is enabled. The interposer's standalone ``bump_mirror.py``
+    pre-DRC still checks ``Padc.e`` as a centre-to-centre pitch. The IXN axis
+    keeps the pitch-as-spacing form because per-method numbers need not have
+    the interposer's property: a method whose pitch minus pad size exceeds its
+    spacing is checked on pitch here and nowhere else in that DRC.
 
 The 10 nm circle tolerance
 --------------------------
@@ -265,16 +276,20 @@ construction.
 Ten nanometres is comfortably above the discretisation error at 256 points on a
 1 nm grid and far below any spacing the methods use, so it removes the artefact
 without weakening the rule in any way a designer could exploit. It is the same
-constant, for the same reason, as the interposer deck's ``padc_b_tol`` and
-``padc_e_tol`` on the Cu-pillar spacing and pitch checks, and as ``padc_c_tol``
-on the Cu-pillar enclosure check.
+constant, for the same reason, as the interposer deck's ``padc_b_tol`` on the
+Cu-pillar spacing check and ``padc_c_tol`` on the Cu-pillar enclosure check.
+
+.. _adk_ixn_fail_loud:
 
 Fail-loud validation
 --------------------
 
 The IXN axis reads numbers and die names from files that other tools wrote.
-Every way that input can be wrong is turned into an abort, never into a quiet
-under-check. There are four layers of it.
+Almost every way that input can be wrong is turned into an abort rather than a
+quiet under-check. Two cases are not: an interconnect adapter that omits a key,
+described below, and an ``IXN_spacing`` that is zero, negative, ``null`` or not
+a number, which nothing rejects at run time and which therefore flags nothing
+(see :doc:`/formats/06_ixn_methods`). There are four layers of checking.
 
 The runner, before KLayout starts
     ``resolve_ixn_methods_path`` requires the file to exist, to parse as a JSON
@@ -288,11 +303,12 @@ The wrapper, before the rules are evaluated
     also raises if a methods file is supplied without a boundary manifest.
 
     For the adapter path, the wrapper generates a validation snippet per
-    required key and appends it to the eval chain right after the adapter. Note
-    that ``config/interconnect.json`` has already seeded all three keys before
-    any adapter is evaluated, so in a normal checkout the snippet only fires
-    when that registry is absent; an adapter that omits a key silently inherits
-    the registry default rather than aborting.
+    required key and appends it to the eval chain right after the adapter. The
+    snippet tests ``interconnect_rules.key?``, and ``config/interconnect.json``
+    has already seeded that dictionary with all three keys before any adapter
+    is evaluated. The snippet therefore fires only when that registry is absent
+    or lacks the key; in a normal checkout an adapter that omits a key silently
+    inherits the registry default rather than aborting.
 
 Die-instance resolution, in the deck
     .. code-block:: ruby
@@ -341,12 +357,13 @@ default option, Option 1: a 35 um passivation opening, 40 um minimum space,
 
 They were chosen to match the interposer technology's own defaults rather than
 to be independently reasonable. ``interposer_tech_default.json`` sets
-``Padc_a = 35``, ``Padc_b = 40`` and ``Padc_e = 75`` from the same table, and
-the interposer's ``6_9_copperpillar.drc`` checks them as Padc.a, Padc.b and
-Padc.e. Mapping ``IXN_pad_size``, ``IXN_spacing`` and ``IXN_pitch`` onto those
-three numbers means the interposer stage and the assembly stage of the two-stage
-DRC check the same values, so a design cannot pass one stage and fail the other
-on the same physical constraint.
+``Padc_a = 35``, ``Padc_b = 40`` and ``Padc_e = 75`` from the same table. The
+interposer's ``6_9_copperpillar.drc`` checks Padc.a and Padc.b; ``Padc_e``
+carries the same 75 um, but that deck emits no Padc.e rule (see
+:ref:`adk_ixn_pitch_as_spacing`). Mapping ``IXN_pad_size``, ``IXN_spacing``
+and ``IXN_pitch`` onto those three numbers means the interposer stage and the
+assembly stage of the two-stage DRC check the same values, so a design cannot
+pass one stage and fail the other on the same physical constraint.
 
 The consequence for the coarser options of the table (Option 2 at 40 um opening
 and 80 um pitch, Option 3 at 45 um and 95 um) is that a design using them is
