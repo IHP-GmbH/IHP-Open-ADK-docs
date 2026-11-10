@@ -137,7 +137,8 @@ represent faithfully rather than rounding or guessing: a die whose
 height, to within 1e-6 um; a rotation that is not a multiple of 90 degrees; a
 non-canonical orientation token; a die anchored ``bbox_center``, or with no
 declared anchor; an unresolvable connection stack; a pin that falls outside the
-die's declared outline; more or fewer than one interposer component.
+die's declared outline; more or fewer than one interposer component; an
+interposer that seats dies and declares no ``attachment_surface_z``.
 
 ``check_3dblox`` then lints the loaded database. The open implementation in
 OpenROAD runs seven checks: floating components, 3D overlap, connection-region

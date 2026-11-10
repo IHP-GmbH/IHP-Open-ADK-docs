@@ -36,6 +36,7 @@ build:
       - python3 docs/scripts/gen_frame_values.py
       - python3 docs/scripts/gen_admission_values.py
       - python3 docs/scripts/check_validation_rules.py
+      - python3 docs/scripts/check_bump_mirror.py
 
 # The documented sources are pinned submodules under src/. recursive: false
 # because ADK-Tools carries its own submodule set (the toolchain lockfile),

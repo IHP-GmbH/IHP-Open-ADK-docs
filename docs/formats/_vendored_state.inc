@@ -2,3 +2,4 @@
 
 .. |vendored-reader-state| replace:: identical to the specification's reference reader
 .. |vendored-reader-formats| replace:: 1.5
+.. |gds2kicad-vendored-reader| replace:: 1.22.0

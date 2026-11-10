@@ -115,7 +115,8 @@ with a ``GatePending`` line that names the gate and the command that signs it.
 A halt is not a failure. A later run of the same design reuses a gate's
 signature while what it signed is unchanged: ``map`` names each gate it reused
 and the run that signed it, and the run halts at the first gate whose signature
-no longer holds.
+no longer holds. The external gate keys the terminal map by its content, not
+its raw bytes, so a run in another folder keeps that gate's key.
 
 .. code-block:: bash
 
@@ -163,20 +164,24 @@ After the last signature, ``resume`` writes the verdict. Then:
     packaging-flow review-levels $WD $RUN/review
 
 ``status`` prints one row per stage. ``verify`` recomputes the manifest from
-the files and prints one word, the tier, the dies built and admitted, then one
-line per level. The words are:
+the files and prints its verdict, the tier, the dies built and admitted, then
+one line per level. ``verify --json`` carries the verdict as one word, in
+``verdict``. The verdicts are:
 
 - ``OK``: every check held, and every die was built in this run. It is not a
   fabrication qualification.
-- ``NOT_ALL_DIES_BUILT_IN_RUN``: every check that applies held, but the run
-  placed dies it did not build, so the all-dies-built verdict does not apply.
-  It exits 1 and is not a failed run. It is the word a run of ready dies
-  expects: ``two_die_echo_shifted_gf180`` expects ``verify:
-  NOT_ALL_DIES_BUILT_IN_RUN (tier full; built none; admitted U1, U2)``.
+- ``not every die was built in this run`` (the word
+  ``NOT_ALL_DIES_BUILT_IN_RUN`` in ``--json``): every check that applies held,
+  but the run placed dies it did not build, so the all-dies-built verdict does
+  not apply. It exits 1 and is not a failed run. It is what a run of ready dies
+  expects: ``mixed_gf180`` expects ``verify: not every die was built in this
+  run (tier full; built none; admitted U1, U2)``.
 - ``FAILED``: at least one check did not hold on the files; each reason
   names one. It exits 1.
-- ``NOT EVALUATED``: ``verify`` did not complete, and says nothing about the
-  run (exit 7).
+- ``NOT EVALUATED``, in ``--json`` only: ``verify`` did not complete, and the
+  document says nothing about the run. Text ``verify`` prints no verdict then,
+  only its one error line on stderr. It exits with the code of the refusal, 7
+  for an internal error.
 
 ``review-levels`` fills ``$RUN/review/`` by level, ``1-chiplet/<die>/``,
 ``2-interposer/``, ``3-assembly/`` and ``4-external/``, with ``levels.txt``

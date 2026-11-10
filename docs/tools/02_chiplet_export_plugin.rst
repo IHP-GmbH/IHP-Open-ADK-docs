@@ -652,8 +652,14 @@ the interposer and each die take the technology of the System component with
 the same id. The interposer's technology must be ``intm4tm2``: a System whose
 carrier names another technology is refused with
 ``CARRIER_UNSUPPORTED_TECHNOLOGY``, exit 1, nothing written. IntM4TM2 is the
-only carrier the export models. The plugin's command reference, linked at the
-foot of this page, lists every flag.
+only carrier the export models. ``technologies`` becomes the System's entries
+for exactly the ids bound, copied as written, so ``layer_properties`` and
+``stackup`` paths the System declares reach the exported ``.chiplet``; a
+relative path in either is refused, because it cannot be anchored to the
+exported file. Nothing else is taken from the System: the mount plane still
+comes from the interposer PDK (:ref:`hyp_to_gds_attach_frame`), not from the
+System's ``attachment_surface_z``. The plugin's command reference, linked at
+the foot of this page, lists every flag.
 
 ``run_export`` is the Python API the dialog itself calls. The package is
 ``chiplet_export``, so the repository's ``plugins/`` directory has to be on

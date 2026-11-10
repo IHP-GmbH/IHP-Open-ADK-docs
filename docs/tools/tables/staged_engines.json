@@ -14,6 +14,11 @@
     "ref": "d78b01e4202e284a135d4270089ad7b8028c5281",
     "version": "0.1.0"
   },
+  "chiplet-spec": {
+    "lag": true,
+    "pinned": "e8461297172fab6a7b4c357c1c35025fd7cbd076",
+    "ref": "6f8e0dc2af72b9ab21ff3dd8b2e3c2f5b85e2d97"
+  },
   "interposer-pnr": {
     "distribution": "interposer-pnr",
     "ref": "54caf817e08a713ded71173c331815b4e2572a12",

@@ -567,21 +567,33 @@ generator conservatively shifts pillars within a per-pillar budget
 ``--no-auto-resolve`` turns that off, so any device with a violation is dropped.
 ``--auto-resolve-best-effort`` only silences the ``auto-resolve FAILED`` line
 when auto-resolve does not converge; a device with collisions left still fails
-DRC and is dropped, although the ``--help`` text says the flag generates GDS
-anyway.
+DRC and is dropped.
 
 A device that fails DRC is left out of the GDS, and a generate run still writes
 the GDS of the devices that passed. The ``Failed devices:`` line on stdout and the
 ``failed_devices`` list in the ``--report`` JSON name the dropped devices.
 
-.. Remove this warning when the OpenIntM4TM2 pin includes the upstream commit
-   "Exit 1 from bump_mirror when a device fails DRC".
+The exit code reports a failed device:
 
-.. warning::
-   At the pinned interposer release (v2026.11) the exit code does not report a
-   dropped device: a run that drops a device still exits 0, as long as one
-   device passed or the run was ``--validate-only``. Check the report before you
-   use the GDS.
+- 0 when no device failed and, in a generate run, at least one device passed.
+  A device skipped in ``--chiplet`` mode because it has no connection stack is
+  not a failure.
+- 1 when any device failed DRC or had no bump locations. The
+  ``Exiting non-zero: N device(s) failed: ...`` line on stderr names them. Exit
+  1 can come with a partial GDS, because a generate run still writes the
+  devices that passed.
+- 1 also when the input is bad: a malformed ``--pins``, ``--position`` or
+  ``--rotation`` token, a missing pin file, coordinates that are not numbers, a
+  ``--diameter`` that matches no Table 6.1 opening, or no usable
+  ``gds_to_kicad``. The run then prints ``Error: ...`` instead and names no
+  device.
+- 2 when ``argparse`` rejects the command line: ``--pins`` missing, both or
+  neither of ``--position`` and ``--chiplet``, or both ``--auto-resolve`` and
+  ``--no-auto-resolve``.
+
+A generate run in which no device passed, skipped ones included, writes no GDS
+and exits 1. The same input with ``--validate-only`` exits 0 when nothing
+failed.
 
 Two properties of this generator are worth understanding.
 

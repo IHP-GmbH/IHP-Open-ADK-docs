@@ -11,7 +11,8 @@ quietly stops matching the build.
 The README writes the release tag as ``vYYYY.MM``. When ADK-Tools is pinned
 exactly at a release tag, that tag replaces the placeholder; when it is pinned
 at an untagged commit, as on a development branch, the placeholder stays, which
-is what the README itself tells a reader to fill in. A release tag (``v``
+is what the README itself tells a reader to fill in. A point release of a
+month, ``vYYYY.MM.N`` (v2026.11.1), is a release tag too. A release tag (``v``
 and a digit) of any other shape is an error; local tags (not release tags)
 are ignored. The README's "(see below)" pointers are dropped, since they point
 nowhere here; any other "(see ...)" is an error rather than a dangling pointer.
@@ -46,7 +47,7 @@ from _common import (
 )
 
 PLACEHOLDER = "vYYYY.MM"
-RELEASE_TAG = re.compile(r"v\d{4}\.\d{2}")
+RELEASE_TAG = re.compile(r"v\d{4}\.\d{2}(\.\d+)?")
 INSTALL_DIR = os.path.join(DOCS_DIR, "install")
 
 
@@ -57,7 +58,7 @@ def release_tag():
     if len(releases) > 1:
         fail("ADK-Tools HEAD carries several release tags: {}".format(", ".join(releases)))
     if not releases and tags:
-        fail("ADK-Tools HEAD is tagged {} but not as vYYYY.MM".format(", ".join(tags)))
+        fail("ADK-Tools HEAD is tagged {} but not as vYYYY.MM or vYYYY.MM.N".format(", ".join(tags)))
     return releases[0] if releases else PLACEHOLDER
 
 

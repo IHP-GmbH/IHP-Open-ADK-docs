@@ -39,20 +39,22 @@ def fail(message):
     raise SystemExit(1)
 
 
-def run_git(repo, *args):
+def run_git(repo, *args, strip=True):
     """Run a git command in repo. Returns (returncode, stdout, stderr), with
-    returncode None when git could not be run at all."""
+    returncode None when git could not be run at all. stdout is decoded as
+    UTF-8, and stripped unless strip is False."""
     try:
         result = subprocess.run(
             ["git"] + list(args),
             cwd=repo,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
             timeout=30,
         )
     except (OSError, subprocess.SubprocessError) as error:
         return None, "", str(error)
-    return result.returncode, result.stdout.strip(), result.stderr.strip()
+    out = result.stdout.strip() if strip else result.stdout
+    return result.returncode, out, result.stderr.strip()
 
 
 def git(repo, *args):
@@ -61,9 +63,10 @@ def git(repo, *args):
     return out if code == 0 else ""
 
 
-def git_or_fail(repo, *args):
-    """The stripped stdout of a git command that must succeed."""
-    code, out, err = run_git(repo, *args)
+def git_or_fail(repo, *args, strip=True):
+    """The stdout of a git command that must succeed, stripped unless strip is
+    False."""
+    code, out, err = run_git(repo, *args, strip=strip)
     if code != 0:
         fail("git {} failed in {}: {}".format(" ".join(args), repo, err or "no output"))
     return out
@@ -103,6 +106,15 @@ def pinned_commit(path, name):
             "or restore the gitlink with: git checkout HEAD -- {}".format(name, name)
         )
     return fields[0][1]
+
+
+def git_text(repo, *args):
+    """The raw stdout of a git command in repo, or a failure in git's own words.
+
+    For reading a file or a listing out of a commit, where a silent "" would
+    read as an empty file.
+    """
+    return git_or_fail(repo, *args, strip=False)
 
 
 def require_submodule(path, name):

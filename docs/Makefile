@@ -29,6 +29,7 @@ preprocess:
 	$(PYTHON) scripts/gen_frame_values.py
 	$(PYTHON) scripts/gen_admission_values.py
 	$(PYTHON) scripts/check_validation_rules.py
+	$(PYTHON) scripts/check_bump_mirror.py
 
 build:
 	$(SPHINXBUILD) -b html $(SPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html

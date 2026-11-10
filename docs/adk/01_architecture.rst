@@ -349,7 +349,10 @@ The KLayout deck sees only 2D geometry plus the manifest, so it cannot check
 heights at all. The rule "each die's ``position.z`` equals the mounting surface
 plus its connection-stack height" is enforced by the 3Dblox exporter,
 ``openroad/chiplet2dbx.py``, which compares the two to a tolerance of 1e-6 um
-and refuses to export an assembly that does not satisfy it exactly. Downstream,
+and refuses to export an assembly that does not satisfy it exactly. It also
+refuses an assembly whose interposer seats dies but declares no
+``attachment_surface_z``, since without that plane there is no mounting surface
+to measure from. Downstream,
 ``read_3dbx`` in OpenROAD loads the exported model and ``check_3dblox`` lints
 its geometry; the exporter deliberately grounds the substrate so that the
 floating-chip check has a reference. An assembly that is never exported gets no

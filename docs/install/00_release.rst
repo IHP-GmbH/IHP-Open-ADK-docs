@@ -12,7 +12,7 @@ The preview release
     they are.
 
 The preview release is three things that move together: an ADK-Tools release
-tag, the image you build from it, and an adk-examples checkout at the same tag.
+tag, the image you build from it, and an adk-examples checkout.
 No image is published: you build the one you run, and it gets an ID of its
 own. The checkout's ``release-lock.json`` names the reference image the
 examples were checked on and the pin set that image was built from.
@@ -41,10 +41,11 @@ What you need
 - **git**, for the checkouts, and **python3**, which the build scripts use.
 - **The sources the build stages.** Besides the ADK-Tools clone and its
   submodules, the build needs a checkout of each sibling repository that
-  ADK-Tools' ``staging.pin`` lists, at the commit it pins, beside the clone.
-- **The adk-examples checkout** at the release tag. Its ``die-views/`` folder
-  holds the die records the build stages into the image, and its
-  ``release-lock.json`` is the lock the examples run under.
+  ADK-Tools' ``staging.pin`` lists, holding the commit it pins and any extra
+  commit it names for that tree, beside the clone.
+- **The adk-examples checkout.** Its ``die-views/`` folder holds the die
+  records the build stages into the image. Its ``release-lock.json`` is the
+  lock the examples run under.
 - **A display** for the reviews the examples ask for. ``run.sh`` takes
   ``DISPLAY`` or a ThinLinc session; ``ADK_DISPLAY=:N`` names another.
 - **Memory and cores.** Each example states what it needs before it starts a
@@ -57,9 +58,10 @@ What you need
 
 Keep both checkouts outside your work directory (``ADK_WORK``,
 ``~/adk-work`` by default), which the container can write: ``run.sh`` refuses
-to start when ``ADK_WORK`` holds its clone or lies inside it. The adk-examples
-checkout is the release you run, at the release tag |release-tag|; the
-ADK-Tools clone is at the same tag. The sibling checkouts sit beside the
+to start when ``ADK_WORK`` holds its clone or lies inside it. The ADK-Tools
+clone is at the release tag |release-tag|. The die records in the adk-examples
+checkout's ``die-views/`` folder have to match ADK-Tools' ``die-views.sha256``
+at that tag. The sibling checkouts sit beside the
 clone, or in the directory ``STAGE_SIBLINGS`` names.
 
 .. literalinclude:: /install/_recipe/clone.sh
@@ -68,8 +70,9 @@ clone, or in the directory ``STAGE_SIBLINGS`` names.
 The two ``--check`` calls write nothing. ``stage-sources.sh --check`` finds
 each sibling checkout and the commit ``staging.pin`` pins in it;
 ``stage-die-views.sh --check`` holds the records under ``STAGE_DIE_VIEWS_DIR``
-to the listing ADK-Tools pins. Either one names what is missing in seconds,
-before an hour of build.
+to the listing ADK-Tools pins; when they do not match, update the adk-examples
+checkout until they do. Either one names what is missing in seconds, before an
+hour of build.
 
 2. The image
 ------------

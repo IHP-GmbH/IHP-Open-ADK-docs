@@ -12,6 +12,9 @@ Each step is one subcommand that reads files and writes one, so
 refusal. You can also run them by hand.
 
 Version |interposer-pnr-version| ships in the ADK-Tools image as the ``interposer-pnr`` command.
+A version with a ``.dev0`` suffix is a development version, not a release:
+between two releases the engine reports the next minor with that suffix, and
+reports that name the engine carry the same value.
 It is licensed GPL-3.0-or-later. The shipped routing descriptors, the vendored
 ``.chiplet`` reader and the schema of the record ``signoff --check`` writes are
 Apache-2.0.
@@ -113,7 +116,7 @@ interposer-pnr reads no PDK kit files. An interposer enters as a
 routing-technology descriptor, a small JSON file checked against a schema, and
 ``--tech`` takes its path or the name of a shipped one. The descriptor is the
 one place the engine couples to a process, and the engine's ``PDK_CONTRACT``
-document says how to write one for a new interposer. Version 0.5.0 ships three:
+document says how to write one for a new interposer. The engine ships three:
 
 .. list-table::
     :header-rows: 1
@@ -185,7 +188,10 @@ the image's verify stage, which ADK-Tools sets:
   geometric and is not fabrication DRC. On a net widened by a requirement,
   ``detailed_route`` can report 0 violations while leaving the net closer to
   other copper than the technology allows. The engine's own copper spacing
-  check fails such a route (exit 3) and names the net.
+  check fails such a route (exit 3) and names the net. The refusal also
+  quotes drt's own ``check_drc``, run in the same OpenROAD session right after
+  the route, and suggests carrying a declared power or ground rail as a mesh
+  instead of a widened trace.
 - Routing is not impedance-driven, and no parasitics are carried for the IHP
   interposer.
 - ``place`` seeds on a grid as wide as the largest die plus ASM_b, so dies of

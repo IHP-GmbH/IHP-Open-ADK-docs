@@ -221,27 +221,32 @@ Connection thickness is the stack height, exactly
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``.chiplet`` z-mounting rule is
-``z_die = mounting_surface + connection.total_height()``, so the stack's
+``z_die = interposer.position.z + mounting_surface + connection.total_height()``,
+so the stack's
 ``total_height()`` **is** the vertical gap between the attachment surface and
 the die bottom. OpenROAD's linter asserts that a connection's declared
 thickness equals that gap exactly. So emit
 ``thickness := connection.total_height()``, never a rounded or nominal value,
 and never a gap re-derived from body outlines.
 
-Two caveats follow from the frame contract's fallback rules. First, the
+Three caveats follow from the frame contract's edge cases. First, the
 equality is only guaranteed when the die's z defers to auto-calculation. A
 ``.chiplet`` may carry an explicit ``position.z``, which readers honour as-is,
 so an exporter must verify that
-``z_die == mounting_surface + total_height()`` and fail loudly on a mismatch
+``z_die == interposer.position.z + mounting_surface + total_height()`` and
+fail loudly on a mismatch
 rather than emit a thickness inconsistent with the actual gap. Second, when a
 die's ``connection`` id does not resolve to a stack, there is no thickness
-source at all, and the export must likewise fail loudly.
+source at all, and the export must likewise fail loudly. Third, a file whose
+interposer seats dies and declares no ``attachment_surface_z`` has no mount
+plane, and the export refuses it (:ref:`chiplet_mounting_plane`).
 
 The attachment surface is not the maximum z
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``mounting_surface`` resolves to the file's mounting plane
-(:ref:`chiplet_mounting_plane`), the pad top through the passivation opening,
+``mounting_surface`` resolves to the file's attachment surface, the
+interposer's ``attachment_surface_z`` (:ref:`chiplet_mounting_plane`), the pad
+top through the passivation opening,
 which is generally not the substrate's maximum z
 (:ref:`chiplet_passivation_trap`). On export the error is not silent: a gap
 taken from the outline fails the linter's exact-equality check. Use the
