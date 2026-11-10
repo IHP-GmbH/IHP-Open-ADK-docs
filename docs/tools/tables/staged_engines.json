@@ -1,32 +1,27 @@
 {
   "assembly-lvs": {
     "distribution": "assembly-lvs",
-    "ref": "32d4739590a136dd35f13d53455c223c05fd4dde",
+    "ref": "27e850825e11035871a8023d94573b502f32af87",
     "version": "0.8.0"
   },
   "chiplet-cosim": {
     "distribution": "chiplet-cosim",
-    "ref": "dcd7fdcdd7afa2149e3e8b738009b9ea4c25417f",
+    "ref": "50247f2c4e3441dd28c5de3fb3c4f82c650051eb",
     "version": "0.1.0"
   },
   "chiplet-flow": {
     "distribution": "chiplet-die-flow",
-    "ref": "d78b01e4202e284a135d4270089ad7b8028c5281",
+    "ref": "54f256d55635d7aadd217a237ca591dfb1601108",
     "version": "0.1.0"
-  },
-  "chiplet-spec": {
-    "lag": true,
-    "pinned": "48a30522451b3bcc45754fe01633196188cab2f0",
-    "ref": "6f8e0dc2af72b9ab21ff3dd8b2e3c2f5b85e2d97"
   },
   "interposer-pnr": {
     "distribution": "interposer-pnr",
-    "ref": "54caf817e08a713ded71173c331815b4e2572a12",
-    "version": "0.5.0"
+    "ref": "3e85398b8d118370796a22f643355bbe0e3a4638",
+    "version": "0.6.0.dev0"
   },
   "packaging-flow": {
     "distribution": "packaging_flow",
-    "ref": "9ec146d1d6f5882f92407fbb85bbed28f1eedd67",
+    "ref": "56affc12e96e3702dcd5e5d503aa9607c17a136f",
     "version": "0.1.0"
   }
 }
