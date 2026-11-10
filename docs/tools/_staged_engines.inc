@@ -2,7 +2,7 @@
 .. Regenerate with: make -C docs preprocess
 
 .. |assembly-lvs-version| replace:: 0.8.0
-.. |interposer-pnr-version| replace:: 0.5.0
+.. |interposer-pnr-version| replace:: 0.6.0.dev0
 .. |packaging-flow-version| replace:: 0.1.0
 .. |chiplet-flow-version| replace:: 0.1.0
 .. |chiplet-cosim-version| replace:: 0.1.0
