@@ -813,8 +813,10 @@ The last row is the important one. See :doc:`/adk/01_architecture`.
 
 From 0.4.0 the tree also ships a technology manifest,
 ``libs.tech/adk/technology.json``, and the routing descriptors it names under
-``libs.tech/adk/routing/``. No tool documented on this site reads them from
-this tree in this release.
+``libs.tech/adk/routing/``. In this release no engine routes from them
+directly: ``interposer-pnr`` routes from its own copies of the descriptors,
+which one of its tests holds byte-equal to the ones named here
+(:doc:`/formats/00_shared_data`).
 
 .. note::
    The ``assembly`` deck used to live in this repository and was promoted out of

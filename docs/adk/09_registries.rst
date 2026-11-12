@@ -11,6 +11,11 @@ which is the point of the adapter axes. Nothing
 normative is hardcoded in a rule deck or in a generator. This page describes each
 registry, who reads it, and what its values are worth.
 
+These registries are the ADK's own. The data the PDKs publish, the interconnect
+methods, the interposer's stack and routing descriptors among them, lives in
+those PDKs; :doc:`/formats/00_shared_data` says where each shared datum lives
+and who reads it.
+
 Alongside the registries, ``config/schema/`` holds the JSON Schemas: three that
 describe the registries themselves, and four that describe the per-assembly
 sidecar files the toolchain exchanges.

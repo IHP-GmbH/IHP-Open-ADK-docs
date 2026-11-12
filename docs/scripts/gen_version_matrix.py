@@ -63,6 +63,7 @@ from _common import (
     read_json,
     read_text,
     require_submodule,
+    stage_siblings,
     write_csv,
     write_text,
 )
@@ -360,7 +361,7 @@ def staged_engines():
     src/ADK-Tools at a release (lagging_pin), which the release regeneration closes.
     """
     require_submodule(TOOLS, "src/ADK-Tools")
-    siblings = os.environ.get("STAGE_SIBLINGS") or os.path.dirname(REPO_ROOT)
+    siblings = stage_siblings()
     record = read_json(STAGED_RECORD) if os.path.isfile(STAGED_RECORD) else {}
     engines, aliases = {}, {}
     for path, ref, extras in staged_trees():

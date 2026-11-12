@@ -97,6 +97,18 @@ quote. Never edit the generated files: they are overwritten on every build.
         files with what the pinned commit renders. At a pin move, read again
         the few values the guide still types by hand; a comment at the top of
         ``from_scratch.rst`` names them.
+    * - ``gen_shared_data.py``
+      - The four tables of :doc:`/formats/00_shared_data`, from the rows it
+        holds and from ADK-Tools' ``ci/contract-registry.json``. It fails when
+        an owner's file or schema is missing at its pin, when a reader or
+        writer file no longer names the datum, or when the linked page does
+        not. Readers in the staged engines are checked at the commits
+        ``tools/tables/staged_engines.json`` records, in a checkout beside
+        this repository or in ``STAGE_SIBLINGS``; without one, as in the
+        public build, their rows are written unchecked. It checks all the
+        staged engines or none: with ``STAGE_SIBLINGS`` set, or with some
+        checkouts found and others not, a missing engine fails the run. A new
+        shared file is a new row in the script.
     * - ``check_validation_rules.py``
       - Nothing. It fails when the validation rules on
         :doc:`/formats/01_chiplet` drift from the specification's numbering.

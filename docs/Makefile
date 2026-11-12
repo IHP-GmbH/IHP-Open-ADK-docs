@@ -31,6 +31,7 @@ preprocess:
 	$(PYTHON) scripts/check_validation_rules.py
 	$(PYTHON) scripts/check_bump_mirror.py
 	$(PYTHON) scripts/gen_example_blocks.py
+	$(PYTHON) scripts/gen_shared_data.py
 
 # Local only: the from-scratch guide's include files against the adk-examples commit they
 # name. Needs ADK_DOCS_EXAMPLES_ROOT, a checkout holding that commit; the public build has none.
