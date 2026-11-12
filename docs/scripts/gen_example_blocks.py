@@ -118,7 +118,11 @@ VALUES = {
 }
 OUT_DIR = os.path.join(DOCS_DIR, "_blocks")
 CAPTURE_SCHEMA = "adk-examples.proven/2"
-LOCK_SCHEMA = "adk-examples.release-lock/1"
+#: release-lock.json schema -> its required keys (install/00_release, "The release lock")
+LOCK_KEYS = {
+    "adk-examples.release-lock/1": ("adk_tools", "image", "pin_set"),
+    "adk-examples.release-lock/2": ("adk_tools", "image", "image_manifest", "pin_set"),
+}
 PIN = "ADK_EXAMPLES_COMMIT"
 SUMS = "SHA256SUMS"
 BLOCK_ID = r"^(?P<stem>[a-z0-9]+)-(?P<key>[a-z0-9-]+?)-(?P<shell>host-after|host|container|review)"
@@ -217,10 +221,10 @@ def tools_lock(root, commit):
     """The pin's release-lock.json, whose ADK-Tools commit must be the one this site
     pins src/ADK-Tools at (in the index, as every generator reads its pins)."""
     lock = json.loads(git_text(root, "show", "{}:release-lock.json".format(commit)))
-    if lock.get("schema") != LOCK_SCHEMA:
+    if lock.get("schema") not in LOCK_KEYS:
         fail("adk-examples {} release-lock.json is schema {}, this generator reads {}"
-             .format(commit[:12], lock.get("schema"), LOCK_SCHEMA))
-    for key in ("adk_tools", "image", "pin_set"):
+             .format(commit[:12], lock.get("schema"), " or ".join(sorted(LOCK_KEYS))))
+    for key in LOCK_KEYS[lock["schema"]]:
         if not lock.get(key):
             fail("adk-examples {} release-lock.json has no {}".format(commit[:12], key))
     tools = pinned_commit(os.path.join(SRC_DIR, "ADK-Tools"), "src/ADK-Tools")
@@ -242,10 +246,12 @@ def captures(root, commit, example, lock):
     if proven.get("schema") != CAPTURE_SCHEMA:
         fail("{} at {} is schema {}, this generator reads {}"
              .format(path, commit[:12], proven.get("schema"), CAPTURE_SCHEMA))
-    # tools_lock() has checked that the lock holds all three keys.
+    # tools_lock() has checked that the lock holds its schema's keys. A capture made on
+    # the containerd image store records the ID a schema /2 lock names as image_manifest.
+    images = {lock["image"], lock.get("image_manifest")} - {None}
     if made.get("pin_set") != lock["pin_set"] or \
             made.get("adk_tools") != lock["adk_tools"] or \
-            proven.get("image") != lock["image"] or \
+            proven.get("image") not in images or \
             proven.get("container_exit") != 0:
         fail("{} at {} is not a clean capture on the reference image its release-lock.json names"
              .format(path, commit[:12]))
