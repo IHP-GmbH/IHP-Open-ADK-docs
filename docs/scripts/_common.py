@@ -193,6 +193,12 @@ def require_submodule(path, name):
     return path
 
 
+def stage_siblings():
+    """The directory holding checkouts of the staged engines: STAGE_SIBLINGS,
+    or the directory beside this repository."""
+    return os.environ.get("STAGE_SIBLINGS") or os.path.dirname(REPO_ROOT)
+
+
 def read_json(path):
     if not os.path.isfile(path):
         fail("expected file not found: {}".format(path))

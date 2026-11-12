@@ -63,6 +63,8 @@ cover.
     One assembly rule set above many PDKs. The chiplet PDKs, the interposer PDK
     and the interconnect PDK each own their own fabrication rules; the ADK owns
     only what happens between them, and reaches each one through an adapter.
+    :doc:`formats/00_shared_data` says which repository owns each datum the
+    tools share.
 
 Where to start
 ==============

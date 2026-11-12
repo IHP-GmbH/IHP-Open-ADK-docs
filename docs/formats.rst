@@ -6,6 +6,7 @@ Formats and contracts
     :caption: Formats and contracts
     :maxdepth: 2
 
+    Where shared data lives <formats/00_shared_data>
     The .chiplet assembly file <formats/01_chiplet>
     Components and optional blocks <formats/02_chiplet_components>
     Coordinate frames <formats/03_coordinate_frames>
