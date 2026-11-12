@@ -143,3 +143,20 @@ To hold the examples to a lock of your own, write it in this form and set
 ``ADK_EXAMPLES_LOCK`` to its path; each example's first block passes it to
 ``run.sh`` as ``--lock``. The adk-examples checkout's ``docs/RELEASE_LOCK.md``
 says the same from the examples' side.
+
+.. _release_known_issues:
+
+Known issues
+------------
+
+These are known in |release-tag| and are being fixed.
+
+A die with ``sbump_sac305`` exports without its interposer landings
+    A die whose ``CONNECTION`` field
+    (:doc:`/flow/03_interposer_design`) names ``sbump_sac305`` exports
+    without its interposer landings. The export still succeeds, and the only
+    sign is a warning from the export worker, so read the export log before
+    you take such a design further. Stand-alone solder bumps do not run end
+    to end in this release; the Cu pillar methods ``cupillar_opt1`` to
+    ``cupillar_opt3`` do. The next release is planned to either refuse such
+    a die or draw its landings.

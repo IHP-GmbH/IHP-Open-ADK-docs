@@ -174,7 +174,9 @@ carries the matching field.
         ``sbump_sac305``. It selects the connection stack, and with it the die's
         z position, the 3D bodies rendered downstream, and the pitch and
         spacing numbers the interconnect rules will check. Left unset, the die
-        follows the assembly-wide default chosen in the export dialog.
+        follows the assembly-wide default chosen in the export dialog. In
+        this release ``sbump_sac305`` exports without its interposer
+        landings (:ref:`release_known_issues`).
     * - ``DIE_OUTLINE_LAYER``
       - The ``LAYER/DATATYPE`` on which the die's own GDS draws its outline,
         ``39/4`` for an SG13G2 die. The export sizes the die from it and
