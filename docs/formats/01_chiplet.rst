@@ -76,7 +76,7 @@ bound to a different abstraction level. It has an open-source BSD-3
 implementation in OpenROAD (ingestion, an automatic assembly linter, and a 3D
 viewer). 3Dblox binds an assembly to the place-and-route abstraction (LEF, DEF,
 Verilog netlists, Liberty views) for multi-die EDA and design-space
-exploration, and its OpenROAD reader takes no artwork file. ``.chiplet`` binds
+exploration, and OpenROAD's reader takes no artwork file. ``.chiplet`` binds
 the same assembly to the mask level: GDS/OASIS bodies, ``.lyp`` layer
 properties, per-layer interconnect metallurgy with method identity, and fab DRC
 parameters.

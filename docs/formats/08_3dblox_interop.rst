@@ -48,9 +48,9 @@ viewer. That linter is the reason an export is worth producing: it is a second,
 independently written opinion about an assembly the ADK has already checked at
 the mask level.
 
-The abstraction split is the whole story. 3Dblox binds an assembly to the P&R
-abstraction for multi-die EDA and design-space exploration. OpenROAD's
-reader, the one this export is written for, takes no artwork file from it.
+The abstraction split is the whole story. 3Dblox describes an assembly for
+multi-die EDA and design-space exploration. OpenROAD's reader, the one this
+export is written for, works at the P&R abstraction and takes no artwork file.
 ``.chiplet`` binds it to the mask level: GDS and OASIS bodies, ``.lyp`` layer
 properties, per-layer interconnect metallurgy, and fab DRC parameters, for
 assembly checking and fabrication hand-off.
@@ -145,10 +145,9 @@ What does not map, and why
 Reduced or dropped on export
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
-3Dblox sits at the P&R abstraction and OpenROAD's reader takes no artwork from
-it. Some survive
-the export only in reduced form:
+These are ``.chiplet`` concepts that OpenROAD's 3Dblox reader has no
+counterpart for: it works at the P&R abstraction and takes no artwork. Some
+survive the export only in reduced form:
 
 1. **Per-layer interconnect metallurgy.** ``connection_stacks`` carries a name,
    material, height and diameter per layer, and derives the die z from the

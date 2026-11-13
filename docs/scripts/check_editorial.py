@@ -7,8 +7,8 @@ These are factual and legal constraints, not style preferences. The check
 reads exactly the files the site publishes, in two groups:
 
 - this site's own files: everything under ``docs/`` but ``_build`` and
-  ``_repos`` (pages, figures, recipes and the generated tables, includes and
-  transcripts), and any file outside ``docs/`` and ``src/`` a page includes,
+  ``_repos`` (pages, figures, recipes, the bibliography and the generated
+  tables, includes and transcripts), and any file outside ``docs/`` and ``src/`` a page includes,
   such as the README;
 - upstream files the site publishes as they stand: the pages Sphinx builds
   from ``_repos/*/docs`` (``REPO_PAGES`` in conf.py), the files those pages
@@ -53,14 +53,14 @@ RULES = [
     (r"signoff.?grade|production.?grade",
      "Do not claim signoff-grade or production-grade. This is a preview release.", True,
      {"docs/contrib/02_documentation.rst"}),
-    (DASHES,
-     "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
-     True, DASH_EXEMPT),
-    (EMOJI, "Emojis are not allowed in documentation sources.", True, set()),
     # IEEE approved the 3Dblox standard on 2026-11-04; the draft number alone is stale.
     (r"\bP3537\b(?!-\d{4})",
      "Cite the 3Dblox standard with its year, IEEE 3537-2026, not the draft project number.",
      True, set()),
+    (DASHES,
+     "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
+     True, DASH_EXEMPT),
+    (EMOJI, "Emojis are not allowed in documentation sources.", True, set()),
     # flow/06 keeps its stage-N labels for old URL fragments; flow/01 owns the numbers.
     (r":ref:`(?:[^`<]*<)?stage-\d",
      "Do not link a legacy stage-N label. Stage numbers live in the flow/01 table.",
