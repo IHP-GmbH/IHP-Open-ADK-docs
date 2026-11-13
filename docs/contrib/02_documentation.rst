@@ -242,6 +242,8 @@ back even if the prose is good.
   been fabricated several times at IHP, which is a statement about process
   maturity.
 - Never present 3Dblox as closed or proprietary. It has an open implementation.
+- Cite the 3Dblox standard with its year, as IEEE 3537-2026. A draft project
+  number without a year fails the editorial check.
 - Automated 2.5D place and route is a proof of concept. Do not present it as
   more than that.
 - Do not name a bumping or packaging vendor in the site's own prose. Write "the

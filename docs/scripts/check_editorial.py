@@ -30,7 +30,7 @@ import sys
 
 from _common import DOCS_DIR, REPO_ROOT, SRC_DIR, included as includes, own_files as site_files
 
-OWN_SUFFIXES = (".rst", ".md", ".svg", ".sh", ".csv", ".inc", ".txt", ".yaml")
+OWN_SUFFIXES = (".rst", ".md", ".svg", ".sh", ".csv", ".inc", ".txt", ".yaml", ".bib")
 REPO_PAGES = "_repos/*/docs/**"
 
 # Upstream files allowed to carry dashes, each with the date the exemption was
@@ -57,6 +57,10 @@ RULES = [
      "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
      True, DASH_EXEMPT),
     (EMOJI, "Emojis are not allowed in documentation sources.", True, set()),
+    # IEEE approved the 3Dblox standard on 2026-11-04; the draft number alone is stale.
+    (r"\bP3537\b(?!-\d{4})",
+     "Cite the 3Dblox standard with its year, IEEE 3537-2026, not the draft project number.",
+     True, set()),
     # flow/06 keeps its stage-N labels for old URL fragments; flow/01 owns the numbers.
     (r":ref:`(?:[^`<]*<)?stage-\d",
      "Do not link a legacy stage-N label. Stage numbers live in the flow/01 table.",

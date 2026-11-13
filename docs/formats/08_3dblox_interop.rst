@@ -24,8 +24,11 @@ exporter in the ADK that implements it.
 What 3Dblox is
 --------------
 
-3Dblox was originated by TSMC and is being standardised as **IEEE P3537**. It
-describes multi-die physical assemblies through three file kinds:
+3Dblox was originated by TSMC and is standardised as **IEEE 3537-2026**. On
+2026-11-13 the IEEE Standards Association page for it
+(https://standards.ieee.org/ieee/3537/11871/) lists it as an active standard,
+approved by the IEEE SA Standards Board on 2026-11-04. It describes
+multi-die physical assemblies through three file kinds:
 
 - **``.3dbv``**, chiplet definitions: ``ChipletDef`` entries with a per-die
   technology, design area and thickness, named bond regions, and linkage to
@@ -46,10 +49,11 @@ independently written opinion about an assembly the ADK has already checked at
 the mask level.
 
 The abstraction split is the whole story. 3Dblox binds an assembly to the P&R
-abstraction for multi-die EDA and design-space exploration, and references no
-artwork files. ``.chiplet`` binds it to the mask level: GDS and OASIS bodies,
-``.lyp`` layer properties, per-layer interconnect metallurgy, and fab DRC
-parameters, for assembly checking and fabrication hand-off.
+abstraction for multi-die EDA and design-space exploration. OpenROAD's
+reader, the one this export is written for, takes no artwork file from it.
+``.chiplet`` binds it to the mask level: GDS and OASIS bodies, ``.lyp`` layer
+properties, per-layer interconnect metallurgy, and fab DRC parameters, for
+assembly checking and fabrication hand-off.
 
 
 The shared core
@@ -142,7 +146,8 @@ Reduced or dropped on export
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
-3Dblox sits at the P&R abstraction and does not reference artwork. Some survive
+3Dblox sits at the P&R abstraction and OpenROAD's reader takes no artwork from
+it. Some survive
 the export only in reduced form:
 
 1. **Per-layer interconnect metallurgy.** ``connection_stacks`` carries a name,
@@ -155,9 +160,9 @@ the export only in reduced form:
 3. **Fab DRC parameter linkage**: the fab parameters and pitch rules that feed
    a parameterised assembly-DRC flow.
 4. **Mask artwork linkage**: GDS and OASIS bodies with ``.lyp`` layer
-   properties. 3Dblox references no artwork files; its region schema carries a
-   ``gds_layer`` layer-id attribute, which the open implementation parses and
-   ignores, but no field references a GDS or OASIS file.
+   properties. OpenROAD's reader references no artwork files: its region
+   schema carries a ``gds_layer`` layer-id attribute, which the reader parses
+   and ignores, and no field it reads references a GDS or OASIS file.
 5. **Polygonal boundary manifests**, arbitrary polygons with content hashes.
    3Dblox bond regions are four-corner rectangles.
 6. **Black-box pad vocabulary** for closed-PDK dies, that is pad layers usable

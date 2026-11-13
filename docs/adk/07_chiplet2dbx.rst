@@ -12,7 +12,7 @@ connection stack becomes a connection whose thickness is the stack's exact
 total height. A die for which you supply its recorded views is exported with
 them instead; see `Exporting a die with its recorded views`_.
 
-3Dblox, originated by TSMC and being standardised as IEEE P3537, describes
+3Dblox, originated by TSMC and standardised as IEEE 3537-2026, describes
 multi-die physical assemblies, and has an open-source implementation in OpenROAD
 under BSD-3 that this exporter writes for.
 
