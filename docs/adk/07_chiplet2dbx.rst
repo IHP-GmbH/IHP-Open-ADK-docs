@@ -12,26 +12,26 @@ connection stack becomes a connection whose thickness is the stack's exact
 total height. A die for which you supply its recorded views is exported with
 them instead; see `Exporting a die with its recorded views`_.
 
-3Dblox, originated by TSMC and being standardised as IEEE P3537, describes
+3Dblox, originated by TSMC and standardised as IEEE 3537-2026, describes
 multi-die physical assemblies, and has an open-source implementation in OpenROAD
 under BSD-3 that this exporter writes for.
 
-The two formats describe the same physical assembly at different abstraction
-levels. 3Dblox describes it at the place-and-route level: chiplet definitions
-and their LEF, DEF and Liberty views, the stack, and the connections between
-chiplets. ``.chiplet`` describes it at the mask level: GDS bodies, layer
-property files, per-layer interconnect metallurgy and fab DRC parameters. A
-design can usefully hold both, one for exploration and P&R-level linting, one
+The two formats describe the same physical assembly. OpenROAD's 3Dblox reader
+takes it at the place-and-route level: chiplet definitions and their LEF, DEF
+and Liberty views, the stack, and the connections between chiplets. ``.chiplet``
+describes it at the mask level: GDS bodies, layer property files, per-layer
+interconnect metallurgy and fab DRC parameters. A design can usefully hold both,
+one for exploration and P&R-level linting, one
 for mask-level assembly and DRC.
 
 .. note::
 
     The export is lossy by declaration. Mask artwork, per-layer metallurgy,
     interconnect method provenance, DRC parameter linkage, ``io_pads``,
-    polygonal boundary manifests and parasitics have no 3Dblox target and are
-    dropped. The ``.chiplet`` file stays the **authoritative** placement source;
-    a ``.3dbx`` is a derived artefact, regenerated rather than edited. The
-    mapping follows the non-normative interoperability appendix
+    polygonal boundary manifests and parasitics have no target in the export and
+    are dropped. The ``.chiplet`` file stays the **authoritative** placement
+    source; a ``.3dbx`` is a derived artefact, regenerated rather than edited.
+    The mapping follows the non-normative interoperability appendix
     (``docs/3dblox_interop.md``) of the |spec-repo| repository; where that
     appendix and this tool disagree, the appendix governs. See
     :doc:`/formats/08_3dblox_interop`.

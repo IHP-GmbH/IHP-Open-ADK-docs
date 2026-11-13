@@ -3,8 +3,9 @@
 
 .. include:: /common.inc
 
-3Dblox and ``.chiplet`` describe the same thing, a multi-die physical assembly,
-bound to two different abstraction levels. An exploration-level model and a
+3Dblox and ``.chiplet`` describe the same thing, a multi-die physical assembly.
+As OpenROAD reads it, 3Dblox binds that assembly to the P&R abstraction, and
+``.chiplet`` binds it to the mask level. An exploration-level model and a
 mask-level model of one assembly are both useful, so the relationship the
 specification defines is interop rather than rivalry: a field-by-field mapping,
 a proposed reference field, and one rule about which file is authoritative.
@@ -24,8 +25,11 @@ exporter in the ADK that implements it.
 What 3Dblox is
 --------------
 
-3Dblox was originated by TSMC and is being standardised as **IEEE P3537**. It
-describes multi-die physical assemblies through three file kinds:
+3Dblox was originated by TSMC and is standardised as **IEEE 3537-2026**. On
+2026-11-13 the IEEE Standards Association page for it
+(https://standards.ieee.org/ieee/3537/11871/) lists it as an active standard,
+approved by the IEEE SA Standards Board on 2026-11-04. It describes
+multi-die physical assemblies through three file kinds:
 
 - **``.3dbv``**, chiplet definitions: ``ChipletDef`` entries with a per-die
   technology, design area and thickness, named bond regions, and linkage to
@@ -45,11 +49,12 @@ viewer. That linter is the reason an export is worth producing: it is a second,
 independently written opinion about an assembly the ADK has already checked at
 the mask level.
 
-The abstraction split is the whole story. 3Dblox binds an assembly to the P&R
-abstraction for multi-die EDA and design-space exploration, and references no
-artwork files. ``.chiplet`` binds it to the mask level: GDS and OASIS bodies,
-``.lyp`` layer properties, per-layer interconnect metallurgy, and fab DRC
-parameters, for assembly checking and fabrication hand-off.
+The abstraction split is the whole story. 3Dblox describes an assembly for
+multi-die EDA and design-space exploration. OpenROAD's reader, the one this
+export is written for, works at the P&R abstraction and takes no artwork file.
+``.chiplet`` binds it to the mask level: GDS and OASIS bodies, ``.lyp`` layer
+properties, per-layer interconnect metallurgy, and fab DRC parameters, for
+assembly checking and fabrication hand-off.
 
 
 The shared core
@@ -141,9 +146,9 @@ What does not map, and why
 Reduced or dropped on export
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These are ``.chiplet`` concepts with no direct 3Dblox equivalent, because
-3Dblox sits at the P&R abstraction and does not reference artwork. Some survive
-the export only in reduced form:
+These are ``.chiplet`` concepts that OpenROAD's 3Dblox reader has no
+counterpart for: it works at the P&R abstraction and takes no artwork. Some
+survive the export only in reduced form:
 
 1. **Per-layer interconnect metallurgy.** ``connection_stacks`` carries a name,
    material, height and diameter per layer, and derives the die z from the
@@ -155,9 +160,9 @@ the export only in reduced form:
 3. **Fab DRC parameter linkage**: the fab parameters and pitch rules that feed
    a parameterised assembly-DRC flow.
 4. **Mask artwork linkage**: GDS and OASIS bodies with ``.lyp`` layer
-   properties. 3Dblox references no artwork files; its region schema carries a
-   ``gds_layer`` layer-id attribute, which the open implementation parses and
-   ignores, but no field references a GDS or OASIS file.
+   properties. OpenROAD's reader references no artwork files: its region
+   schema carries a ``gds_layer`` layer-id attribute, which the reader parses
+   and ignores, and no field it reads references a GDS or OASIS file.
 5. **Polygonal boundary manifests**, arbitrary polygons with content hashes.
    3Dblox bond regions are four-corner rectangles.
 6. **Black-box pad vocabulary** for closed-PDK dies, that is pad layers usable
@@ -296,10 +301,9 @@ productive one, and it is the one the ADK implements.
 The 3dblox_ref proposed extension
 ---------------------------------
 
-A ``die`` or ``die_array`` may cite the 3Dblox ``ChipletDef`` that describes
-the same physical die at the P&R abstraction level, so that a mask-level
-assembly and a P&R-level view of the same die stay linked without either
-duplicating the other.
+A ``die`` or ``die_array`` may cite the 3Dblox ``ChipletDef`` that describes the
+same physical die for P&R, so that a mask-level assembly and a P&R-level view of
+the same die stay linked without either duplicating the other.
 
 .. code-block:: yaml
 
