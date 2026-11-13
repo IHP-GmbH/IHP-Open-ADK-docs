@@ -3,8 +3,9 @@
 
 .. include:: /common.inc
 
-3Dblox and ``.chiplet`` describe the same thing, a multi-die physical assembly,
-bound to two different abstraction levels. An exploration-level model and a
+3Dblox and ``.chiplet`` describe the same thing, a multi-die physical assembly.
+As OpenROAD reads it, 3Dblox binds that assembly to the P&R abstraction, and
+``.chiplet`` binds it to the mask level. An exploration-level model and a
 mask-level model of one assembly are both useful, so the relationship the
 specification defines is interop rather than rivalry: a field-by-field mapping,
 a proposed reference field, and one rule about which file is authoritative.
@@ -300,10 +301,9 @@ productive one, and it is the one the ADK implements.
 The 3dblox_ref proposed extension
 ---------------------------------
 
-A ``die`` or ``die_array`` may cite the 3Dblox ``ChipletDef`` that describes
-the same physical die at the P&R abstraction level, so that a mask-level
-assembly and a P&R-level view of the same die stay linked without either
-duplicating the other.
+A ``die`` or ``die_array`` may cite the 3Dblox ``ChipletDef`` that describes the
+same physical die for P&R, so that a mask-level assembly and a P&R-level view of
+the same die stay linked without either duplicating the other.
 
 .. code-block:: yaml
 

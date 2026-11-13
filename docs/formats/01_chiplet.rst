@@ -70,16 +70,14 @@ active vehicle for that part-model data. By its own scope CDXML carries no
 inter-die placement: its only coordinates are pad positions inside a single
 part.
 
-**3Dblox**, originated by TSMC and standardised as **IEEE 3537-2026**,
-describes multi-die physical assemblies at the same layer as ``.chiplet``, but
-bound to a different abstraction level. It has an open-source BSD-3
-implementation in OpenROAD (ingestion, an automatic assembly linter, and a 3D
-viewer). 3Dblox binds an assembly to the place-and-route abstraction (LEF, DEF,
-Verilog netlists, Liberty views) for multi-die EDA and design-space
-exploration, and OpenROAD's reader takes no artwork file. ``.chiplet`` binds
-the same assembly to the mask level: GDS/OASIS bodies, ``.lyp`` layer
-properties, per-layer interconnect metallurgy with method identity, and fab DRC
-parameters.
+**3Dblox**, originated by TSMC and standardised as **IEEE 3537-2026**, describes
+multi-die physical assemblies at the same layer as ``.chiplet``. It has an
+open-source BSD-3 implementation in OpenROAD (ingestion, an automatic assembly
+linter, and a 3D viewer), whose reader binds an assembly to the place-and-route
+abstraction (LEF, DEF, Verilog netlists, Liberty views) for multi-die EDA and
+design-space exploration and takes no artwork file. ``.chiplet`` binds the same
+assembly to the mask level: GDS/OASIS bodies, ``.lyp`` layer properties,
+per-layer interconnect metallurgy with method identity, and fab DRC parameters.
 
 .. list-table:: Where each format sits
     :header-rows: 1

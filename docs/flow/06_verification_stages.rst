@@ -153,8 +153,9 @@ occupy the same volume. This is the only stage with a z axis.
 
 **What it cannot prove.** Anything about mask artwork. The export is lossy by
 declaration: artwork, metallurgy, DRC parameters, I/O pads and the boundary
-manifest have no 3Dblox target and are dropped. A shorted trace, a missing via,
-a pillar that was never drawn into the GDS: none of it exists in the model being
+manifest have no target in the export and are dropped. A shorted trace, a
+missing via, a pillar that was never drawn into the GDS: none of it exists in
+the model being
 linted.
 
 **What it catches that the others miss.** Change one die's ``position.z`` by a
