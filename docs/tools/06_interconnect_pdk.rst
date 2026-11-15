@@ -73,6 +73,8 @@ The method registry
 ``manifest/interconnect_methods.json`` is the single source of truth. Its schema
 is at ``manifest/schema/interconnect_methods.schema.json`` (JSON Schema
 draft-07), and the top-level key is ``schema_version``, currently ``1.1``. The
+repository otherwise follows the IHP Open-PDK directory convention
+(``libs.tech/<tool>/``, ``libs.ref/``), as the interposer PDK does. The
 manifest lives at the repository root rather than under ``libs.tech/<tool>/``
 because it is the cross-tool contract of the whole PDK, not the data of one
 tool.
@@ -94,8 +96,9 @@ The reader API in ``libs.tech/klayout/python/interconnect_manifest.py`` is
 stdlib-only and cached: ``find_manifest_path``, ``load_manifest``,
 ``clear_cache``, ``list_methods``, ``default_method``, ``get_method``,
 ``get_layer``, ``layers_3d``, ``get_connection_library``,
-``get_connection_stack``, ``body_diameter``, ``pitch_rules``, ``fab_params`` and
-``adapter_for``.
+``get_connection_stack``, ``body_diameter``, ``pitch_rules``, ``fab_params``,
+``die_processes`` and ``adapter_for``. ``die_processes(method_id)`` returns the
+ids as a tuple, or ``None`` when the method states none.
 
 :doc:`/formats/06_ixn_methods` is the normative description of the manifest
 structure.
@@ -107,44 +110,59 @@ Five methods are defined. The **default method is** ``cupillar_opt2``.
 
 .. list-table::
     :header-rows: 1
-    :widths: 22 26 20 16 16
+    :widths: 20 22 18 14 14 12
 
     * - Method id
       - Vendor
       - 3D bodies
       - Body diameter (um)
       - In default library
+      - Die processes
     * - ``cupillar_opt1``
       - Bumping vendor (IHP)
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 44
       - yes
+      - ``sg13g2``
     * - ``cupillar_opt2``
       - Bumping vendor (IHP)
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 49
       - yes (default)
+      - ``sg13g2``
     * - ``cupillar_opt3``
       - Bumping vendor (IHP)
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 54
       - yes
+      - ``sg13g2``
     * - ``sbump_sac305``
       - Bumping vendor (IHP)
       - ``SolderBall`` 502/36
       - 80
       - yes
+      - ``sg13g2``
     * - ``vendorx_microbump``
       - VendorX (demonstration, non-IHP)
       - ``VendorXBumpCu`` 510/35, ``VendorXBumpCap`` 511/35
       - 40
       - no
+      - none stated
 
 The ``default_connection_library`` is the ordered list emitted into a
 ``.chiplet`` file when no explicit choice is made:  ``cupillar_opt1``,
 ``cupillar_opt2``, ``cupillar_opt3``, ``sbump_sac305``. ``vendorx_microbump`` is
 defined but deliberately excluded from it, because it exists to prove that a
 non-IHP method drops onto the same IHP interposer, not to be picked by default.
+
+``die_processes``, added in schema 1.1, lists the die process ids a method
+attaches. The ids are the technology ids the assembly document keys its
+technologies by (``sg13g2`` is the IHP SG13G2 die), joined by string equality;
+they are ids, not versions. A strict consumer refuses to mount any die on a
+method that states none, and never reads absence as "any process". The schema
+refuses an empty list, so absence is the only way to state nothing. The demo
+entry deliberately states none, so the shipped registry carries one entry in
+each state.
 
 Parameters per method
 ~~~~~~~~~~~~~~~~~~~~~

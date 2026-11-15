@@ -123,7 +123,18 @@ there, and verify it:
     0
 
 The folder now holds ``resolved.lvs.json`` and ``resolved.lvs.lvsdb`` beside
-the input. Move the die off its landing and run it again:
+the input.
+
+In a checkout of the repository, with assembly-lvs installed, the same example
+runs in place: ``make_layouts.py`` writes the layouts beside the input when it
+is given no ``--out``.
+
+.. code-block:: bash
+
+    python examples/minimal/make_layouts.py
+    assembly-lvs verify examples/minimal/resolved.yaml
+
+Back in the image folder, move the die off its landing and run it again:
 
 .. code-block:: bash
 

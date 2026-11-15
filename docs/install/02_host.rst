@@ -296,8 +296,8 @@ in-tree KLayout libraries at run time:
 .. note::
     CMake bakes an absolute configuration directory into the binary. If you
     move the tree after building, rebuild it rather than moving the binary.
-    The repository also ships a portable-bundle script for machines without the
-    build dependencies.
+    The repository's portable-bundle script is not supported
+    (:doc:`/tools/04_chiplet_studio`).
 
 The PDKs
 --------

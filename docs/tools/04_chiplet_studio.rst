@@ -395,6 +395,10 @@ An assembly file can carry a ``flow:`` block, and the studio will run it. The
 Flow Pipeline dock shows each step with its status, elapsed time, a per-step run
 button, and the captured output of whichever step you select.
 
+.. important::
+   A ``.chiplet`` file's ``flow:`` block names programs, and the Flow Pipeline
+   dock runs them when you start them. Open only files you trust.
+
 .. note::
    The dock has no menu entry on purpose. It reveals itself when the loaded
    assembly defines a ``flow:`` and stays hidden otherwise, so it never presents
@@ -501,6 +505,12 @@ The surface, as shipped:
 it still matches the assembly the GUI has open, and raises once the GUI replaces
 or closes it, rather than dangling.
 
+Saving through ``save_assembly`` follows the document's safe-save policy: it
+refuses an existing unrelated destination, and a loaded file that changed on
+disk since it was loaded. Use a fresh filename for a new document. Loading a
+file allows replacing only its on-disk version, and only while it is
+unchanged.
+
 .. tip::
    Component geometry setters go through the same command objects the GUI uses,
    so a scripted move participates in undo and redo like a mouse drag.
@@ -508,8 +518,8 @@ or closes it, rather than dangling.
 Running the application
 -----------------------
 
-Three ways to get a runnable binary, in increasing order of independence from
-the host. What each of them has to provide is the bottom row of the
+Two supported ways to get a runnable binary, besides the ADK-Tools image. What
+each of them has to provide is the bottom row of the
 application's own structure:
 
 .. figure:: /_figures/studio_architecture.*
@@ -541,23 +551,10 @@ is a submodule and is built first:
     cmake .. -DKLAYOUT_BUILD_DIR=../extern/klayout/bin-release
     make -j$(nproc)
 
-**Portable bundle.** ``scripts/build-portable.sh`` produces a self-contained
-tree in ``dist/`` for machines with neither Docker nor root:
-
-.. code-block:: bash
-
-    ./scripts/build-portable.sh             # tarball, bundled software-GL fallback
-    ./scripts/build-portable.sh --appimage  # also emit an AppImage
-    ./scripts/build-portable.sh --lean      # smaller, host OpenGL only
-
-The bundle runs on any glibc 2.35 or newer Linux. It uses the host GPU when it
-provides OpenGL 3.3 and otherwise falls back to a bundled llvmpipe software
-renderer. Force either with ``CHIPLET_GL``:
-
-.. code-block:: bash
-
-    CHIPLET_GL=hardware ./AppRun
-    CHIPLET_GL=software ./AppRun
+**Portable bundle.** ``scripts/build-portable.sh`` is not supported. It has not
+been run since June 2026; treat it as unmaintained until it is revived and
+tested again. Studio runs from the ADK-Tools image or from a build of this
+repository.
 
 Resolving PDK roots
 -------------------
@@ -604,6 +601,15 @@ common failure than an unset one.
    bodies do not appear in the interposer's detailed view.
 
 See :doc:`/install/03_environment`.
+
+What the gate tests
+-------------------
+
+``scripts/run-gate.sh`` builds Studio and runs its whole ctest suite offline in
+a container. The suite covers reading and saving ``.chiplet`` files, the
+commands behind undo and redo, the 3D and 2D views and the Python API. The gate
+also reads the writer's output with a second YAML reader (PyYAML), so a save
+that only Studio could read fails it.
 
 Known limits
 ------------
