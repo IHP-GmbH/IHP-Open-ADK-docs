@@ -10,6 +10,11 @@ written by hand: the prose, the other tables and the other command outputs.
 Where it and a generated file differ, the generated file describes the pinned
 code.
 
+Two kinds of source are not submodules here. The KiCad fork, |kicad-repo|, is
+pinned by ADK-Tools. The flow engines, such as packaging-flow and
+assembly-lvs, are staged by ADK-Tools from pinned commits, and they are not
+public yet.
+
 Getting a local build
 ---------------------
 
