@@ -12,6 +12,13 @@ example in a checkout runs in the one image its ``release-lock.json`` names;
 :doc:`/install/00_release` gets you that image, which carries every tool a run
 needs.
 
+An example is only input for the engines. packaging-flow reads the system file
+and drives the run. It calls the other engines along the way, among them
+chiplet-die-flow when a die is built from its RTL, interposer-pnr to place the
+dies and route the interposer, and assembly-lvs to check the assembled
+connections. At each checkpoint (the dies, the interposer, the assembly and the
+external interface) the run stops until you sign.
+
 The README of ``two_die_echo_shifted_gf180`` opens with a table that says what
 the example claims before you run it: the command, what holds when it passes,
 how long it takes, and what it does not claim. When a run disagrees with what a block expects, the block
@@ -46,6 +53,17 @@ The examples in this release
     * - ``driver_from_rtl_echo_gf180``
       - The same link with the DRIVER built from its RTL in the run, on IHP
         SG13G2, beside the same ECHO.
+    * - ``typical_01_two_die_minimal``
+      - The first typical application: the smallest system this release runs
+        from a pad plan to a verdict, two pad frames on an IntM4TM2 carrier,
+        with a one-page sheet, ``SHEET.md``.
+    * - ``typical_02_die_with_power``
+      - The second: a designed die and a pad frame, with two rails, each
+        stated as a current, and its sheet.
+    * - ``typical_03_from_schematic``
+      - The third: the first application's system drawn on a KiCad sheet and
+        read into a skeleton system file, for a design that starts on a
+        schematic, with its sheet.
 
 Pages in an example folder:
 
