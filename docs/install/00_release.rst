@@ -160,3 +160,10 @@ A die with ``sbump_sac305`` exports without its interposer landings
     to end in this release; the Cu pillar methods ``cupillar_opt1`` to
     ``cupillar_opt3`` do. The next release is planned to either refuse such
     a die or draw its landings.
+
+A LibreLane Classic flow run in the image fails at ``Magic.StreamOut``
+    The image's Magic is 8.3.610, from LibreLane's Nix closure, and the PDK's
+    Magic techfiles require 8.3.617 (ihp-sg13g2) and 8.3.657
+    (ihp-sg13cmos5l). Build dies with chiplet-die-flow's Chiplet flow
+    (``meta.flow: Chiplet``, :doc:`/tools/12_chiplet_flow`), which runs no
+    Magic step.
