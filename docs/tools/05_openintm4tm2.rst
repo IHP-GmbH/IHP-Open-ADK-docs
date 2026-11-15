@@ -75,6 +75,24 @@ from the carrier surface to the top of the passivation is
 |interposer-passivation-top| um. The gap between two metals is the thickness
 of the via that joins them in the table.
 
+The interposer body is the substrate plus the attach plane,
+``beol.attachment_surface_z_um`` in ``libs.tech/intm4tm2_stack.json``, the top
+of TopMetal2. The passivation lies above it and is not part of it. Consumers
+derive the body, and no file stores it. The EM stackups, the KiCad template and
+the Chiplet Studio stackup, ``libs.tech/chiplet_studio/intm4tm2.stackup.yaml``,
+follow the key, and ``libs.tech/klayout/intm4tm2_tests/test_body_thickness.py``
+names every copy that disagrees with it. The Studio stackup leaves out
+BackMetal1, which the key does not carry, and draws no passivation: Studio
+extrudes a layer's polygons, and Passiv holds the openings, not the film.
+
+Assembly flows read the attach plane from the stack file and keep no copy of
+it. A die's z is that plane plus its connection stack height, written as
+:ref:`chiplet_z_mounting` states. The base oxide under Metal4 is the
+``dummyOx`` of the public SG13G2 ITF
+(``ihp-sg13g2/libs.tech/parasitics/itf/sg13g2_typ.itf``), the dielectric under
+Metal1 there, reused for the carrier; no IntM4TM2-specific value for it is
+published.
+
 Connectivity for net tracing is declared in the technology file as three
 stacks: ``Metal4-Via4-Metal5``, ``Metal5-TopVia1-TopMetal1`` and
 ``TopMetal1-TopVia2-TopMetal2``.
@@ -812,8 +830,13 @@ Studio and ``pads_vs_pillars`` look for ``libs.tech/klayout``.
 The last row is the important one. See :doc:`/adk/01_architecture`.
 
 From 0.4.0 the tree also ships a technology manifest,
-``libs.tech/adk/technology.json``, and the routing descriptors it names under
-``libs.tech/adk/routing/``. In this release no engine routes from them
+``libs.tech/adk/technology.json``. It says where a design flow finds this
+PDK's files (the layer sheet, the routing descriptors, the stack, the DRC and
+the KiCad template) and states facts about the PDK (its grid, its attach
+methods and its seal ring cell). Its paths are relative to the repository root.
+The routing descriptors sit under ``libs.tech/adk/routing/``, one per variant
+(``base`` and ``rdl2``), each bound by its sha256 in the manifest. In this
+release no engine routes from them
 directly: ``interposer-pnr`` routes from its own copies of the descriptors,
 which one of its tests holds byte-equal to the ones named here
 (:doc:`/formats/00_shared_data`).
@@ -858,6 +881,24 @@ of ``libs.tech/intm4tm2_stack.json``, and the PDK's own tests fail when the
 two disagree. The carrier conductivity is the public SG13G2 substrate value,
 because the interposer carrier's resistivity is not specified yet. Change the
 ``Substrate`` conductivity in the XML if your carrier is high-resistivity.
+
+``libs.tech/parasitics/routed_load.py`` reads one route's traces and bumps, as
+interposer-pnr writes them, and gives each named net a capacitance meant to sit
+above what its driver sees on the interposer. Each wire is solved as a 2D
+cross-section at its routed layer and width. The section holds every parallel
+conductor within a fixed distance, and signal neighbours count with a Miller
+factor; both are set in ``routed_load.py``. Pads are solved as top-metal discs,
+and crossings take a grown parallel plate. The solver, ``field2d.py``, is
+first-order finite elements on a tensor grid in plain Python, inside a grounded
+box, so a conductor's own capacitance comes out at or above the open-domain
+value. The dielectric is the stack file's, flat, which puts oxide in every gap
+between top-metal wires and reads their coupling high. Given a load budget and
+the load outside the interposer, it reads each net WITHIN or OVER.
+
+``libs.tech/parasitics/fill_halo_widths.json`` gives the halo the fill keep-out
+grows around a routed net, one width per fill metal: the widest halo at which
+the fill still passed the PDK's filler and density decks in a density ladder on
+a reference route.
 
 ``libs.tech/ngspice/models/`` carries the ``cap_cmim`` subcircuit and its
 corners, ported from the SG13G2 open PDK and trimmed to the devices the

@@ -28,3 +28,4 @@ Tools and reference PDKs
     packaging-flow <tools/10_packaging_flow>
     interposer-pnr <tools/11_interposer_pnr>
     Assembly LVS <tools/09_assembly_lvs>
+    chiplet-cosim <tools/13_chiplet_cosim>

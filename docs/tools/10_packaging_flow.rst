@@ -13,6 +13,13 @@ for a person's signature at four checkpoints on the way. Everything it does is
 recorded in a manifest that ``packaging-flow verify`` recomputes from the files
 on disk.
 
+It is meant for chip and package designers putting several dies on one carrier,
+and for anyone bringing up a new die technology or interposer who wants the
+same checks on their own design. The technology, the dies and the carrier come
+from the input file and the registries it names, not from the flow. At this
+release those cover dies in IHP SG13G2 and GF180MCU on the IHP IntM4TM2
+interposer.
+
 Version |packaging-flow-version| ships in the ADK-Tools image as the ``packaging-flow`` command.
 It is licensed GPL-3.0-or-later.
 
@@ -37,16 +44,22 @@ Where it runs
 packaging-flow runs inside the image (:doc:`/tools/07_adk_tools_image`). It
 starts the other tools from ``PATH``: ``interposer-pnr``, KLayout,
 ``chiplet-export``, ``adk-verify-carrier-drc``, ``assembly-lvs``, and
-``chiplet-die-flow`` when a die is built in the run. It finds the ADK, the
+``chiplet-die-flow`` when a die is built in the run. A run names a tool it
+cannot find before the stage that needs it starts. It finds the ADK, the
 interposer PDK and the interconnect PDK through ``ADK_ROOT``,
 ``INTERPOSER_PDK_ROOT`` and ``INTERCONNECT_PDK_ROOT``, which the image sets;
 :doc:`/install/03_environment` describes the discovery chain. A run starts only
 from a file inside the workspace, ``/work`` by default (``--workspace``).
 
-A die can enter a run in two ways. A ready die, built elsewhere, is admitted
-from its contract; :doc:`/tools/12_chiplet_flow` describes one. A die built in
+A die can enter a run in two ways. A ready die, built elsewhere, is a folder
+with its layout, pin list, build record and die contract, as
+``chiplet-die-flow emit-ready-die`` writes it, and is admitted from that
+contract; :doc:`/tools/12_chiplet_flow` describes one. A die built in
 the run goes through ``chiplet-die-flow build-die`` and LibreLane, which the
 image carries for IHP SG13G2 only.
+
+The image installs packaging-flow's ``console`` extra, so ``run`` and
+``resume`` also show their progress in the terminal.
 
 The examples in :doc:`/examples` drive every step below block by block, and
 ``two_die_echo_shifted_gf180`` is the one this page follows. The commands use
@@ -228,6 +241,13 @@ refused on resume (exit 3). Changes go through commands that record them:
   :doc:`/tools/11_interposer_pnr`).
 - ``compare-nets <file> <reference>`` compares the nets of two files; it exits
   0 when they agree and 21 when they differ.
+
+A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the
+die-to-die links out, and ``python -m packaging_flow.sheet_handout
+<file.chiplet>`` writes a handout folder beside it, named by its stem, with
+the die symbol library and an empty KiCad project. Draw the links in a copy of
+that folder; ``edit <file.chiplet> --sheet <saved .kicad_sch>`` then writes
+them into the file with no run.
 
 From an editor
 --------------
