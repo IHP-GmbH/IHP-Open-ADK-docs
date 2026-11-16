@@ -188,6 +188,16 @@ A partner die's signoff is recorded, never checked
     that places such a die is never read as verified ("not every die was built
     in this run"), and its die gate needs a person's acceptance.
 
+A stopped ``escape-capacity`` stage can leave a defunct OpenROAD process
+    ``run.sh`` starts the container without an init process, so the command
+    you give it becomes the container's first process. When that command is
+    ``interposer-pnr escape-capacity`` itself, each stage stopped at its
+    ``--timeout`` or by an interrupt takes about 5 s longer to stop, and the
+    stopped OpenROAD can stay listed as defunct until the container exits.
+    Results are not affected: the stage is recorded as stopped either way. Run
+    the command from a shell in the container (``run.sh`` with no command, or
+    ``run.sh bash < script.sh``), where neither happens.
+
 The from-scratch guide was run on an earlier release's image
     The blocks of :doc:`/from_scratch` and the values it states are those the
     worked examples ran on the |typical-01-release| image (ADK-Tools
