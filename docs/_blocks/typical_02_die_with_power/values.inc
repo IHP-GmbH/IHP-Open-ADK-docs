@@ -4,6 +4,7 @@
 
 .. |typical-02-examples-commit| replace:: ``e4f43a6``
 .. |typical-02-adk-tools| replace:: ``6b6ffcf``
+.. |typical-02-release| replace:: ``v2026.11.1``
 .. |typical-02-rail-width-um| replace:: 10
 .. |typical-02-rail-ma| replace:: 50
 .. |typical-02-rail-density| replace:: 5

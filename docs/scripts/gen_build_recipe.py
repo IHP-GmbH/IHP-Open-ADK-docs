@@ -38,28 +38,16 @@ import re
 from _common import (
     DOCS_DIR,
     GENERATED_BANNER,
+    RELEASE_PLACEHOLDER,
     TOOLS,
     fail,
     read_text,
-    release_tags,
+    release_tag,
     require_submodule,
     write_text,
 )
 
-PLACEHOLDER = "vYYYY.MM"
-RELEASE_TAG = re.compile(r"v\d{4}\.\d{2}(\.\d+)?")
 INSTALL_DIR = os.path.join(DOCS_DIR, "install")
-
-
-def release_tag():
-    """The release tag ADK-Tools is pinned at, or the placeholder if untagged."""
-    tags = release_tags(TOOLS)
-    releases = [tag for tag in tags if RELEASE_TAG.fullmatch(tag)]
-    if len(releases) > 1:
-        fail("ADK-Tools HEAD carries several release tags: {}".format(", ".join(releases)))
-    if not releases and tags:
-        fail("ADK-Tools HEAD is tagged {} but not as vYYYY.MM or vYYYY.MM.N".format(", ".join(tags)))
-    return releases[0] if releases else PLACEHOLDER
 
 
 def section_block(readme, heading):
@@ -78,7 +66,7 @@ def section_block(readme, heading):
 
 def resolve(text, tag):
     """The block with the release tag filled in and its pointers dropped."""
-    text = text.replace(" (see below)", "").replace(PLACEHOLDER, tag)
+    text = text.replace(" (see below)", "").replace(RELEASE_PLACEHOLDER, tag)
     if "(see " in text:
         fail("a README block points at another README section: {}".format(
             re.search(r"\(see [^)]*\)?", text).group(0)))
@@ -119,7 +107,7 @@ def update_recipe(build_lines, update_block):
 
 def main():
     require_submodule(TOOLS, "src/ADK-Tools")
-    tag = release_tag()
+    tag = release_tag(TOOLS, "ADK-Tools")
     readme = read_text(os.path.join(TOOLS, "README.md"))
     lines = resolve(section_block(readme, "### Build"), tag).splitlines(keepends=True)
 

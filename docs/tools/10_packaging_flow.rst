@@ -222,6 +222,67 @@ and keeps its report at ``out/reports/assembly_lvs.json``.
 four flow words, what a match does not claim, and how ``lvs-bundle`` and
 ``lvs-verify`` repeat the check on a completed run's copies.
 
+.. _packaging_flow_black_box:
+
+Dies of a technology the flow has no tables for
+-----------------------------------------------
+
+A die of a process the flow has no layer sheet, pad-layer row or design-rule
+deck for can still be placed. It enters as a ready die (its four files:
+layout, pin list, build record, die contract), built elsewhere, under an
+admission: a small JSON file beside the system file with three keys,
+``reason``, ``scope`` and ``not_verified``, named on the die's row as
+``admission:`` (format 1.4 of the system file), and a run started with
+``--admitted-by <role>``. The role is kept in the run's manifest, never in the
+file; give a role, not a person. A die from a partner's package
+(:doc:`/formats/09_partner_die_package`) enters this way.
+
+Its technology is the id its contract states, and the system file declares
+nothing else of it. The attachment method on the die's row must list that id
+among the die processes it attaches; the shipped registry lists ``sg13g2`` and
+``sg13cmos5l``, so a die of another technology needs a registry row that names
+it (the ``registry:`` key of the system file points the run at a registry
+folder of your own). A method that does not list the die's technology refuses
+at the first stage, before anything is built.
+
+The die's own layout is never composed into the assembly: its layer numbers
+would land on the carrier's layers of the same number and every deck would
+read them. The admit stage writes an abstract instead, from the contract and
+the pin list alone: the outline, and one rectangle and one name per pad
+opening, shifted into a layer window of the run's own (one window per such
+technology, from layer 3000 upwards, recorded on the admit row). Placement,
+routing, the exported board and the assembly LVS read that abstract; the
+layout stays an input of the admission and of the run identity only. The
+assembly LVS maps the die on the one pad pair its openings name.
+
+The admit row records the contract's facts, the build status its record
+states (``partner-declared`` for a die from a partner package, not qualified)
+and that the die's internals are not claimed. The run itself completes, but
+``verify`` never reads it as verified, because a placed die was not built by
+this run: it prints ``die <instance> internals: unverified; admitted`` and
+ends with "not every die was built in this run", reason (g).
+The die gate is accepted by a person (``verify-accept <run> --gate
+die:<instance>``), whatever its checks read; a checks template that drops a
+die check never lets ``verify-sign`` sign it instead.
+
+The refusals you will meet:
+
+- A die row without an admission, or a run without ``--admitted-by``, refuses
+  at the admit stage (``ReadyDieRefused``).
+- A contract that states no ``process.technology`` refuses when the system
+  file is read.
+- A method that does not list the technology refuses before any build
+  (``DieProcessRefused``).
+- A run can hold at most 29 such technologies, one layer window each.
+
+``verify-open <run> layout die.layout:<instance>`` opens the admitted die's
+layout in KLayout with the pad sheet, the layer sheet of the shared pad
+vocabulary, since the die's own process has no sheet here.
+``verify-open <run> abstract_over_layout ...`` shows the abstract over the
+layout. The repository's test fixtures hold a frozen partner die, a package of
+a fictional ``fx-pdk`` process and the four files the writer wrote from it, as
+a complete worked input.
+
 Changing the design
 -------------------
 

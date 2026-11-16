@@ -3,6 +3,7 @@ The preview release
 
 .. include:: /common.inc
 .. include:: /install/_release_tag.inc
+.. include:: /_blocks/typical_01_two_die_minimal/values.inc
 
 .. warning::
     packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
@@ -167,3 +168,28 @@ A LibreLane Classic flow run in the image fails at ``Magic.StreamOut``
     (ihp-sg13cmos5l). Build dies with chiplet-die-flow's Chiplet flow
     (``meta.flow: Chiplet``, :doc:`/tools/12_chiplet_flow`), which runs no
     Magic step.
+
+A partner die regenerates byte-equal under KLayout 0.30.5 and 0.30.6 only
+    The pads-only layout ``emit-partner-die`` writes is byte-identical across
+    runs under those two KLayout releases. Under another release the layout
+    can differ in bytes while every cell, layer and shape is the same. Compare
+    structure, not bytes, when the KLayout release differs.
+
+A partner die's build record names the reader release it was written with
+    A newer die flow or ``.chiplet`` reader release does not re-admit an older
+    folder silently. Re-run ``emit-partner-die`` on the same package and
+    replace the four files, and their recorded digests, when the reader
+    release moves.
+
+A partner die's signoff is recorded, never checked
+    The flow carries the owner's signoff statement verbatim into the build
+    record and the run's evidence. It does not verify the checks it names, and
+    the layout digest in it is never compared with the derived layout. A run
+    that places such a die is never read as verified ("not every die was built
+    in this run"), and its die gate needs a person's acceptance.
+
+The from-scratch guide was run on an earlier release's image
+    The blocks of :doc:`/from_scratch` and the values it states are those the
+    worked examples ran on the |typical-01-release| image (ADK-Tools
+    |typical-01-adk-tools|). They move to this release once the examples are
+    locked to its image.

@@ -75,8 +75,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Same scope as the build job above.
+          # Same scope and depth as the build job above: the examples check
+          # reads the release tag at the commit the examples ran on, which a
+          # shallow submodule clone does not carry.
           submodules: true
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
