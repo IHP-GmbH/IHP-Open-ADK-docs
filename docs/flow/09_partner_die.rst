@@ -135,8 +135,7 @@ die's row. The ``admission`` key needs format 1.4. Save it as
       carrier: {technology: intm4tm2, top_cell: CF_CARRIER, size: [3000, 3000]}
       registry: registry
       dies:
-        - {id: U1, die: dies/example_partner_die, at: [1500, 1500], rotation: 0,
-           method: owner_tech_pillar, thickness: 250, admission: admission.json}
+        - {id: U1, die: dies/example_partner_die, at: [1500, 1500], rotation: 0, method: owner_tech_pillar, thickness: 250, admission: admission.json}
       rails:
         - {name: VDD, class: power, volts: 1.8, ports: [U1.VDD]}
         - {name: VSS, class: ground, ports: [U1.PAD_VSS]}
@@ -148,8 +147,16 @@ die's row. The ``admission`` key needs format 1.4. Save it as
         route: {tech: ihp_sg13g2_intm4tm2_rdl2, interconnect_adapter: ihp_cupillar}
         checks: {template: signoff}
 
-Ports are named as the package names them: the two ``VDD`` pads are one port
-``VDD``, and the others keep their pad name. Check the file before running:
+Each item under ``dies``, ``buses``, ``links``, ``rails``, ``alone`` and
+``open`` is one line: a die row wrapped over two lines is refused.
+
+Ports are named as the package names them. A pad with a ``port`` key is
+addressed by that port name, so the two ``VDD`` pads are one port ``VDD``; a
+pad without one, as every signal pad of the placeholder, keeps its pad name. A
+pad of role ``no_connect`` goes in an ``open`` block (``open:``, then
+``- U1.<name>``); it is refused under ``alone`` and is not a rail. The
+placeholder has no such pad, but a real package may. Check the file before
+running:
 
 .. code-block:: bash
 
