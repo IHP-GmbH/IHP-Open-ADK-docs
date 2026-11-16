@@ -206,6 +206,18 @@ Only a ``no_connect`` pad listed under ``open`` gets through assembly LVS
     ``gds2kicad --classic`` writes as ``open`` from a no-connect flag when
     its pad has another role.
 
+    A signal pin has a way round it: after the last sheet read, move it by
+    hand in the system file from ``open`` to ``alone``. The file then
+    validates and the run carries the pin as a net with one connection. The
+    next ``packaging-flow edit --sheet`` writes it back under ``open``, so
+    redo the move after each sheet read. A power or ground pin has no such
+    way round in this release.
+
+    A pad of role ``no_connect`` that the system file wires to another pad or
+    to a carrier pad is refused, but only when the run builds its assembly
+    LVS inputs, after the die and interposer gates. List such a pad under
+    ``open`` and nowhere else.
+
 The from-scratch guide was run on an earlier release's image
     The blocks of :doc:`/from_scratch` and the values it states are those the
     worked examples ran on the |typical-01-release| image (ADK-Tools
