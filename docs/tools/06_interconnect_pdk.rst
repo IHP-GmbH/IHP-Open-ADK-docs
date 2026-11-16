@@ -123,25 +123,25 @@ Five methods are defined. The **default method is** ``cupillar_opt2``.
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 44
       - yes
-      - ``sg13g2``
+      - ``sg13g2``, ``sg13cmos5l``
     * - ``cupillar_opt2``
       - Bumping vendor (IHP)
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 49
       - yes (default)
-      - ``sg13g2``
+      - ``sg13g2``, ``sg13cmos5l``
     * - ``cupillar_opt3``
       - Bumping vendor (IHP)
       - ``CuPillar`` 500/35, ``SnAgCap`` 501/35
       - 54
       - yes
-      - ``sg13g2``
+      - ``sg13g2``, ``sg13cmos5l``
     * - ``sbump_sac305``
       - Bumping vendor (IHP)
       - ``SolderBall`` 502/36
       - 80
       - yes
-      - ``sg13g2``
+      - ``sg13g2``, ``sg13cmos5l``
     * - ``vendorx_microbump``
       - VendorX (demonstration, non-IHP)
       - ``VendorXBumpCu`` 510/35, ``VendorXBumpCap`` 511/35
@@ -157,7 +157,8 @@ non-IHP method drops onto the same IHP interposer, not to be picked by default.
 
 ``die_processes``, added in schema 1.1, lists the die process ids a method
 attaches. The ids are the technology ids the assembly document keys its
-technologies by (``sg13g2`` is the IHP SG13G2 die), joined by string equality;
+technologies by (``sg13g2`` is the IHP SG13G2 die, ``sg13cmos5l`` the IHP
+SG13CMOS5L die), joined by string equality;
 they are ids, not versions. A strict consumer refuses to mount any die on a
 method that states none, and never reads absence as "any process". The schema
 refuses an empty list, so absence is the only way to state nothing. The demo

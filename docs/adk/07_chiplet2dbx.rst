@@ -101,12 +101,19 @@ Running the exporter
         --chiplet demo.chiplet \
         --out-dir build/3dblox
 
-    # Bump-aware export: one pin list per die
+    # Bump-aware export: one pin list and one die contract per die
     python3 openroad/chiplet2dbx.py \
         --chiplet demo.chiplet \
         --out-dir build/3dblox \
-        --pins U1=chiplets/die_a.pins.json \
-        --pins U2=chiplets/die_b.pins.json
+        --pins U1=chiplets/die_a.pins.json --contract U1=contracts/die_a \
+        --pins U2=chiplets/die_b.pins.json --contract U2=contracts/die_b
+
+A die whose anchor is ``gds_origin`` is placed by its GDS box, which the
+exporter reads from the die's contract, ``--contract REF=DIR``. The contract
+must be bound to that die's top cell, layout and pin list. Without it the
+export refuses the die; it never falls back to centring the outline on the
+die's position. ``--list-layouts`` prints the layout each given contract
+resolves to and writes nothing.
 
 .. include:: /_image_adk_scripts.inc
 

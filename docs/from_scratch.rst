@@ -26,11 +26,11 @@ The quickstart leaves you with an image and a smoke test. This page takes you
 from an empty folder to a checked assembly: two dies that do not exist yet,
 placed on an interposer, routed, checked, and signed at four checkpoints. It
 follows the typical application ``typical_01_two_die_minimal`` of adk-examples,
-the smallest system this release runs from a pad plan to a verdict. The guide
+the smallest system the examples run from a pad plan to a verdict. The guide
 follows adk-examples at commit |typical-01-examples-commit|, the one this site
 pins: every shell block on this page is a block of that example's page, copied
-from that commit, so what you read here is what the examples' checks run
-against the release image; the page in the checkout is the one to paste from,
+from that commit, so what you read here is what the examples' checks ran
+on the |typical-01-release| image; the page in the checkout is the one to paste from,
 since it carries the STOP checks around each block and the result lines in
 full.
 
@@ -46,11 +46,11 @@ look at, and the usual refusal with its fix. An eighth adds power.
 Before you start
 ----------------
 
-You need the image of the preview release, |release-tag| (ADK-Tools
-|typical-01-adk-tools|), built as :doc:`/install/00_release` sets up, and an
-adk-examples checkout at commit |typical-01-examples-commit|, its
-|release-tag| release, whose ``release-lock.json`` locks the same ADK-Tools
-commit. The container does everything below. Its first block is run
+You need the image of the preview release, |release-tag|, built as
+:doc:`/install/00_release` sets up, and an adk-examples checkout at commit
+|typical-01-examples-commit|. The blocks and values on this page were run on
+the |typical-01-release| image (ADK-Tools |typical-01-adk-tools|), which that
+commit's ``release-lock.json`` locks. The container does everything below. Its first block is run
 from the host and starts the container with the example's caps,
 |typical-01-cpus| CPUs and |typical-01-mem-gib| GiB, which this application
 peaks under:

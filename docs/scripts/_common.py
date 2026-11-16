@@ -113,12 +113,28 @@ def git_or_fail(repo, *args, strip=True):
 RELEASE_TAG_GLOB = "v[0-9]*"
 
 
-def release_tags(repo):
-    """The v-prefixed tags pointing exactly at HEAD of repo.
+def release_tags(repo, rev="HEAD"):
+    """The v-prefixed tags pointing exactly at rev (HEAD by default) of repo.
 
     Exact, not the nearest tag: a commit past a release is not that release.
     """
-    return git(repo, "tag", "--points-at", "HEAD", "--list", RELEASE_TAG_GLOB).split()
+    return git(repo, "tag", "--points-at", rev, "--list", RELEASE_TAG_GLOB).split()
+
+
+#: The placeholder a page shows while ADK-Tools is pinned at an untagged commit.
+RELEASE_PLACEHOLDER = "vYYYY.MM"
+RELEASE_TAG = re.compile(r"v\d{4}\.\d{2}(\.\d+)?")
+
+
+def release_tag(repo, name, rev="HEAD"):
+    """The one release tag at rev of repo, or RELEASE_PLACEHOLDER if it has none."""
+    tags = release_tags(repo, rev)
+    releases = [tag for tag in tags if RELEASE_TAG.fullmatch(tag)]
+    if len(releases) > 1:
+        fail("{} {} carries several release tags: {}".format(name, rev[:12], ", ".join(releases)))
+    if not releases and tags:
+        fail("{} {} is tagged {} but not as vYYYY.MM or vYYYY.MM.N".format(name, rev[:12], ", ".join(tags)))
+    return releases[0] if releases else RELEASE_PLACEHOLDER
 
 
 def pinned_commit(path, name):

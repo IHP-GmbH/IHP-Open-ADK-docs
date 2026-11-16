@@ -15,3 +15,4 @@ Formats and contracts
     Interconnect methods manifest <formats/06_ixn_methods>
     Pin lists <formats/07_pin_lists>
     3Dblox interoperability <formats/08_3dblox_interop>
+    Black-box pad map and partner die package <formats/09_partner_die_package>

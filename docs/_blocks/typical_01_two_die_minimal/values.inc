@@ -4,6 +4,7 @@
 
 .. |typical-01-examples-commit| replace:: ``e4f43a6``
 .. |typical-01-adk-tools| replace:: ``6b6ffcf``
+.. |typical-01-release| replace:: ``v2026.11.1``
 .. |typical-01-cpus| replace:: 2
 .. |typical-01-mem-gib| replace:: 3
 .. |typical-01-validate-expected| replace:: ``validate exit=1``

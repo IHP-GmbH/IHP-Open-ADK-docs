@@ -11,17 +11,17 @@
   },
   "chiplet-flow": {
     "distribution": "chiplet-die-flow",
-    "ref": "54f256d55635d7aadd217a237ca591dfb1601108",
+    "ref": "5b2807c97586db033fe847c45209b94e7b3f0499",
     "version": "0.1.0"
   },
   "interposer-pnr": {
     "distribution": "interposer-pnr",
-    "ref": "3e85398b8d118370796a22f643355bbe0e3a4638",
+    "ref": "a99d7e6d5ee6014093957ff06f2588311deb4a1f",
     "version": "0.6.0.dev0"
   },
   "packaging-flow": {
     "distribution": "packaging_flow",
-    "ref": "56affc12e96e3702dcd5e5d503aa9607c17a136f",
+    "ref": "6114386108ea75468980324f23ad8fd68158e8b0",
     "version": "0.1.0"
   }
 }

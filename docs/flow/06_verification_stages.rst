@@ -126,6 +126,10 @@ any layout file.
         --pins U1=chiplets/metal_test_chiplet.pins.json \
         --pins U2=chiplets/metal_test_chiplet.pins.json
 
+A die anchored at ``gds_origin`` also needs its die contract,
+``--contract U1=<contract folder>``, or the export refuses it
+(:doc:`/adk/07_chiplet2dbx`).
+
 Then, in OpenROAD, ``read_3dbx build/3dblox/<name>.3dbx`` loads the assembly and
 runs the ``check_3dblox`` linter.
 
