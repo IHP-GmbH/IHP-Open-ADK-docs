@@ -198,6 +198,14 @@ A stopped ``escape-capacity`` stage can leave a defunct OpenROAD process
     the command from a shell in the container (``run.sh`` with no command, or
     ``run.sh bash < script.sh``), where neither happens.
 
+Only a ``no_connect`` pad listed under ``open`` gets through assembly LVS
+    A pad of role ``no_connect`` listed under the system file's ``open`` block
+    is carried through assembly LVS. A port of any other role listed under
+    ``open`` stops the run at assembly LVS (``AssemblyLvsInvalid``), after the
+    die and interposer gates. That covers a spare signal pad, and a pin that
+    ``gds2kicad --classic`` writes as ``open`` from a no-connect flag when
+    its pad has another role.
+
 The from-scratch guide was run on an earlier release's image
     The blocks of :doc:`/from_scratch` and the values it states are those the
     worked examples ran on the |typical-01-release| image (ADK-Tools
