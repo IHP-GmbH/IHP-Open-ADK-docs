@@ -126,6 +126,10 @@ any layout file.
         --pins U1=chiplets/metal_test_chiplet.pins.json \
         --pins U2=chiplets/metal_test_chiplet.pins.json
 
+A die anchored at ``gds_origin`` also needs its die contract,
+``--contract U1=<contract folder>``, or the export refuses it
+(:doc:`/adk/07_chiplet2dbx`).
+
 Then, in OpenROAD, ``read_3dbx build/3dblox/<name>.3dbx`` loads the assembly and
 runs the ``check_3dblox`` linter.
 
@@ -153,8 +157,9 @@ occupy the same volume. This is the only stage with a z axis.
 
 **What it cannot prove.** Anything about mask artwork. The export is lossy by
 declaration: artwork, metallurgy, DRC parameters, I/O pads and the boundary
-manifest have no 3Dblox target and are dropped. A shorted trace, a missing via,
-a pillar that was never drawn into the GDS: none of it exists in the model being
+manifest have no target in the export and are dropped. A shorted trace, a
+missing via, a pillar that was never drawn into the GDS: none of it exists in
+the model being
 linted.
 
 **What it catches that the others miss.** Change one die's ``position.z`` by a

@@ -206,7 +206,7 @@ Formats and frames
         single source of truth for layer names, numbers and display.
 
     3Dblox
-        An assembly description format on the standards track as IEEE P3537,
+        An assembly description format standardised as IEEE 3537-2026,
         with a BSD-3 licensed implementation in OpenROAD. The ADK exports to it
         so OpenROAD's geometry linter can check an assembly. See
         :doc:`/formats/08_3dblox_interop`.

@@ -3,6 +3,7 @@ The preview release
 
 .. include:: /common.inc
 .. include:: /install/_release_tag.inc
+.. include:: /_blocks/typical_01_two_die_minimal/values.inc
 
 .. warning::
     packaging-flow, interposer-pnr, assembly-lvs, chiplet-die-flow,
@@ -143,3 +144,82 @@ To hold the examples to a lock of your own, write it in this form and set
 ``ADK_EXAMPLES_LOCK`` to its path; each example's first block passes it to
 ``run.sh`` as ``--lock``. The adk-examples checkout's ``docs/RELEASE_LOCK.md``
 says the same from the examples' side.
+
+.. _release_known_issues:
+
+Known issues
+------------
+
+These are known in |release-tag| and are being fixed.
+
+A die with ``sbump_sac305`` exports without its interposer landings
+    A die whose ``CONNECTION`` field
+    (:doc:`/flow/03_interposer_design`) names ``sbump_sac305`` exports
+    without its interposer landings. The export still succeeds, and the only
+    sign is a warning from the export worker, so read the export log before
+    you take such a design further. Stand-alone solder bumps do not run end
+    to end in this release; the Cu pillar methods ``cupillar_opt1`` to
+    ``cupillar_opt3`` do. The next release is planned to either refuse such
+    a die or draw its landings.
+
+A LibreLane Classic flow run in the image fails at ``Magic.StreamOut``
+    The image's Magic is 8.3.610, from LibreLane's Nix closure, and the PDK's
+    Magic techfiles require 8.3.617 (ihp-sg13g2) and 8.3.657
+    (ihp-sg13cmos5l). Build dies with chiplet-die-flow's Chiplet flow
+    (``meta.flow: Chiplet``, :doc:`/tools/12_chiplet_flow`), which runs no
+    Magic step.
+
+A partner die regenerates byte-equal under KLayout 0.30.5 and 0.30.6 only
+    The pads-only layout ``emit-partner-die`` writes is byte-identical across
+    runs under those two KLayout releases. Under another release the layout
+    can differ in bytes while every cell, layer and shape is the same. Compare
+    structure, not bytes, when the KLayout release differs.
+
+A partner die's build record names the reader release it was written with
+    A newer die flow or ``.chiplet`` reader release does not re-admit an older
+    folder silently. Re-run ``emit-partner-die`` on the same package and
+    replace the four files, and their recorded digests, when the reader
+    release moves.
+
+A partner die's signoff is recorded, never checked
+    The flow carries the owner's signoff statement verbatim into the build
+    record and the run's evidence. It does not verify the checks it names, and
+    the layout digest in it is never compared with the derived layout. A run
+    that places such a die is never read as verified ("not every die was built
+    in this run"), and its die gate needs a person's acceptance.
+
+A stopped ``escape-capacity`` stage can leave a defunct OpenROAD process
+    ``run.sh`` starts the container without an init process, so the command
+    you give it becomes the container's first process. When that command is
+    ``interposer-pnr escape-capacity`` itself, each stage stopped at its
+    ``--timeout`` or by an interrupt takes about 5 s longer to stop, and the
+    stopped OpenROAD can stay listed as defunct until the container exits.
+    Results are not affected: the stage is recorded as stopped either way. Run
+    the command from a shell in the container (``run.sh`` with no command, or
+    ``run.sh bash < script.sh``), where neither happens.
+
+Only a ``no_connect`` pad listed under ``open`` gets through assembly LVS
+    A pad of role ``no_connect`` listed under the system file's ``open`` block
+    is carried through assembly LVS. A port of any other role listed under
+    ``open`` stops the run at assembly LVS (``AssemblyLvsInvalid``), after the
+    die and interposer gates. That covers a spare signal pad, and a pin that
+    ``gds2kicad --classic`` writes as ``open`` from a no-connect flag when
+    its pad has another role.
+
+    A signal pin has a way round it: after the last sheet read, move it by
+    hand in the system file from ``open`` to ``alone``. The file then
+    validates and the run carries the pin as a net with one connection. The
+    next ``packaging-flow edit --sheet`` writes it back under ``open``, so
+    redo the move after each sheet read. A power or ground pin has no such
+    way round in this release.
+
+    A pad of role ``no_connect`` that the system file wires to another pad or
+    to a carrier pad is refused, but only when the run builds its assembly
+    LVS inputs, after the die and interposer gates. List such a pad under
+    ``open`` and nowhere else.
+
+The from-scratch guide was run on an earlier release's image
+    The blocks of :doc:`/from_scratch` and the values it states are those the
+    worked examples ran on the |typical-01-release| image (ADK-Tools
+    |typical-01-adk-tools|). They move to this release once the examples are
+    locked to its image.

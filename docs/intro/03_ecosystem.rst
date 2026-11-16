@@ -71,7 +71,8 @@ The repositories
       - GPL-3.0-or-later
       - Co-simulation of the dies as the system file connects them, under
         cocotb with Icarus Verilog and, for mixed-signal blocks, ngspice, with
-        one verdict record per run. This site does not document it yet.
+        one verdict record per run. See
+        :doc:`/tools/13_chiplet_cosim`.
     * - |tools-repo|
       - GPL-3.0-or-later; the record schemas under ``formats/`` and most CI
         and Nix helpers Apache-2.0

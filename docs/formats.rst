@@ -6,6 +6,7 @@ Formats and contracts
     :caption: Formats and contracts
     :maxdepth: 2
 
+    Where shared data lives <formats/00_shared_data>
     The .chiplet assembly file <formats/01_chiplet>
     Components and optional blocks <formats/02_chiplet_components>
     Coordinate frames <formats/03_coordinate_frames>
@@ -14,3 +15,4 @@ Formats and contracts
     Interconnect methods manifest <formats/06_ixn_methods>
     Pin lists <formats/07_pin_lists>
     3Dblox interoperability <formats/08_3dblox_interop>
+    Black-box pad map and partner die package <formats/09_partner_die_package>

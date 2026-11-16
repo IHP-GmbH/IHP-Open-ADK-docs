@@ -166,7 +166,7 @@ To our knowledge, this is the first open assembly design kit tied to a real,
 manufacturable open foundry process. The claim is deliberately narrow.
 
 Other open work is active in this space and is complementary rather than
-competing. The 3Dblox assembly format, on the standards track as IEEE P3537,
+competing. The 3Dblox assembly format, standardised as IEEE 3537-2026,
 has a BSD-3 licensed implementation in OpenROAD, and the ADK exports to it
 rather than competing with it. See :doc:`/formats/08_3dblox_interop`.
 

@@ -1,0 +1,4 @@
+"Pin set: every repository and tool the image is built from","``ci/pin-set.json`` in ADK-Tools","none","``schema`` adk-pin-set/1","assembly-lvs, chiplet-cosim, interposer-pnr, packaging-flow",":doc:`/tools/07_adk_tools_image`"
+"Staged sources: the commits the image stages","``staging.pin`` in ADK-Tools","none","the owner's release tag","This site's version matrix.",":doc:`/tools/07_adk_tools_image`"
+"Die views: records the image stages, by layout digest","``die-views.sha256`` in ADK-Tools","none","the owner's release tag","The image build, from an adk-examples checkout.",":doc:`/tools/07_adk_tools_image`"
+"Contract registry: the copies and pins checked across repositories","``ci/contract-registry.json`` in ADK-Tools","none","``registry_version`` 1","ADK-Tools' contract gate.",":doc:`/formats/00_shared_data`"

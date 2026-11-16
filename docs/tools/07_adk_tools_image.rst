@@ -25,6 +25,12 @@ instructions rather than the design of the image, read
     the individual repositories; this page describes how they are pinned,
     built and shipped together.
 
+    What is checked is the build: ``./build.sh`` runs its verify gate on the
+    image it makes. The flow's results are not: no assembly this image
+    exports or checks is qualified, and the path that builds dies from RTL
+    has not run end to end in the image (``docs/E2E_BUILD_VARIANT.md`` in the
+    clone).
+
 The pins
 --------
 
@@ -85,6 +91,73 @@ records the image carries under ``/opt/adk-tools/die-views``, and
 ``staging.pin`` holds the sha256 of that listing. The records come from the
 ``die-views/`` folder of an adk-examples checkout, and
 ``stage-die-views.sh --check`` says whether they match the listing.
+
+What the image carries
+~~~~~~~~~~~~~~~~~~~~~~
+
+The image carries OpenROAD, LibreLane, its interpreter, the SG13G2 PDK and the
+LibreLane launcher in its own ``/nix/store``: the closure
+``nix/host-closure.txt`` lists, each path pinned with its narHash in
+``nix/host-closure.lock``. ``build.sh`` refuses to pack unless every path is in
+the build host's store with that narHash, and the verify stage recomputes each
+one in the image. The image sets ``OPENROAD``, ``ADK_NIX_LIBRELANE``,
+``ADK_NIX_LIBRELANE_PYTHON``, ``ADK_NIX_SG13G2_PDK`` and the launcher pair in
+its environment, and carries the ``org.ihp.adk-tools.nix-closure-inside``
+label, the lock's sha256. How ``run.sh`` launches such an image, and an older
+one without the label, is on :ref:`container_nix_closure`.
+
+The other engines sit in the image's store the same way, at the paths
+``staging.pin`` names, and except for the viewers none of them is on ``PATH``:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 22 78
+
+    * - Engine
+      - What it holds
+    * - Co-simulation, ``COSIM_DEVSHELL``
+      - The engine :doc:`/tools/13_chiplet_cosim` runs: Icarus Verilog and a
+        python3.13 with cocotb 2.0.0 in its own site-packages, at the paths of
+        ``staging.pin``'s ``NIX_COSIM_*`` lines. ``COSIM_DEVSHELL`` links to
+        the flake's ``cosim-devshell``, a store path whose ``bin/`` holds only
+        ``python3``, ``iverilog`` and ``vvp``.
+    * - Mixed signal, ``MIXSIM_DEVSHELL``
+      - ngspice 45, an Icarus Verilog with ``libvvp``, and the six SG13G2 OSDI
+        models compiled for generic x86-64, at the paths of the
+        ``NIX_MIXSIM_*`` and ``NIX_SG13G2_OSDI_OUTPATH`` lines.
+        ``MIXSIM_DEVSHELL`` holds ``bin/ngspice``, ``bin/iverilog``,
+        ``bin/vvp``, ``lib/libvvp.so``, ``lib/ngspice`` (with the ``ivlng``
+        shim ``d_cosim`` loads) and ``osdi/``. Give ``d_cosim``
+        ``lib/libvvp.so`` and ``lib/ngspice/ivlng`` by absolute path, and load
+        the models with ``pre_osdi``.
+    * - Verilog-AMS, ``VAMS_DEVSHELL``
+      - gnucap and its Verilog-AMS model compiler in one prefix, at the paths
+        of the ``NIX_VAMS_GNUCAP_OUTPATH`` and ``NIX_VAMS_DEVSHELL_OUTPATH``
+        lines. ``VAMS_DEVSHELL`` holds ``bin/gnucap``, ``bin/gnucap-conf``,
+        ``bin/gnucap-mg-vams``, ``bin/gnucap-modelgen``, ``bin/g++`` and
+        ``bin/c++``. Compile a model with ``gnucap-mg-vams`` and that ``g++``
+        (flags from ``gnucap-conf --cppflags``), then ``load`` the ``.so`` in
+        gnucap.
+    * - Viewers and schematic editor, on ``PATH``
+      - ``gtkwave`` (GTKWave 3.3.121, for VCD and FST), ``gaw`` (GAW, for
+        ngspice's raw files, binary or ASCII) and ``xschem`` (Xschem 3.4.8RC,
+        upstream commit 8d2088e, with its device symbols under
+        ``XSCHEM_SHAREDIR``), at the paths of the ``NIX_GTKWAVE_OUTPATH``,
+        ``NIX_GAW_OUTPATH`` and ``NIX_XSCHEM_OUTPATH`` lines. All three need a
+        display (``ADK_DISPLAY``); ``xschem -x -q -n -s`` netlists without
+        one.
+
+For a gf180mcuD die in a mixed case the image carries that PDK's
+``design.ngspice`` and ``sm141064.ngspice`` and no cell library, at the GF180
+layer sheet's commit; ``COSIM_GF180_ROOT`` points at them. For a
+transistor-level ihp-sg13g2 die it carries, under ``$PDK_ROOT/ihp-sg13g2``,
+every ngspice model file the MOS, diode, resistor and capacitor corner
+libraries include, in any section and at any depth, and the standard-cell
+SPICE, at the slice's commit. ``sg13g2-models.sha256`` lists them, and
+``ci/check_sg13g2_models.py`` recomputes that list. It also carries copies of
+the OSDI files ``psp103``, ``psp103_nqs``, ``r3_cmc`` and ``mosvar`` in
+``libs.tech/ngspice/osdi``. A link would not do there: chiplet-cosim refuses an
+OSDI file that resolves outside the PDK.
 
 ``ci/pin-set.json`` records every pinned commit in one file. ``build.sh``
 writes its sha256 on the image as the ``org.ihp.adk-tools.pin-set`` label,

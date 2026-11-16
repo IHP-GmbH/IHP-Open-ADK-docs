@@ -7,8 +7,8 @@ These are factual and legal constraints, not style preferences. The check
 reads exactly the files the site publishes, in two groups:
 
 - this site's own files: everything under ``docs/`` but ``_build`` and
-  ``_repos`` (pages, figures, recipes and the generated tables, includes and
-  transcripts), and any file outside ``docs/`` and ``src/`` a page includes,
+  ``_repos`` (pages, figures, recipes, the bibliography and the generated
+  tables, includes and transcripts), and any file outside ``docs/`` and ``src/`` a page includes,
   such as the README;
 - upstream files the site publishes as they stand: the pages Sphinx builds
   from ``_repos/*/docs`` (``REPO_PAGES`` in conf.py), the files those pages
@@ -28,15 +28,10 @@ import os
 import re
 import sys
 
-from _common import DOCS_DIR, REPO_ROOT, SRC_DIR
+from _common import DOCS_DIR, REPO_ROOT, SRC_DIR, included as includes, own_files as site_files
 
-OWN_SUFFIXES = (".rst", ".md", ".svg", ".sh", ".csv", ".inc", ".txt", ".yaml")
-SKIP_DIRS = {"_build", "_repos", ".git", "__pycache__"}
+OWN_SUFFIXES = (".rst", ".md", ".svg", ".sh", ".csv", ".inc", ".txt", ".yaml", ".bib")
 REPO_PAGES = "_repos/*/docs/**"
-
-# reStructuredText and MyST include directives, and the path each names.
-RST_INCLUDE = re.compile(r"^\s*\.\. (?:literal)?include::\s+(\S+)", re.MULTILINE)
-MYST_INCLUDE = re.compile(r"^\s*[`:]{3,}\{(?:literal)?include\}\s+(\S+)", re.MULTILINE)
 
 # Upstream files allowed to carry dashes, each with the date the exemption was
 # recorded. Remove an entry once the file is fixed upstream and the pin moves.
@@ -58,6 +53,10 @@ RULES = [
     (r"signoff.?grade|production.?grade",
      "Do not claim signoff-grade or production-grade. This is a preview release.", True,
      {"docs/contrib/02_documentation.rst"}),
+    # IEEE approved the 3Dblox standard on 2026-11-04; the draft number alone is stale.
+    (r"\bP3537\b(?!-\d{4})",
+     "Cite the 3Dblox standard with its year, IEEE 3537-2026, not the draft project number.",
+     True, set()),
     (DASHES,
      "Em-dashes and en-dashes are not allowed. Use a comma, a colon or a new sentence.",
      True, DASH_EXEMPT),
@@ -75,23 +74,13 @@ def relative(path):
 
 
 def own_files():
-    files = []
-    for root, dirs, names in os.walk(DOCS_DIR):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
-        files += [os.path.join(root, n) for n in sorted(names) if n.endswith(OWN_SUFFIXES)]
-    return files
+    return site_files(OWN_SUFFIXES)
 
 
 def included(page):
     """The files page includes, resolved as Sphinx resolves them."""
-    with open(page, encoding="utf-8") as handle:
-        text = handle.read()
     found = []
-    for target in RST_INCLUDE.findall(text) + MYST_INCLUDE.findall(text):
-        if target.startswith("/"):
-            path = os.path.join(DOCS_DIR, target.lstrip("/"))
-        else:
-            path = os.path.join(os.path.dirname(page), target)
+    for target, path in includes(page):
         if not os.path.isfile(path):
             sys.exit("error: {} includes {}, which does not exist".format(relative(page), target))
         found.append(path)

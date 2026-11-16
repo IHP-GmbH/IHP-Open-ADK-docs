@@ -105,7 +105,11 @@ result differs.
 
 ``PINS`` is left unquoted on purpose, so the shell splits it into its four
 words. A ready die's pin list is the ``pins.json`` its die contract binds
-(:doc:`/tools/12_chiplet_flow`). In the run, the ``route`` step may also take
+(:doc:`/tools/12_chiplet_flow`); it also states the die's box. The nets come
+from the ``.chiplet``, and ``--netlist`` adds them from a YAML file whose
+top-level ``netlist:`` block is merged into the assembly. ``route`` needs an
+``openroad`` binary, from ``$OPENROAD`` or ``PATH``; the image ships one. A
+missing binary exits 2. In the run, the ``route`` step may also take
 the net width requirements the source states, so a route by hand without them
 can differ from the run's.
 
@@ -113,8 +117,13 @@ The routing technology
 ----------------------
 
 interposer-pnr reads no PDK kit files. An interposer enters as a
-routing-technology descriptor, a small JSON file checked against a schema, and
-``--tech`` takes its path or the name of a shipped one. The descriptor is the
+routing-technology descriptor, a small JSON file checked against a schema.
+``--tech`` takes the carrier package's manifest,
+``<root>/libs.tech/adk/technology.json``, and reads the descriptor that
+manifest names: its default variant, or the one after ``#``
+(``--tech <manifest>#rdl2``). The descriptor's bytes must match the sha256 the
+manifest states. ``--tech`` also still takes a descriptor path or the name of a
+shipped one. The descriptor is the
 one place the engine couples to a process, and the engine's ``PDK_CONTRACT``
 document says how to write one for a new interposer. The engine ships three:
 
@@ -238,3 +247,11 @@ Codes 0 to 4 are never renumbered. A non-zero exit prints one line;
       - An unexpected exception: a bug in the engine, not in the design.
     * - 130
       - Interrupted.
+
+Further reference
+-----------------
+
+The repository's ``docs/`` folder holds the rest: ``usage.md`` for the
+commands and their inputs, ``cli-reference.md`` for every option,
+``PDK_CONTRACT.md`` for writing a descriptor, ``limits.md`` for what the engine
+does not do, and ``DEVELOPMENT.md`` for the test suite and its frozen inputs.

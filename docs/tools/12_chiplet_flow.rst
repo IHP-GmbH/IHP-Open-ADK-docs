@@ -25,7 +25,7 @@ chiplet-die-flow |chiplet-flow-version| ships in the ADK-Tools image as the
    foundry sign-off.
 
 This page covers ``build-die``, ``die-view``, ``emit-ready-die``,
-``derive-padring-die`` and ``pad-frame``. ``chiplet-die-flow <command>
+``derive-padring-die``, ``pad-frame`` and ``emit-partner-die``. ``chiplet-die-flow <command>
 --help`` lists every option of a command.
 
 Three commands are not covered here. ``prepare-die`` makes the die project
@@ -111,8 +111,8 @@ then build it and emit the ready die:
         --run-dir <die_project> --out <build_dir> \
         --opening-purpose aperture --ready-out <ready_die>
 
-``--technology`` is the one your system declares for the die, ``sg13g2`` or
-``gf180mcu``. ``<build_dir>`` gets ``build.json``, the record of the build, and
+``--technology`` is the one your system declares for the die, ``sg13g2``,
+``sg13cmos5l`` or ``gf180mcu``. ``<build_dir>`` gets ``build.json``, the record of the build, and
 ``<ready_die>`` gets the four files. ``--opening-purpose`` states what the bound
 pad opening layer is, a passivation ``aperture`` or a ``conductor``. ``--tier``
 is ``hermetic`` (no tool started), ``smoke`` (stops after the step
@@ -152,7 +152,8 @@ the reader would not admit, which is kept as the evidence.
 Dies the die flow did not build
 -------------------------------
 
-Two more commands make a ready die without building one:
+Three more commands make a ready die without building one. Two are below;
+the third, ``emit-partner-die``, has a section of its own after them.
 
 - ``derive-padring-die`` takes a full chip with a pad ring made by LibreLane's
   stock Chip flow. It reads the run's final DEF, netlist and GDS, checks each
@@ -165,6 +166,50 @@ Two more commands make a ready die without building one:
   pad's name. Its build record says ``pad-frame-not-a-circuit`` and holds no
   check counts, and an assembly places such a die only on a person's
   admission.
+
+.. _chiplet_flow_emit_partner_die:
+
+emit-partner-die
+~~~~~~~~~~~~~~~~
+
+A die whose owner hands over a package instead of a layout enters through:
+
+.. code-block:: bash
+
+    chiplet-die-flow emit-partner-die --package PKG.json --output DIR [--report R.json]
+
+``PKG.json`` is the black-box pad map at version 1.1, the partner die package
+(:doc:`/formats/09_partner_die_package`): the die's name, outline and
+thickness, the owner's process ids, each pad's centre, size, net, direction
+and role (optionally its port and ordinal), the supply volts of every power
+and ground net, and the owner's signoff statement, with optional CDXML and
+3Dblox references. Every rule is checked before anything runs; a broken one
+refuses (exit 1) naming the key and the pad, and leaves no directory behind.
+``DIR`` must not exist yet; its parent folder must.
+
+The command writes the four ready-die files into ``DIR``:
+
+- ``layout.gds``, a pads-only layout drawn from the package on the shared pad
+  vocabulary. The generator runs under the interpreter
+  ``CHIPLET_FLOW_PADMAP_PYTHON`` names, from the gds2kicad tree
+  ``GDS_TO_KICAD_ROOT`` names, with the vocabulary of the ADK ``ADK_ROOT``
+  names when that tree holds one.
+- ``pins.json``.
+- ``die-contract.json``, contract 1.2, stating the voltages.
+- ``build-record.json``, with status ``partner-declared``, not qualified, the
+  signoff carried verbatim and never judged, and the reader release the
+  writer ran with.
+
+The folder is re-admitted by the strict reader before it appears, and the
+command prints each file's digest. ``--report`` writes the command, the
+package digest, each output's digest, which vocabulary the generator read
+(``adk`` or ``fallback``) and the refusal if there was one, so a caller reads
+the result without parsing standard output. The GDS carries no write date, so
+the same package written twice gives the same bytes.
+
+The die then enters an assembly as any ready die built elsewhere does: placed
+under an admission statement, its internals not claimed
+(:ref:`packaging_flow_black_box`).
 
 What a ready die records
 ------------------------

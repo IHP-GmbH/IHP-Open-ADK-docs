@@ -40,10 +40,51 @@ KLayout's Python module to read GDS, and PyQt6 for the GUIs:
     pip install -r requirements.txt    # PyQt6, PyYAML
     pip install klayout
 
-A system KLayout with its bindings on ``PYTHONPATH`` works too. In the container
-none of this applies: run ``gds-to-kicad`` and the GUI opens.
+``pip install -e .`` installs the same modules with all three dependencies,
+KLayout included (``pyproject.toml``). A system KLayout with its bindings on
+``PYTHONPATH`` works too. On a slim Linux box or container, PyQt6 also needs
+``libgl1 libegl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0``, or
+the GUI dies on a Qt platform-plugin error. In the container none of this
+applies: run ``gds-to-kicad`` and the GUI opens.
 
 .. include:: /_image_gds2kicad_scripts.inc
+
+The clone's tools, each covered in a section below:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 36 64
+
+    * - Tool
+      - Does
+    * - ``unified_gui.py``
+      - GUI covering the whole flow: pins, symbol, footprint
+    * - ``gds_to_kicad.py``
+      - GDS to ``.kicad_mod`` footprint
+    * - ``gds_to_kicad_symbol.py``
+      - GDS to ``.kicad_sym`` symbol library
+    * - ``blackbox_chiplet.py``
+      - Pad map (JSON or CSV) to a stand-in GDS
+    * - ``footprint_to_pinlist.py``
+      - ``.kicad_mod`` to pin list JSON
+    * - ``kicad_netlist_to_chiplet.py``
+      - KiCad ``.net`` to chiplet YAML, CSV or ``.chiplet``
+    * - ``chiplet_to_kicad_sch.py``
+      - ``.chiplet`` system to a KiCad schematic, or to a symbol library and
+        blank sheet
+    * - ``kicad_sch_to_connectivity.py``
+      - Netlist of an edited system schematic to a connectivity form
+    * - ``kicad_sch_to_cosim_setup.py``
+      - Netlists of edited co-simulation setup sheets to a setup form
+    * - ``extract_padmap.py``
+      - Plan a die's pad map, or extract it from a finished die GDS
+    * - ``io_pads/generate_io_pad.py``
+      - Parametric interposer I/O pad symbol and footprint
+    * - ``io_pads/kicad_pcb_to_iopads.py``
+      - Routed ``.kicad_pcb`` to ``io_pads.json``
+
+Every tool accepts ``--help``, and ``--help`` is authoritative for flags; this
+page covers the common paths.
 
 The schematic tools and ``kicad_pcb_to_iopads.py`` import two readers that
 ship vendored in the clone, so they need nothing else:
@@ -136,9 +177,11 @@ Four files ship under ``pdks/``:
       - The default. A pads-only vocabulary: pad metal 205/0, pad text 205/25,
         outline 206/0. For closed chiplets that ship no layer file at all.
     * - ``sg13g2.lyp``
-      - The full IHP SG13G2 layer set.
+      - The full IHP SG13G2 layer set, a byte copy of IHP-Open-PDK's, pinned to
+        its source commit by ``tests/test_sg13g2_lyp_source.py``.
     * - ``sky130.lyp``
-      - The full SkyWater sky130 layer set.
+      - The full SkyWater sky130 layer set, a byte copy of open_pdks'
+        ``sky130/klayout/sky130.lyp`` (Apache-2.0).
     * - ``interposer.lyp``
       - SG13G2 upper metals through Bump, for interposer work.
 
@@ -179,13 +222,18 @@ property written into the footprint from ``face_up`` to ``flip_chip``, which is
 the value the ``.chiplet`` exporter later keys its flip-chip handling on.
 
 ``--die-outline-layer N/D`` names the layer that carries the die outline, for
-example ``39/4`` for an SG13G2 die or ``206/0`` for the output of
+example ``189/4`` (prBoundary) for a LibreLane-built SG13G2 die, ``39/4``
+(EdgeSeal) for a die with a seal ring, or ``206/0`` for the output of
 ``blackbox_chiplet.py``. With it the courtyard (``F.CrtYd``) is the die outline
 rather than the pad bounding box, the layer is recorded as a
 ``DIE_OUTLINE_LAYER`` property, and an absent, ambiguous or non-rectangular
 outline, or a pad outside it, is an error rather than a fallback. With
 ``--generate-pad-review`` the outline is copied into the review GDS, so a
 curated conversion keeps it. Omit the flag to keep the pad-hull courtyard.
+
+The outline must merge to exactly one rectangle containing every pad. Anything
+else, no pads at all, or a ``--dbu`` that differs from the file's is an error,
+and no file is written.
 
 ``--die-thickness-um UM`` writes the die body thickness as a
 ``DIE_THICKNESS_UM`` property. Omit it to leave the property out; the export
@@ -215,7 +263,7 @@ from, and two more when you pass the flags that set them:
     * - ``DIE_THICKNESS_UM``
       - The die body thickness in micrometres, only with ``--die-thickness-um``.
     * - ``DIE_OUTLINE_LAYER``
-      - The outline layer as bare ``N/D``, for example ``39/4``, only with
+      - The outline layer as bare ``N/D``, for example ``189/4``, only with
         ``--die-outline-layer`` and only once the outline on that layer was
         read.
 
@@ -313,6 +361,15 @@ pin list is the authoritative list of names; pads are matched to it by nearest
 neighbour, and anything left unmatched is warned about rather than silently
 numbered.
 
+To keep the die outline on this path, pass the same ``--die-outline-layer`` to
+both steps. ``--generate-pad-review`` then copies the outline into
+``review.gds`` (leave it in place while editing), and ``--from-pad-review``
+reads it back from there, since that is the file the footprint's ``GDS_FILE``
+names. Name the pad layer explicitly on both steps (``--pad-layer-number`` or
+``--layer``): the review now holds two layers, and auto-detection may rank the
+outline first. Reading the outline box as a pad is refused, with or without
+``--die-outline-layer``, rather than turned into a single die-sized pad.
+
 Database units
 --------------
 
@@ -384,7 +441,8 @@ After routing, ``kicad_pcb_to_iopads.py`` walks the board, keeps the footprints
 carrying an ``IO_CLASS``, and writes their pad locations, sizes and nets to JSON,
 converting millimetres to micrometres and negating Y for the GDS Y-up
 convention. The export plugin performs the same extraction automatically; this
-script is the standalone and override path.
+script is the standalone and override path. The full library setup is in
+``io_pads/README.md`` in the clone.
 
 Each entry's ``ref`` is the pad's io_pad id. On a board ``interposer-pnr
 export`` drew, recognised by a carrier from the ``chiplet_carrier`` library or
@@ -441,8 +499,7 @@ a KiCad schematic. ``chiplet_to_kicad_sch.py`` draws the system sheet, or a
 handout for drawing one by hand. ``kicad_sch_to_connectivity.py`` reads an
 edited sheet back as a connectivity form, which the ``.chiplet`` schematic
 import turns into a revision of the system. This section covers drawing,
-handouts and reading back. The generator can also draw co-simulation setup
-sheets (``--setup``); those are not covered here.
+handouts, reading back, and the co-simulation setup sheets.
 
 Drawing the sheet from a ``.chiplet``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -455,18 +512,32 @@ Drawing the sheet from a ``.chiplet``
 
 The result is one KiCad 9 sheet. Each die is a symbol whose Reference is its
 component id, with a pin per name in its pin list, and every connected pin
-carries a global label with the exact net name. Terminals on no net get a
+carries a global label with the exact net name. A name the list repeats, one
+pad of a rail, is drawn as one pin. Terminals on no net get a
 no-connect flag, except open pins that link dies, which are left bare so that
 KiCad's list of unconnected pins is the list still to wire. Nets come only from
 the ``.chiplet``: the sheet is a view of the description, not a second source
 of it.
 
+The sheet is laid out to be read and wired on paper, not to mirror the pads.
+The dies sit in one row in ``.chiplet`` order, and every pin is on the left or
+the right of its symbol, so every name reads horizontally. A die's link pins
+(open, or on a net that joins dies and nothing else) face its neighbour, the
+first die's on its right and the others' on their left; power pins, carrier
+nets and nets of one die take the other side. Each column runs in port order
+with numbers read as numbers (``d2d_f2`` before ``d2d_f10``), so two dies with
+the same port names line up row for row, and the link side keeps room for a
+label on every pin, so a sheet with its links open and the wired one share a
+layout.
+
 A die symbol names its footprint ``chiplet_dies:<top cell>``. A carrier, a
 component that is not a die but lists ``io_pads`` (a wire-bond interposer, for
-example), is drawn as its pads: one ``chiplet_system:EXT_PAD`` symbol per pad,
+example), is drawn as its pads, in a column below the dies in name order: one
+``chiplet_system:EXT_PAD`` symbol per pad, the symbol designer sheets use,
 whose Reference starts as the pad id, with the pad id also in a hidden
-``IO_PAD_ID`` property, and Footprint ``chiplet_carrier:EXT_PAD_<n>um`` from
-the pad's size in the ``.chiplet``. Those are the footprints
+``IO_PAD_ID`` property, ``CHIPLET_COMPONENT`` the carrier id, and Footprint ``chiplet_carrier:EXT_PAD_<n>um`` from
+the pad's size in the ``.chiplet``. The pad's net is the one the netlist
+connects it to, else its ``io_pads`` net, else none. Those are the footprints
 ``interposer-pnr export`` draws, so a board it drew pairs with the sheet symbol
 for symbol. The carrier's pin list is written next to the sheet as
 ``<id>.carrier_pins.json``. Reading the sheet back, with ``--check`` or with the
@@ -477,14 +548,17 @@ carrier pad has the field, one drawn before the field existed, is read by
 Reference as before. Once any carrier pad has the field every one must: a pad
 without it is refused as ``missing_identity``, naming its carrier and
 Reference, and two pads of one carrier with the same id are refused as
-``duplicate_pad``, naming both References, and neither folds.
+``duplicate_pad``, naming both References, and neither folds. A generated
+die-library symbol missing ``CHIPLET_COMPONENT`` is refused as
+``missing_identity``; parts from other libraries keep a null identity.
 
 Each symbol carries a hidden ``CHIPLET_COMPONENT`` property with its component
 id, title-block comment 1 holds the sha256 of the ``.chiplet``, and reruns on
 the same inputs are byte-identical. Anything that cannot be drawn verbatim is
 refused by name and no sheet is written. The report lists every refusal; among
-them are a pin the component does not have, a pad whose netlist net and
-``io_pads`` net disagree, a pad whose size is missing, not square or not a
+them are a connection to a component that is neither a die nor a carrier, a
+pin the component does not have, a pad whose netlist net and ``io_pads`` net
+disagree, a pad ``io_class`` outside the format's vocabulary, a pad whose size is missing, not square or not a
 whole number of micrometres, a pad id that is also a component id or another
 pad's, and a die that states no top cell. ``--check`` exports the sheet's
 netlist with ``kicad-cli`` and compares it with the ``.chiplet``. It reads
@@ -517,7 +591,10 @@ system from scratch:
 with Reference prefix ``U``, every pin passive and the link pins on the right;
 a ``sym-lib-table`` naming that library ``chiplet_dies`` through
 ``${KIPRJMOD}``; and a project with an empty sheet, named after the
-``.chiplet`` or ``--name``. Carriers are not drawn. No file carries a digest, a
+``.chiplet`` or ``--name``. The library carries no ``CHIPLET_COMPONENT``
+property. Carriers are not drawn. A die whose top cell is not a plain name is
+refused, and so are two dies of one top cell that would need two different
+symbols. No file carries a digest, a
 time or a host path, so a rerun writes the same bytes.
 
 A handout file already in ``DIR`` that differs from what would be written, a
@@ -534,8 +611,11 @@ The same handout can be drawn from die folders, with no ``.chiplet``:
         --dies sheet_first/dies/DRIVER --dies sheet_first/dies/ECHO \
         --ext-pad-um 80
 
-Each die folder holds ``die-contract.json`` and the pad inventory it binds, and
-lies inside the handout directory. A folder is read the way the schematic
+This path is ``die_handout.py``. Each die folder holds ``die-contract.json``
+and the pad inventory it binds, and lies inside the handout directory: a
+placed die's ``Die`` field is that folder, relative to the folder of the
+``.chiplet`` source, so keep that source in the handout directory. One symbol
+per top cell, and one folder per top cell. A folder is read the way the schematic
 import reads it, so a die that import would refuse is refused here rather than
 drawn: a contract and an inventory that name different pads
 (``contract_pads_differ``), a pad on no port (``unported_pads``), or a folder
@@ -583,7 +663,9 @@ that does not fold (``unknown_pad``, ``missing_identity`` or
 two-name check. The exit status is 0 when the form is written, refusals
 included, and 2 when an input is missing or is not what it claims to be, a
 placed symbol whose UUID does not resolve in the root schematic included.
-Only root-sheet symbols are written, in every mode.
+Only root-sheet symbols are written, in every mode. A co-simulation setup
+symbol (a non-empty ``chiplet_cosim_setup`` field) is left out with its pins,
+so setup symbols never change the form.
 Options may sit anywhere on the line, between the paths too.
 
 A sheet drawn on a handout has no generator report. Say which handout it came
@@ -609,7 +691,9 @@ instance, are refused as ``duplicate_reference``.
 
 ``--classic`` writes form 1.3 with ``sheet`` set to ``classic``. It adds each
 component's UUID key, its value, footprint and fields verbatim, explicitly
-flagged no-connect pins as ``open``, each symbol's ``units`` and ``jumpers``
+flagged no-connect pins as ``open`` (an assembly reaches the end of its LVS
+with such a pin only when its pad's role is ``no_connect``, see
+:ref:`release_known_issues`), each symbol's ``units`` and ``jumpers``
 (its ``duplicate_pin_numbers_are_jumpers``), and ``rails`` from the
 ``chiplet_system:GND`` and ``chiplet_system:SUPPLY`` symbols on the root sheet.
 The netlist's names and endpoints stay the connectivity authority. Refusals on
@@ -617,8 +701,82 @@ a classic sheet include a symbol with more than one unit (``multi_unit``), a
 net-naming power symbol from another library (``foreign_rail``; a
 ``PWR_FLAG`` names no net and is ignored), a drawn rail that is no netlist net
 (``rail_unused``), and two pins of one unit at one position with different
-numbers (``unit_pin_order``). A symbol with no cached library symbol is an input
+numbers (``unit_pin_order``). A supply's ``Volts`` is empty or a plain decimal
+above zero; invalid or conflicting rail voltages, and rails absent from the
+netlist, are refused, and refused rails are omitted from the rail list. A rail
+name follows KiCad net-name escaping. Symbols sharing a reference keep separate
+UUID records and their own properties, so the import can diagnose the
+duplicate. A symbol with no cached library symbol is an input
 error, exit 2.
+
+Co-simulation setup sheets
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The setup projection these sheets draw comes from the co-simulation flow,
+:doc:`/tools/13_chiplet_cosim`, whose repository is not public yet. The
+generator and the reader described here are in gds2kicad.
+
+With ``--setup cosim.setup.json --setup-spec cosim_setup_symbols.json``, a
+co-simulation setup projection (``chiplet_cosim.cosim_setup`` 1.0) and the
+symbol spec the co-simulation flow draws it with
+(``chiplet_cosim.cosim_setup_symbols`` 1.0; pass your own, the copy under
+``tests/fixtures/`` is only for the tests), the setup is drawn too. Its
+system-sheet symbols (simulation, models, supplies, crossings, bench) go in a
+band below the dies, and its die, bench and channel sheets are flat sheets of
+their own beside the system sheet (``sys.die.<die>.kicad_sch``,
+``sys.bench.kicad_sch``, ``sys.channel.<net>.kicad_sch``), each netlisted on
+its own. A setup symbol carries a ``chiplet_cosim_setup`` field holding its
+kind and one field per attribute, and is excluded from simulation and from the
+BOM.
+
+Bench and channel elements are R, C and L primitives and DC or pulse V and I
+sources, each with its SPICE name as Reference and drawn as a raw SPICE model.
+KiCad writes a raw model's text into the card unchanged only when it is digits
+and points, and any other number to six significant digits, so an R, C or L
+model is the value's exact plain decimal (``2.322105e-14`` as
+``0.00000000000002322105``) while its Value shows the projection's text. A
+value typed in e-notation with more than six significant digits is rounded by
+KiCad, and the reader refuses it (``value_rounded``): type a plain decimal, or
+six digits at most. The title block of each bench and channel sheet says so. A
+reference without a trailing digit (``VSEL``) is one KiCad reports as not
+annotated; annotating renames it, which co-simulation reads as an edit, and the
+sheet's title block says so too. The report names the projection and the spec
+by sha256 and lists every setup sheet by role, path and sha256; ``--check``
+leaves setup symbols out.
+
+Beside the sheets go the symbol library ``chiplet_cosim.kicad_sym`` and a
+project ``sym-lib-table`` naming it ``chiplet_cosim``, so a setup symbol of any
+kind whose pins the spec fixes can be placed from KiCad's symbol chooser, also
+a kind the case does not use (a probe on a die sheet that has none). A placed
+symbol carries its kind and one empty field per required attribute, to fill
+in; an optional attribute is a field to add by hand. Each library symbol is
+the one the sheets embed for its kind. The bench and block kinds take their
+pins from their row, so the library has no symbol for them: to place one, copy
+an existing one. A ``sym-lib-table`` already in the output directory is refused
+unless it is the one the generator writes; the report lists the library and the
+table by path and sha256.
+
+A system whose dies have no pin lists (a mixed co-simulation case) is drawn
+with ``--setup-only`` instead of ``--pins``: no system sheet is written, and
+the system-sheet setup symbols go on a flat sheet of their own,
+``sys.system.kicad_sch``, beside the others. The ``.chiplet`` only names the
+system; ``--check`` does not apply, and the report's ``schematic`` is null.
+
+``kicad_sch_to_cosim_setup.py`` reads the edited setup sheets back. It takes
+the generator report, the form to write, and ``--sheet SCHEMATIC NETLIST
+[SPICE]`` once per sheet: the kicadsexpr netlist and, for a bench or channel
+sheet, the SPICE netlist, both exported with ``kicad-cli``. It writes
+``chiplet_cosim.cosim_setup`` 1.0 with tool ``kicad``: every setup symbol with
+its kind, attributes and pins, each pin open or on its net as KiCad named it,
+and every sheet and SPICE netlist by path and sha256. It reads the SPICE
+netlist only to check it: every R, C, L, V or I card must carry, as numbers,
+the value its symbol's fields state, or the sheet is refused as
+``value_rounded`` (a standard part whose value KiCad rounded, or a Value edited
+on a raw model, which KiCad does not read). An attribute left empty, as a field
+of a placed library symbol is until someone fills it in, is refused as
+``attribute_empty``. Otherwise it judges nothing; the co-simulation flow's back
+end does. The exit status is 0 when written and 2 when an input is not what it
+claims, with no form written.
 
 The GUIs
 --------
@@ -702,7 +860,8 @@ Troubleshooting
       - ``pip install klayout``, or put a system KLayout's bindings on
         ``PYTHONPATH``.
     * - Qt "xcb platform plugin" error on Linux
-      - Missing Qt system libraries, or use ``QT_QPA_PLATFORM=offscreen``.
+      - Missing Qt system libraries (the list under `Installing`_), or use
+        ``QT_QPA_PLATFORM=offscreen``.
     * - Footprint pads come out numbered, not named
       - ``--layer`` was passed with no text layer. Add ``--auto-text`` or
         ``--text-layer``.
@@ -711,3 +870,25 @@ Troubleshooting
     * - ``pdks/...lyp`` not found
       - The examples use paths relative to the clone root. Run from there, or
         pass an absolute ``--lyp-file``.
+
+Running its tests
+-----------------
+
+From the clone, with ``pip install pytest`` on top of the install above:
+
+.. code-block:: bash
+
+    QT_QPA_PLATFORM=offscreen pytest tests -q
+
+``-ra`` (on by default, see ``pyproject.toml``) prints the reason for each
+skip. Two skips need the IHP PDK (``PDK_ROOT``): they compare the vendored
+``pdks/sg13g2.lyp`` and the pad layers against the PDK's own layer sheet.
+Twenty, all in ``tests/test_netlist_converter.py``, look for a demo netlist and
+``.chiplet`` under
+``kicad_designs/kicad_interposer_hyperlynx_to_gds/chiplet_files/``, and that
+directory is empty: those cannot run anywhere today, locally or in CI.
+
+The cases that run the real ``kicad-cli`` are deselected by default, so a bare
+``pytest`` starts no external tool. Run them with ``pytest -m kicad_cli``; with
+``GDS_TO_KICAD_REQUIRE_KICAD_CLI=1`` a missing ``kicad-cli`` is a failure
+instead of a skip.

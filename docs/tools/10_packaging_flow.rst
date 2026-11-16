@@ -13,6 +13,13 @@ for a person's signature at four checkpoints on the way. Everything it does is
 recorded in a manifest that ``packaging-flow verify`` recomputes from the files
 on disk.
 
+It is meant for chip and package designers putting several dies on one carrier,
+and for anyone bringing up a new die technology or interposer who wants the
+same checks on their own design. The technology, the dies and the carrier come
+from the input file and the registries it names, not from the flow. At this
+release those cover dies in IHP SG13G2 and GF180MCU on the IHP IntM4TM2
+interposer.
+
 Version |packaging-flow-version| ships in the ADK-Tools image as the ``packaging-flow`` command.
 It is licensed GPL-3.0-or-later.
 
@@ -37,16 +44,22 @@ Where it runs
 packaging-flow runs inside the image (:doc:`/tools/07_adk_tools_image`). It
 starts the other tools from ``PATH``: ``interposer-pnr``, KLayout,
 ``chiplet-export``, ``adk-verify-carrier-drc``, ``assembly-lvs``, and
-``chiplet-die-flow`` when a die is built in the run. It finds the ADK, the
+``chiplet-die-flow`` when a die is built in the run. A run names a tool it
+cannot find before the stage that needs it starts. It finds the ADK, the
 interposer PDK and the interconnect PDK through ``ADK_ROOT``,
 ``INTERPOSER_PDK_ROOT`` and ``INTERCONNECT_PDK_ROOT``, which the image sets;
 :doc:`/install/03_environment` describes the discovery chain. A run starts only
 from a file inside the workspace, ``/work`` by default (``--workspace``).
 
-A die can enter a run in two ways. A ready die, built elsewhere, is admitted
-from its contract; :doc:`/tools/12_chiplet_flow` describes one. A die built in
+A die can enter a run in two ways. A ready die, built elsewhere, is a folder
+with its layout, pin list, build record and die contract, as
+``chiplet-die-flow emit-ready-die`` writes it, and is admitted from that
+contract; :doc:`/tools/12_chiplet_flow` describes one. A die built in
 the run goes through ``chiplet-die-flow build-die`` and LibreLane, which the
 image carries for IHP SG13G2 only.
+
+The image installs packaging-flow's ``console`` extra, so ``run`` and
+``resume`` also show their progress in the terminal.
 
 The examples in :doc:`/examples` drive every step below block by block, and
 ``two_die_echo_shifted_gf180`` is the one this page follows. The commands use
@@ -209,6 +222,67 @@ and keeps its report at ``out/reports/assembly_lvs.json``.
 four flow words, what a match does not claim, and how ``lvs-bundle`` and
 ``lvs-verify`` repeat the check on a completed run's copies.
 
+.. _packaging_flow_black_box:
+
+Dies of a technology the flow has no tables for
+-----------------------------------------------
+
+A die of a process the flow has no layer sheet, pad-layer row or design-rule
+deck for can still be placed. It enters as a ready die (its four files:
+layout, pin list, build record, die contract), built elsewhere, under an
+admission: a small JSON file beside the system file with three keys,
+``reason``, ``scope`` and ``not_verified``, named on the die's row as
+``admission:`` (format 1.4 of the system file), and a run started with
+``--admitted-by <role>``. The role is kept in the run's manifest, never in the
+file; give a role, not a person. A die from a partner's package
+(:doc:`/formats/09_partner_die_package`) enters this way.
+
+Its technology is the id its contract states, and the system file declares
+nothing else of it. The attachment method on the die's row must list that id
+among the die processes it attaches; the shipped registry lists ``sg13g2`` and
+``sg13cmos5l``, so a die of another technology needs a registry row that names
+it (the ``registry:`` key of the system file points the run at a registry
+folder of your own). A method that does not list the die's technology refuses
+at the first stage, before anything is built.
+
+The die's own layout is never composed into the assembly: its layer numbers
+would land on the carrier's layers of the same number and every deck would
+read them. The admit stage writes an abstract instead, from the contract and
+the pin list alone: the outline, and one rectangle and one name per pad
+opening, shifted into a layer window of the run's own (one window per such
+technology, from layer 3000 upwards, recorded on the admit row). Placement,
+routing, the exported board and the assembly LVS read that abstract; the
+layout stays an input of the admission and of the run identity only. The
+assembly LVS maps the die on the one pad pair its openings name.
+
+The admit row records the contract's facts, the build status its record
+states (``partner-declared`` for a die from a partner package, not qualified)
+and that the die's internals are not claimed. The run itself completes, but
+``verify`` never reads it as verified, because a placed die was not built by
+this run: it prints ``die <instance> internals: unverified; admitted`` and
+ends with "not every die was built in this run", reason (g).
+The die gate is accepted by a person (``verify-accept <run> --gate
+die:<instance>``), whatever its checks read; a checks template that drops a
+die check never lets ``verify-sign`` sign it instead.
+
+The refusals you will meet:
+
+- A die row without an admission, or a run without ``--admitted-by``, refuses
+  at the admit stage (``ReadyDieRefused``).
+- A contract that states no ``process.technology`` refuses when the system
+  file is read.
+- A method that does not list the technology refuses before any build
+  (``DieProcessRefused``).
+- A run can hold at most 29 such technologies, one layer window each.
+
+``verify-open <run> layout die.layout:<instance>`` opens the admitted die's
+layout in KLayout with the pad sheet, the layer sheet of the shared pad
+vocabulary, since the die's own process has no sheet here.
+``verify-open <run> abstract_over_layout ...`` shows the abstract over the
+layout. The repository's test fixtures hold a frozen partner die, a package of
+a fictional ``fx-pdk`` process and the four files the writer wrote from it, as
+a complete worked input.
+
 Changing the design
 -------------------
 
@@ -228,6 +302,13 @@ refused on resume (exit 3). Changes go through commands that record them:
   :doc:`/tools/11_interposer_pnr`).
 - ``compare-nets <file> <reference>`` compares the nets of two files; it exits
   0 when they agree and 21 when they differ.
+
+A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the
+die-to-die links out, and ``python -m packaging_flow.sheet_handout
+<file.chiplet>`` writes a handout folder beside it, named by its stem, with
+the die symbol library and an empty KiCad project. Draw the links in a copy of
+that folder; ``edit <file.chiplet> --sheet <saved .kicad_sch>`` then writes
+them into the file with no run.
 
 From an editor
 --------------

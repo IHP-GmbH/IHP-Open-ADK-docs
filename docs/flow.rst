@@ -14,3 +14,4 @@ The assembly flow
     Verification stages <flow/06_verification_stages>
     Viewing and inspecting <flow/07_view_and_inspect>
     Reference design <flow/08_reference_design>
+    A die from a partner's package <flow/09_partner_die>

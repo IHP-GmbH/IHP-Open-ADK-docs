@@ -18,7 +18,12 @@ interface uses the ``solder_bump`` type. A source file, one with a top-level
 it uses something that minor added (see `Source documents`_). The
 specification lives in the |spec-repo| repository at
 ``docs/CHIPLET_FORMAT_SPEC.md``, alongside the normative coordinate-frame
-contract described in :doc:`/formats/03_coordinate_frames`.
+contract described in :doc:`/formats/03_coordinate_frames`. That document is
+the normative entry point: ``schemas/chiplet.schema.json`` is normative for
+structure, and the reference reader for semantics. ``docs/VERSION_POLICY.md``
+governs every version number in the repository. The library release,
+``chiplet_format_io.__version__``, is versioned separately from
+``format_version``.
 
 .. note::
 
@@ -70,13 +75,12 @@ active vehicle for that part-model data. By its own scope CDXML carries no
 inter-die placement: its only coordinates are pad positions inside a single
 part.
 
-**3Dblox**, originated by TSMC and being standardised as **IEEE P3537**,
-describes multi-die physical assemblies at the same layer as ``.chiplet``, but
-bound to a different abstraction level. It has an open-source BSD-3
-implementation in OpenROAD (ingestion, an automatic assembly linter, and a 3D
-viewer). 3Dblox binds an assembly to the place-and-route abstraction (LEF, DEF,
-Verilog netlists, Liberty views) for multi-die EDA and design-space
-exploration, and references no artwork files. ``.chiplet`` binds the same
+**3Dblox**, originated by TSMC and standardised as **IEEE 3537-2026**, describes
+multi-die physical assemblies at the same layer as ``.chiplet``. It has an
+open-source BSD-3 implementation in OpenROAD (ingestion, an automatic assembly
+linter, and a 3D viewer), whose reader binds an assembly to the place-and-route
+abstraction (LEF, DEF, Verilog netlists, Liberty views) for multi-die EDA and
+design-space exploration and takes no artwork file. ``.chiplet`` binds the same
 assembly to the mask level: GDS/OASIS bodies, ``.lyp`` layer properties,
 per-layer interconnect metallurgy with method identity, and fab DRC parameters.
 
@@ -87,7 +91,7 @@ per-layer interconnect metallurgy with method identity, and fab DRC parameters.
 
     * -
       - Part description (CDXML, JEP30)
-      - Assembly for P&R and exploration (3Dblox, P3537)
+      - Assembly for P&R and exploration (3Dblox, IEEE 3537-2026)
       - ``.chiplet``
     * - Answers
       - what is this part (datasheet)
@@ -650,7 +654,8 @@ The specification ships two reference implementations under
 - **Python**, ``reference/python/chiplet_format_io``. Depends on PyYAML and
   nothing else. It deliberately does not import ``pcbnew``, ``klayout`` or any
   other GPL library, so it can be embedded in a tool under any license.
-- **C++**, ``reference/cpp/``. Depends on yaml-cpp only. It parses into plain
+- **C++**, ``reference/cpp/``. Depends on yaml-cpp only and builds with CMake;
+  the build steps are in ``reference/cpp/README.md``. It parses into plain
   value structs, which is why it round-trips exactly the fields it models and
   drops the ones it does not.
 
@@ -720,6 +725,34 @@ is the reader module alone, without the helper modules.
 ``load_chiplet``; ``pads_vs_pillars`` imports ``chiplet2dbx`` first so that the
 vendored package is on the path, then imports the library itself, so that there
 is one copy on the path and one import home rather than two.
+
+Checking a file and running the conformance suite
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``conformance/`` folder of the specification repository holds fixtures and
+pytest suites that pin reader behaviour across implementations. From the root
+of a checkout:
+
+.. code-block:: bash
+
+    python3 -m venv .venv && . .venv/bin/activate
+    pip install ./reference/python pytest -r conformance/requirements.txt
+
+    # read and validate an example with the reference reader
+    python -c 'import chiplet_format_io as cfio; print(cfio.load("examples/interposer_demo_design.chiplet")["assembly"]["name"])'
+
+    # check the same file against the JSON Schema
+    python -c 'import json, yaml, jsonschema; jsonschema.validate(yaml.safe_load(open("examples/interposer_demo_design.chiplet")), json.load(open("schemas/chiplet.schema.json")))'
+
+    # run the conformance suite, then the library's own tests
+    (cd conformance && pytest -q)
+    (cd reference/python && pytest -q)
+
+The repository also holds ``description/``, the ``chiplet-system-description``
+package: a typed Python eDSL that elaborates to ``.chiplet``, described in its
+``description/README.md``. Issues and pull requests for the format go to the
+|spec-repo| repository, opened against ``dev``; its CI runs on pull requests to
+``dev`` and ``main``.
 
 Implementer rights
 ~~~~~~~~~~~~~~~~~~

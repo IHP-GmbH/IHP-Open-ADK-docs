@@ -199,10 +199,68 @@ These environment variables control it:
     * - ``ADK_DISPLAY``
       - ``DISPLAY``, else ThinLinc
       - X display as ``:N``, or ``none`` for no display.
+    * - ``ADK_OPENROAD``
+      - the image's label
+      - OpenROAD store path, for an image without its own closure
+        (`An image with its own Nix closure, and one without`_). Ignored, with
+        a note, for an image that carries one.
     * - ``ADK_NETWORK``
       - Docker's default network
       - ``none`` runs the container with no network; any other value is
         refused.
+
+.. _container_nix_closure:
+
+An image with its own Nix closure, and one without
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An image built from this release carries OpenROAD, LibreLane, its interpreter
+and the SG13G2 PDK in its own store, and says so with the
+``org.ihp.adk-tools.nix-closure-inside`` label (:doc:`/tools/07_adk_tools_image`).
+For such an image ``run.sh`` mounts nothing of the host's store, passes none of
+the ``ADK_NIX_*`` variables, ignores ``ADK_OPENROAD`` with a note, and needs no
+Nix on the host. It refuses an image whose label is there but is not a sha256.
+
+An image without that label needs the host's Nix store. ``run.sh`` takes,
+read-only, the OpenROAD the image's ``org.ihp.adk-tools.nix-openroad`` label
+names (``staging.pin``'s ``NIX_OPENROAD_OUTPATH``), or ``ADK_OPENROAD`` when
+set, and sets ``OPENROAD`` to it. It refuses to start when the host has no Nix
+store or that path is not in it, with a line starting ``needs Nix on the
+host:``; realise it with ``nix build .#openroad``. An image without the
+``nix-openroad`` label needs ``ADK_OPENROAD``.
+
+What goes in from the host's store, for such an image, is the closure of
+OpenROAD, LibreLane, its interpreter and the SG13G2 PDK, listed in
+``nix/host-closure.txt``. ``build.sh`` refuses unless that file is the store's
+closure of the four, and writes it on the image as the
+``org.ihp.adk-tools.nix-host-closure`` label (the paths joined by single
+spaces), with its sha256 in ``org.ihp.adk-tools.nix-host-closure-sha256``.
+``run.sh`` checks the list against its sha256 and binds each listed path on its
+own, read-only, at its own path, so the image's own ``/nix/store`` stays
+visible beside them; a listed path the host lacks is not bound and is counted
+in a note. No launch calls Nix. An image without the two labels, or an
+``ADK_OPENROAD`` the list does not name, gets the whole host store instead,
+which hides the image's own store paths. A die run recorded under another
+sg13g2-pdk path names a PDK outside the list; rebuild that die under this
+image's PDK.
+
+Such an image ships no LibreLane, no LibreLane interpreter and no SG13G2 PDK
+either; a page that builds a die in the container takes them from the same
+store. ``run.sh`` passes the paths the image's
+``org.ihp.adk-tools.nix-librelane``, ``org.ihp.adk-tools.nix-librelane-python``
+and ``org.ihp.adk-tools.nix-sg13g2-pdk`` labels name (``staging.pin``'s
+``NIX_LIBRELANE_OUTPATH``, the ``bin/python3.<minor>`` of
+``NIX_LIBRELANE_PYTHON_OUTPATH``, and ``NIX_SG13G2_PDK_OUTPATH``) as
+``ADK_NIX_LIBRELANE``, ``ADK_NIX_LIBRELANE_PYTHON`` and ``ADK_NIX_SG13G2_PDK``,
+the names the Nix build shell sets, when they are on the host and in the list
+bound. When one is not, it says so and starts anyway, and that page refuses;
+realise them with ``nix build .#librelane .#librelane-python .#sg13g2-pdk``.
+
+Under a whole-store mount the image's own engines are hidden too, and come from
+the host's store; ``run.sh`` says when one is not there. Realise them with
+``nix build .#cosim-devshell``, ``nix build .#mixsim-ngspice .#mixsim-iverilog
+.#sg13g2-osdi``, ``nix build .#gtkwave .#gaw .#xschem`` and
+``nix build .#vams-devshell``.
 
 Without an ID, or with a tag, ``run.sh`` refuses before it does anything else.
 ``ADK_TOOLS_IMAGE=adk-tools:dev ./run.sh`` prints:
