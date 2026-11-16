@@ -691,7 +691,9 @@ instance, are refused as ``duplicate_reference``.
 
 ``--classic`` writes form 1.3 with ``sheet`` set to ``classic``. It adds each
 component's UUID key, its value, footprint and fields verbatim, explicitly
-flagged no-connect pins as ``open``, each symbol's ``units`` and ``jumpers``
+flagged no-connect pins as ``open`` (an assembly reaches the end of its LVS
+with such a pin only when its pad's role is ``no_connect``, see
+:ref:`release_known_issues`), each symbol's ``units`` and ``jumpers``
 (its ``duplicate_pin_numbers_are_jumpers``), and ``rails`` from the
 ``chiplet_system:GND`` and ``chiplet_system:SUPPLY`` symbols on the root sheet.
 The netlist's names and endpoints stay the connectivity authority. Refusals on
