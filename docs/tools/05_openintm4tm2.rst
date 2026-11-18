@@ -248,7 +248,8 @@ Twenty-one decks are selectable. Twenty of them run when you pass no
       - 6.10
       - Nothing outside the seal ring boundary, Passiv ring around the ring,
         corners, one ring per chip; ring metal width, via ring widths, Passiv
-        ring width and its space to the ring metals
+        ring width and its space to the ring metals; via ring enclosure,
+        design metal to the ring, ring to the boundary
     * - ``mim``
       - 6.11
       - MIM width, space, enclosures, per-device min and max area, via
@@ -283,18 +284,56 @@ The seal ring checks
 ~~~~~~~~~~~~~~~~~~~~
 
 Without a seal ring boundary (39/4), ``Seal.l`` is skipped. Without
-``EdgeSeal``, the rules that measure a distance to it (``Seal.n``, ``Pas.c``,
-``Pad.dR``, ``Padc.d``, ``Padb.d`` and ``LBE.d``) pass because there is nothing
-to measure to. A layout with no ring therefore passes these decks silently;
-``--require_sealring`` below is what makes a missing ring an error. When a
-closed
-``EdgeSeal`` ring is present, the deck measures the ring itself: the width of
-each ring metal from ``Metal4`` to ``TopMetal2`` (``Seal.a_<metal>``), each via
-ring at exactly its width (``Seal.c1.Via4``, ``Seal.c2``, ``Seal.c3``), the
-``Passiv`` ring width (``Seal.e``) and its space to each ring metal
-(``Seal.f.<metal>``). It does not check the 30 um from the seal ring boundary
-to ``EdgeSeal``, the via ring offset (``Seal.d`` has no ``Activ`` to measure
-against on this stack), or the space from design metal to the ring.
+``EdgeSeal``, the rules that measure a distance to it (``Seal.n``, ``Seal.b``,
+``Seal.d``, ``Pas.c``, ``Pad.d``, ``Pad.dR``, ``Padc.d``, ``Padb.d`` and
+``LBE.d``) pass because there is nothing to measure to. A layout with no ring
+therefore passes these decks silently; ``--require_sealring`` below is what
+makes a missing ring an error. When a closed ``EdgeSeal`` ring is present, the
+deck measures the ring itself: the width of each ring metal from ``Metal4`` to
+``TopMetal2`` (``Seal.a_<metal>``), each via ring at exactly its width
+(``Seal.c1.Via4``, ``Seal.c2``, ``Seal.c3``), the ``Passiv`` ring width
+(``Seal.e``) and its space to each ring metal (``Seal.f.<metal>``).
+
+Three SG13G2 rules stated against ``Activ`` are restated for this stack, which
+has none:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 18 82
+
+    * - Rule
+      - Fails when
+    * - ``Seal.b_<metal>``
+      - Design ``Metal4``, ``Metal5``, ``TopMetal1`` or ``TopMetal2`` (the
+        metal outside ``EdgeSeal``) is closer to the ring's metal on the same
+        layer than that layer's own minimum space, or touches or overlaps it.
+        Filler is held off the ring by ``MFil.c``, ``TM1Fil.c`` and
+        ``TM2Fil.c``.
+    * - ``Seal.d.<via>``
+      - ``EdgeSeal`` encloses a ``Via4``, ``TopVia1`` or ``TopVia2`` ring by
+        less than 1.30 um (``Seal_d``) on either side, corners included, or a via on
+        ``EdgeSeal`` reaches out of it.
+    * - ``Seal.l1``
+      - The seal ring boundary (39/4) encloses ``EdgeSeal`` by less than
+        ``Seal_l1`` (30 um), or ``EdgeSeal`` reaches out of it. This is the
+        distance of SG13G2 Fig. 6.12, not an SG13G2 rule id.
+
+The ``pad`` deck checks ``Pad.d``: a pad opening (``Passiv`` and ``dfpad``) at
+least 7.50 um from ``EdgeSeal``; an opening that overlaps or touches
+``EdgeSeal`` fails too. ``Seal.b`` and ``Seal.d`` also run on an ``EdgeSeal``
+that is cut open, so a cut under an intact stack shows as ``Seal.b`` and
+``Seal.d`` markers even without ``--require_sealring``. The wide-metal space
+rules (``M4/M5.e``, ``M4/M5.f`` and ``TM2.bR``, in the ``metaln`` and
+``topmetal2`` decks) measure design metal against the ring's metal on the same
+layer as they measure two design shapes, with the wide side taken from either
+shape, so a wide plane at the plain minimum space from the ring fails. They
+also catch two wide lines, or a notch between two wide arms of one shape,
+closer than the rule.
+
+The decks take the interposer GDS alone, never a complete GDS with the dies
+placed: a die's own metals and seal ring sit on the same layer numbers and read
+as interposer layers, so ``Seal.b``, ``Seal.m`` or ``Pad.fR`` markers there are
+not interposer findings.
 
 ``--require_sealring`` turns on the presence rules, which need the
 ``sealring`` deck in the same run:
