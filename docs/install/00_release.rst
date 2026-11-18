@@ -145,6 +145,21 @@ To hold the examples to a lock of your own, write it in this form and set
 ``run.sh`` as ``--lock``. The adk-examples checkout's ``docs/RELEASE_LOCK.md``
 says the same from the examples' side.
 
+What this release changes
+-------------------------
+
+The interposer DRC checks the seal-ring rules it left out: design metal to the
+ring, the via rings' enclosure in ``EdgeSeal``, ``EdgeSeal`` to the seal ring
+boundary and pad openings to ``EdgeSeal``. The wide-metal space rules measure
+design metal against the ring as well. A layout that passed before can fail
+these now; :doc:`/tools/05_openintm4tm2` lists the rules.
+
+``packaging-flow fab-file`` refuses a run with a failed, waived, removed,
+skipped or informative DRC: the interposer, assembly and package DRC rows must
+all have passed, and the run's check plan must require every DRC check
+(:doc:`/tools/10_packaging_flow`). A run that kept its template's checks is not
+affected.
+
 .. _release_known_issues:
 
 Known issues

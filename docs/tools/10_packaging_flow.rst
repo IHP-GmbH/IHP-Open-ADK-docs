@@ -201,10 +201,15 @@ one line per level. ``verify --json`` carries the verdict as one word, in
 naming each file and its digest. ``views`` draws one picture per gate whose
 layout the run holds, into ``$RUN/views/``; a picture binds and signs nothing.
 ``fab-file`` writes the carrier GDS that would be sent to the fab, from a
-completed run whose carrier and package decks passed: it removes layers outside
-the technology's set, checks the top cell, grid and database unit, and runs
-both decks again on the result. Anything else is refused. It is not a
-fabrication approval.
+completed run whose ``interposer-drc``, ``drc`` and ``package-drc`` rows
+passed: it removes layers outside the technology's set, checks the top cell,
+grid and database unit, and runs the carrier and package decks again on the
+result. Anything else is refused. A failed DRC row is refused even when a
+person waived it at its gate. The run's check plan must also require every DRC
+check the flow has, the die DRC among them: one the run's checks section
+removed or replaced, or one that was skipped or informative, is refused as
+``FabDrcNotInPlan``, which names each one. Every shipped template keeps all of
+them. ``fab-file`` is not a fabrication approval.
 
 Each check is read as one status word: ``PASS``, ``FAIL``, ``INCONCLUSIVE``,
 ``ERROR``, ``UNRESOLVED``, ``NOT_DECLARED``, ``NOT_AVAILABLE``, ``MISSING``,

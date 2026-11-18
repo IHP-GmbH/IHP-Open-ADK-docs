@@ -6,7 +6,7 @@
   },
   "chiplet-cosim": {
     "distribution": "chiplet-cosim",
-    "ref": "c76192e93943819e42024f934eb1e66d71bee8ed",
+    "ref": "dbd5b5c4b15fbe2e956328b9109a5ddb519023c9",
     "version": "0.1.0"
   },
   "chiplet-flow": {
@@ -16,12 +16,12 @@
   },
   "interposer-pnr": {
     "distribution": "interposer-pnr",
-    "ref": "a0528cb272d1b90f917b5a6d655f4625189ecad2",
+    "ref": "65ca8766054b433896648c8b344394242193504b",
     "version": "0.6.0.dev0"
   },
   "packaging-flow": {
     "distribution": "packaging_flow",
-    "ref": "a3695a43b50e8f8035ea31ddb1d1f4e82d26543f",
+    "ref": "5932721af202adbea1be344e4b6be455fec578fd",
     "version": "0.1.0"
   }
 }
