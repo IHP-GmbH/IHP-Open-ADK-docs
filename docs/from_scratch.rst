@@ -299,7 +299,7 @@ second run signs it again.
 
 A rail may state more than a voltage. With ``amps`` and
 ``current_density_ma_per_um`` on its row, or ``width_um`` outright, the rail
-carries a routing requirement: the width its copper must reach, the current
+carries a routing requirement: the width its wires must reach, the current
 divided by the density. The run reads it before any die is built, in its rail
 requirement check, which refuses a width the routing technology cannot draw,
 and the route then draws the rail at that width and records, per rail,
@@ -307,7 +307,7 @@ whether the width was met.
 
 **You write** two keys more on each rail that carries a known current:
 ``amps``, the current the rail carries, and ``current_density_ma_per_um``,
-the current per micrometre of width the system allows the rail's copper,
+the current per micrometre of width the system allows the rail's wires,
 its own figure and not one the technology declares. The
 two go together on a power or ground rail; one without the other is refused
 when the file is read. Neither die has to declare a current: the figure is
@@ -325,19 +325,19 @@ rail whether that width was met.
 **Look at** the ``requirements`` row of ``status`` and the rail rows of the
 route. The readout of the second typical application prints them last, one
 line per rail: the route's word on its width, the width from the current and
-the density, and the narrowest copper on each layer:
+the density, and the narrowest wire on each layer:
 
 .. include:: /_blocks/typical_02_die_with_power/readme-7.inc
 
 **The usual refusal** is a width above what the routing technology draws
 without slits (|interposer-slit-free-width| um on the metals of IntM4TM2, rule
 ``Slt.c``): lower the current or raise the density. A second one comes from the route: a rail widened by its
-requirement is drawn under a non-default rule, and the engine's own copper
-spacing check refuses a route that leaves it closer to other copper than the
+requirement is drawn under a non-default rule, and the engine's own
+spacing check refuses a route that leaves it closer to other metal than the
 technology allows, naming the widened net and each gap; and a width below
 that can still leave spacing violations inside the router, which the route
 reports as its own. On the carrier of the second typical application 20 um
-fails the copper spacing check, 15 um leaves two violations in the route,
+fails the spacing check, 15 um leaves two violations in the route,
 and |typical-02-rail-width-um| um routes; its sheet states that limit. More
 than |typical-02-rail-ma| mA per rail does not route on that carrier at this
 release; a system whose rails need
@@ -347,7 +347,7 @@ than a rail needs.
 A supply mesh, stripes on the top metals over the supply pads, is the step
 after a wide rail: a second file beside the system file, ``pdn_mesh.json``,
 in carrier coordinates, meant for the supply mesh check against the rails
-and the requirement and for laying as reserved copper before the rest is
+and the requirement and for laying as reserved metal before the rest is
 routed. At this release the mesh step is pending: the planner's mesh is not
 one the supply stage draws, so the second typical application ships its
 rails as wide nets and without a mesh, and says so on its sheet. The drop

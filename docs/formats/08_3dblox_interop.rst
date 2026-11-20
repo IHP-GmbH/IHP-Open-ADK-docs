@@ -376,7 +376,7 @@ instance puts that centre at ``position``.
 The interposer is placed the same way, at ``position`` minus half its
 ``dimensions``. The contract makes the interposer's ``position`` the centre of
 its full GDS bbox while ``dimensions`` is the board outline
-(:doc:`/formats/03_coordinate_frames`), so the two agree only when no copper
+(:doc:`/formats/03_coordinate_frames`), so the two agree only when no metal
 leaks past the outline. When some does, the substrate in the ``.3dbx`` is
 shifted by half the leak.
 

@@ -149,7 +149,7 @@ Geometry and attachment
     Cu pillar
         A copper post attachment method. On the IntM4TM2 interposer the
         attachment region is formed where the passivation opening and the final
-        copper pad overlap.
+        metal pad overlap.
 
     pillar manifest
         The sidecar recording the as-drawn attachment centres, after any

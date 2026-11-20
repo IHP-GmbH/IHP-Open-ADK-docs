@@ -203,7 +203,7 @@ board extent and would silently shrink the interposer dimensions written into
 the ``.chiplet``.
 
 After writing the interposer GDS the converter compares the drawn-geometry
-bounding box against the outline and warns per side when copper or a die sticks
+bounding box against the outline and warns per side when metal or a die sticks
 out. That is an early, cheap version of the containment check: KiCad's own DRC
 flags an off-board footprint at design time, and this catches the same mistake
 at the GDS.
@@ -211,7 +211,7 @@ at the GDS.
 Track ends
 ~~~~~~~~~~
 
-Each free end of a chained trace is drawn square: the copper runs half the
+Each free end of a chained trace is drawn square: the wire runs half the
 track width past the endpoint, along the track. A bend keeps its mitred
 corner. An end is not free when another trace of the same net on the same
 layer runs through it, either a wider one or one as wide that passes the
@@ -221,7 +221,7 @@ each other stay free, and so do the two ends of a closed loop, because nothing
 else covers those points.
 
 KiCad draws a free end as a round cap, so where nothing lies under a free end
-the GDS holds a little more copper than the board shows: at most
+the GDS holds a little more metal than the board shows: at most
 (sqrt(2) - 1) times half the width, at the corners of the square, which is
 0.34 um on a 1.64 um track. A clearance KiCad's own check passes can therefore
 fail the KLayout deck on the GDS by that margin, never the other way round. The
@@ -232,14 +232,14 @@ deck on the GDS is the judge.
    therefore changes the interposer GDS, and with it the SHA-256 its boundary
    manifest records, even when the board did not change.
 
-Where two nets' traces touch on one layer, the merged copper is a short that no
+Where two nets' traces touch on one layer, the merged metal is a short that no
 spacing rule reports. After drawing the traces, and before writing anything,
-the converter compares the trace copper of every pair of nets on each layer.
+the converter compares the traces of every pair of nets on each layer.
 If any touch or overlap it stops with ``ERROR: track ends refused:``, followed
 by one line per place naming the layer, the two nets and the box where they
 meet, and the advice to widen the clearance there. On a board that passes its
 own clearance check, such a touch comes from a square end. Only traces are
-compared: an end that reaches another net's pad, via or die copper is not
+compared: an end that reaches another net's pad, via or die metal is not
 checked here, since the export runs no LVS. That is left to an LVS on the GDS.
 
 Vias come from the base PDK's own PCells

@@ -21,7 +21,7 @@ In this release the placement and routing step can be run by tools, as a proof
 of concept. ``interposer-pnr`` (:doc:`/tools/11_interposer_pnr`) places the
 dies a source leaves open and legalises them against the assembly rules, puts
 a bump on every die pad, routes the interposer with OpenROAD, and writes the
-copper as a draft on a KiCad board. ``packaging-flow``
+metal routing as a draft on a KiCad board. ``packaging-flow``
 (:doc:`/tools/10_packaging_flow`) runs those steps in order and halts for a
 person to review and sign the board. What they write is a geometric draft, not
 a sign-off. The interactive path stays: you can still position the footprints
