@@ -272,7 +272,7 @@ The interposer technology also ships real-size device footprints, currently the
 IntM4TM2 MIM capacitor family. Their pads sit on the two inner copper layers
 (``In1.Cu`` for the ``TopMetal1`` plate, ``In2.Cu`` for the ``Metal5`` plate),
 so routing to them happens on those inner metals rather than on the outer
-copper. That is expected for this metal stack.
+layers. That is expected for this metal stack.
 
 .. figure:: /_figures/screenshots/kicad-interposer-routed-fanout.png
     :align: center

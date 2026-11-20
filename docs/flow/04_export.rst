@@ -203,7 +203,7 @@ the fabrication-oriented view of what you designed.
 
 It is not a copy of what KiCad shows. A free trace end that KiCad draws as a
 round cap is square in the GDS, reaching half a track width past its endpoint,
-so the GDS can hold slightly more copper at a trace end than the board.
+so the GDS can hold slightly more metal at a trace end than the board.
 :doc:`/flow/05_hyp_to_gds` explains which ends are drawn square and what that
 does to clearance.
 
@@ -405,7 +405,7 @@ Common failures
 
 ``Carrier pad domains refused: ...``
     A die footprint marked with ``CHIPLET_PAD_DOMAINS`` carries pad metadata
-    the export cannot render as carrier copper. The message names the
+    the export cannot render as carrier metal. The message names the
     footprint and the cause.
 
 ``Die outline layer refused: U1, U2: ...``

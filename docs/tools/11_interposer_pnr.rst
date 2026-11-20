@@ -6,7 +6,7 @@ interposer-pnr
 
 ``interposer-pnr`` places the dies of a 2.5D assembly on the interposer, puts
 a bump on every die pad, routes the nets between them with OpenROAD and writes
-the copper as a draft on a KiCad board, which a person then reviews and signs.
+the metal routing as a draft on a KiCad board, which a person then reviews and signs.
 Each step is one subcommand that reads files and writes one, so
 :doc:`/tools/10_packaging_flow` runs the steps in turn and stops at the first
 refusal. You can also run them by hand.
@@ -58,7 +58,7 @@ The steps
   refuses (exit 3) a die whose interconnect method does not land on the
   attachment surface the technology declares. A partial route is reported,
   not raised; ``--require-complete`` stops on any unrouted link.
-- ``export`` writes the routed copper onto a copy of your board, never
+- ``export`` writes the routed wires and vias onto a copy of your board, never
   rewriting the board itself. Without ``--board`` it synthesizes a minimal
   board from the routing technology, with the interposer's stackup and its
   KiCad rule files.
@@ -172,7 +172,7 @@ Signing
 SHA-256 of one board. ``--reviewed`` (the same as ``--channel terminal``) is a
 person who opened the board in KiCad, signing at a terminal; ``--channel
 form`` is a person who reviewed through a review request, named by digest;
-with neither, the record says nobody reviewed the copper. ``signoff --check
+with neither, the record says nobody reviewed the routing. ``signoff --check
 --report <export report> --record <file>`` judges the board against what was
 sent and signs nothing: it writes ``as_drawn``, ``edited_as_sent`` or
 ``refused`` with reasons. Every acknowledgment says it is not fabrication
@@ -196,7 +196,7 @@ the image's verify stage, which ADK-Tools sets:
 - The multi-layer backend reports OpenROAD's detailed-route DRC, which is
   geometric and is not fabrication DRC. On a net widened by a requirement,
   ``detailed_route`` can report 0 violations while leaving the net closer to
-  other copper than the technology allows. The engine's own copper spacing
+  other metal than the technology allows. The engine's own spacing
   check fails such a route (exit 3) and names the net. The refusal also
   quotes drt's own ``check_drc``, run in the same OpenROAD session right after
   the route, and suggests carrying a declared power or ground rail as a mesh
