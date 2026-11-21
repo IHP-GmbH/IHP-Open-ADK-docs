@@ -203,6 +203,13 @@ own GDS origin or centred on its bounding box. Dies produced by ``gds2kicad``
 use ``gds_origin``; interposers use ``bbox_center``. See
 :doc:`/formats/03_coordinate_frames`.
 
+A component whose file names no layout, or whose layout does not read, is
+drawn as a box of its stated dimensions, placed by its anchor in both axes
+like a component with a layout. For ``gds_origin`` the file does not say where
+the origin sits in such a box, so the view takes the box's lower-left corner,
+the convention ``gds2kicad`` writes, and the viewing strip names each
+component it assumed this for.
+
 The **Filter** slider on the View Mode toolbar hides polygons below a percentage
 of the selected component's shape-area distribution. On a real die the polygon
 count is dominated by fill and by tiny features; pushing the filter up leaves the
