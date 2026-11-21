@@ -192,7 +192,7 @@ Chiplet Studio draws a component whose file names no layout where its anchor
 puts it, in both axes; before, such a box sat half its own height off
 (:doc:`/tools/04_chiplet_studio`).
 
-Signatures given under this release are of version 1. The next release signs
+Signatures given under this release are of version 1. A later release signs
 at version 2 and asks for each gate's signature again, once. The connection
 sheet is drawn and shown in this release, not signed; the assembly signature
 binds the review schematic.
