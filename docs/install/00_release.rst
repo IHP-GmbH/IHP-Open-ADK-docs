@@ -180,7 +180,9 @@ placed die's position and turn, checked as ``place`` checks a file;
 ``packaging-flow gds-xor`` says whether two layouts draw the same geometry.
 ``place`` and ``edit --move`` also draw the placement as an SVG picture and
 print where it is.
-In VS Code, the design's map shows the newest placement picture.
+In VS Code, the design's map shows the newest placement picture while it
+matches the design's ``.chiplet`` as it is now, and none once the
+``.chiplet`` changes by hand or by an edit that draws no picture.
 A run now draws the connection sheet of the assembly as a picture, in a row
 of its own after the schematic. Open it in a web browser, or in any program
 that shows SVG pictures; ``verify-open <run> connection_sheet
@@ -191,6 +193,13 @@ when it is the one skipped.
 Chiplet Studio draws a component whose file names no layout where its anchor
 puts it, in both axes; before, such a box sat half its own height off
 (:doc:`/tools/04_chiplet_studio`).
+
+Co-simulation from a case description with a die modelled in RTL now runs in
+the image: its PDK copy carries the SG13G2 IO cell model
+(``ihp-sg13g2/libs.ref/sg13g2_io/verilog/sg13g2_io.v``) that ``chiplet-cosim``
+compiles with such a die, and the four Xschem device symbols it needs to draw
+the transistor level below a die from the die's netlist
+(:doc:`/tools/13_chiplet_cosim`).
 
 Signatures given under this release are of version 1. A later release signs
 at version 2 and asks for each gate's signature again, once. The connection
