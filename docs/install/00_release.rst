@@ -180,6 +180,7 @@ placed die's position and turn, checked as ``place`` checks a file;
 ``packaging-flow gds-xor`` says whether two layouts draw the same geometry.
 ``place`` and ``edit --move`` also draw the placement as an SVG picture and
 print where it is.
+In VS Code, the design's map shows the newest placement picture.
 A run now draws the connection sheet of the assembly as a picture, in a row
 of its own after the schematic. Open it in a web browser, or in any program
 that shows SVG pictures; ``verify-open <run> connection_sheet

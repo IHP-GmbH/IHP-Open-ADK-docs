@@ -402,6 +402,14 @@ with its id, size and turn, and the external pads by edge, before any routing.
 It binds and signs nothing. When it cannot be drawn, the last line says why,
 and that the placement was written, or that it is unchanged.
 
+In VS Code, the design's map (open the design's item in the Packaging Flow
+view) shows the newest placement picture after a ``place``, with its path
+under it. When it cannot show it, it says so in the picture's place: "<file>
+is the newest placement picture, but it cannot be shown here. Open it in a web
+browser. If a new place gives the same, report it." For a picture larger than
+8 MiB it says "<file> is larger than 8 MiB, the most this view shows. Open it
+in a web browser."
+
 A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the
 die-to-die links out, and ``python -m packaging_flow.sheet_handout
 <file.chiplet>`` writes a handout folder beside it, named by its stem, with
