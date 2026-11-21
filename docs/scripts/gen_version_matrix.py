@@ -585,8 +585,8 @@ def main():
     if not decks:
         fail("no interposer rule decks found under {}".format(deck_dir))
 
-    # The widest track that needs no slits, rule Slt.c of the metal slit deck. The
-    # interposer routing technologies draw no slits, so it is also the widest track
+    # The widest wire that needs no slits, rule Slt.c of the metal slit deck. The
+    # interposer routing technologies draw no slits, so it is also the widest wire
     # they draw, which is what the from-scratch guide says; hold them to it.
     if "fetch_rule(drc_rules, 'Slt_c')" not in read_text(os.path.join(deck_dir, "7_3_metalslits.drc")):
         fail("7_3_metalslits.drc no longer reads Slt_c. The slit rule moved.")

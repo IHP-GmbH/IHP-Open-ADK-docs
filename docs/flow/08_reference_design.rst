@@ -194,7 +194,7 @@ Open the copy in Chiplet Studio and in KiCad as step 3 of :doc:`/quickstart`
 does, from the host through ``run.sh`` or from a shell inside the container,
 where both tools are on the path. Expect Chiplet Studio to show the interposer
 slab with two dies standing off it on their pillars, and the wire-bond pads
-with their fan-out traces around the edge; switch a die to a detailed render
+with their fan-out wires around the edge; switch a die to a detailed render
 mode to see its actual artwork as geometry. See
 :doc:`/flow/07_view_and_inspect`.
 

@@ -65,11 +65,11 @@ The steps
   fails the route (exit 3): the message names how many gaps it found, says the
   interposer DRC would fail the layout, and points at
   ``<work-dir>/<design>.spacing_check.json``, which lists every one. Moving a
-  die or changing the carrier size gives the router other tracks.
+  die or changing the carrier size gives the router other wires.
 - ``routed-geometry`` writes the routed wires and vias, the placed dies and the
   carrier's metal stack as one ``routed-geometry`` 1.0 document (``--out``),
   and the projected I/O pads beside it (``--io-pads-out``). It reads the route's
-  traces and bumps, the ``.chiplet``, the routing technology and each die's
+  wires and bumps, the ``.chiplet``, the routing technology and each die's
   pin list and layout, and needs no KiCad board. It prints nothing on success,
   and writes both files or neither. It refuses (exit 3, ``routed-geometry:
   refused: <cause>``) a via with only a placeholder size, a via rule with cuts
@@ -209,7 +209,7 @@ What it does not verify
 The engine states these limits in its own documentation, except the one on
 the image's verify stage, which ADK-Tools sets:
 
-- Routed traces are idealized centrelines. ``rdl_route`` has no DRC of its
+- Routed wires are idealized centrelines. ``rdl_route`` has no DRC of its
   own, and on one layer a design can stay partly open: on the ADK-Tools
   reference assembly one layer routes 53 of 57 links. It also leaves a few
   terminal stubs narrower than the layer's minimum width (13 of 434 segments
@@ -222,7 +222,7 @@ the image's verify stage, which ADK-Tools sets:
   rule (see ``route`` above). The refusal also quotes drt's own ``check_drc``,
   run in the same OpenROAD session right after the route, and when a widened
   net is in a gap it suggests carrying a declared power or ground rail as a
-  mesh instead of a widened trace.
+  mesh instead of a widened wire.
 - Routing is not impedance-driven, and no parasitics are carried for the IHP
   interposer.
 - ``place`` seeds on a grid as wide as the largest die plus ASM_b, so dies of

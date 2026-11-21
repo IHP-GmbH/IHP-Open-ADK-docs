@@ -46,7 +46,7 @@ Timing
 
 *Reserved. Directory* ``timing/`` *in the ADK repository.*
 
-Intended scope: inter-chiplet trace-length budgets on the interposer. Static
+Intended scope: inter-chiplet wire-length budgets on the interposer. Static
 timing analysis across die boundaries is a broader open problem and is not in
 scope for a rule deck.
 

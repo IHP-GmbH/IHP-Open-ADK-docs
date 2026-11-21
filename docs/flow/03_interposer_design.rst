@@ -69,7 +69,7 @@ To apply the renames to an existing board instead, open
 *Board Setup > Board Editor Layers* and enter the metal names as the
 user-defined layer names.
 
-The template also ships a small example mesh on ``Metal5``, a few traces on the
+The template also ships a small example mesh on ``Metal5``, a few wires on the
 other metals and the four vias that connect them. Keep them while you find your
 feet, then delete them. They are a reference, not part of your design.
 
@@ -262,7 +262,7 @@ clearance check while routing, and the technology's own DRC deck is what
 actually signs off the metal geometry once the GDS exists.
 
 .. note::
-   A 0.2 um track with a 0.21 um clearance is where upstream KiCad stops being
+   A 0.2 um wire with a 0.21 um clearance is where upstream KiCad stops being
    usable. The fork is hardened for this regime: int64 coordinate arithmetic,
    grids down to the nanometre, rendering that stays correct at extreme zoom,
    adaptive zone fill and six-decimal-place export precision. Nothing in this
@@ -278,12 +278,12 @@ layers. That is expected for this metal stack.
     :align: center
     :width: 55%
     :alt: A KiCad canvas showing one die footprint with a dense named pad ring
-          at its perimeter, fan-out traces running outward from the pads, and
+          at its perimeter, fan-out wires running outward from the pads, and
           square wire-bond I/O pad footprints placed around the die.
 
     A routed board in the ADK KiCad build, zoomed to a single die. The die
     footprint is at the centre, carrying the named pad ring that ``gds2kicad``
-    generated from the die GDS. The traces fan out from those pads to the
+    generated from the die GDS. The wires fan out from those pads to the
     square wire-bond I/O pad footprints placed around it. The pad names are
     silicon names and are too small to read at this width; the view is the
     working zoom level, not the whole board.
@@ -296,9 +296,9 @@ Two checks run inside KiCad, before any export.
 **KiCad's own DRC** checks the board rules: clearances, track widths, unrouted
 nets, courtyard collisions. With the template's ``.kicad_dru`` beside the
 board, it also checks each metal's minimum width and clearance, and it warns on
-two interposer rules that rest on one track or pad: ``TM2.bR``, the larger
-TopMetal2 clearance next to a wide track or a wide, long pad, and ``Slt.c``, a
-track too wide to stay unslit. A track that needs slits gets them in KLayout,
+two interposer rules that rest on one wire or pad: ``TM2.bR``, the larger
+TopMetal2 clearance next to a wide wire or a wide, long pad, and ``Slt.c``, a
+wire too wide to stay unslit. A wire that needs slits gets them in KLayout,
 with the slit macro on the exported GDS; no flow step cuts them. The rules file
 and its gaps are described in :doc:`/tools/05_openintm4tm2`.
 

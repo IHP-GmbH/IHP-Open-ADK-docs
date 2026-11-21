@@ -220,7 +220,7 @@ three ways, all of them required by ``hyp_to_gds.py`` downstream.
 0.0254 to reach inches. The inch factor is not exactly representable in binary
 floating point, so the imperial path lost precision on every coordinate. At PCB
 scale that loss is far below the manufacturing tolerance; at interposer scale it
-is a substantial fraction of a feature. A 200 um trace now exports as
+is a substantial fraction of a feature. A 200 um wire now exports as
 ``W=0.0002000000``.
 
 **Explicit via layer stacks.** ``writeSinglePadStack`` no longer collapses a

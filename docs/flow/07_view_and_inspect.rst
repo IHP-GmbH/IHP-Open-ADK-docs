@@ -63,10 +63,10 @@ toolbars. For a first look at an exported assembly:
 .. figure:: /_figures/screenshots/chiplet-inteposer-assembly-lateral-view.png
     :align: center
     :width: 100%
-    :alt: Lateral view of a die mounted on Cu pillars above the interposer, with wire-bond pads and the traces fanning out to them.
+    :alt: Lateral view of a die mounted on Cu pillars above the interposer, with wire-bond pads and the wires fanning out to them.
 
     A lateral view: the die sits on its Cu pillars above the interposer body,
-    with the wire-bond I/O pads and the traces fanning out to them at the
+    with the wire-bond I/O pads and the wires fanning out to them at the
     interposer edge.
 
 Opening the GDS in KLayout with named layers

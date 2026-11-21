@@ -5,7 +5,7 @@ Generating the assembly GDS
 
 The KiCad export of :doc:`/flow/04_export` leaves you with a HyperLynx ``.hyp``
 netlist and an intermediate ``.chiplet`` file. Neither is fabrication geometry:
-the ``.hyp`` describes traces as centre lines with widths, vias as padstack
+the ``.hyp`` describes wires as centre lines with widths, vias as padstack
 indices, and dies as position-only anchors pointing at external GDS files.
 ``hyp_to_gds.py``, the worker of the |plugin-repo| repository, turns that
 description into GDS layouts on real process layers, generates the attachment
@@ -39,12 +39,12 @@ these inputs:
 
 ``.hyp`` (required)
     Board geometry from KiCad. The converter parses the ``STACKUP`` section
-    (layer order, top to bottom), ``PADSTACK`` definitions, per-net trace
+    (layer order, top to bottom), ``PADSTACK`` definitions, per-net wire
     segments and arcs, via instances, the ``BOARD`` perimeter (the KiCad
     ``Edge.Cuts`` outline), and the ``DEVICES`` section, where each chiplet
     appears with a reference designator, a layer, a ``GDS_FILE`` path, a
     rotation, and the position of the KiCad footprint's own anchor (with Y
-    negated so it shares the coordinate system of the traces). The converter
+    negated so it shares the coordinate system of the wires). The converter
     takes that position as given; it computes no centroid.
 
 A KLayout layer properties file (``--lyp``)
@@ -176,16 +176,16 @@ template board the interposer PDK ships at
 already applied. The converter's own error message points at that same file,
 resolved through ``INTERPOSER_PDK_ROOT``.
 
-The converter accounts for what it dropped. If more than half of the trace
+The converter accounts for what it dropped. If more than half of the wire
 elements sit on layers the ``.lyp`` does not map, the conversion aborts and
 prints the unmapped board layers next to the list of drawing layers the PDK
 does offer. Below that threshold the strays are tolerated with an aggregate
 warning. The reasoning is that a GDS missing most of its routing still looks
-like a valid layout, and nothing downstream can tell that traces were supposed
+like a valid layout, and nothing downstream can tell that wires were supposed
 to be there.
 
-Traces, arcs and the outline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Wires, arcs and the outline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Segments and arcs of the same net, layer and width are chained end to end into
 continuous paths before they are written, so a polyline routed as ten KiCad
@@ -208,37 +208,37 @@ out. That is an early, cheap version of the containment check: KiCad's own DRC
 flags an off-board footprint at design time, and this catches the same mistake
 at the GDS.
 
-Track ends
-~~~~~~~~~~
+Wire ends
+~~~~~~~~~
 
-Each free end of a chained trace is drawn square: the wire runs half the
-track width past the endpoint, along the track. A bend keeps its mitred
-corner. An end is not free when another trace of the same net on the same
+Each free end of a chained wire is drawn square: the wire runs half its
+width past the endpoint, along the wire. A bend keeps its mitred
+corner. An end is not free when another wire of the same net on the same
 layer runs through it, either a wider one or one as wide that passes the
 endpoint rather than ending on it. KiCad's round cap there already lies inside
-that trace, so the end is drawn flush. Two ends of the same width that meet
+that wire, so the end is drawn flush. Two ends of the same width that meet
 each other stay free, and so do the two ends of a closed loop, because nothing
 else covers those points.
 
 KiCad draws a free end as a round cap, so where nothing lies under a free end
 the GDS holds a little more metal than the board shows: at most
 (sqrt(2) - 1) times half the width, at the corners of the square, which is
-0.34 um on a 1.64 um track. A clearance KiCad's own check passes can therefore
+0.34 um on a 1.64 um wire. A clearance KiCad's own check passes can therefore
 fail the KLayout deck on the GDS by that margin, never the other way round. The
 deck on the GDS is the judge.
 
 .. note::
-   Earlier releases drew every end flush. Re-exporting any board with traces
+   Earlier releases drew every end flush. Re-exporting any board with wires
    therefore changes the interposer GDS, and with it the SHA-256 its boundary
    manifest records, even when the board did not change.
 
-Where two nets' traces touch on one layer, the merged metal is a short that no
-spacing rule reports. After drawing the traces, and before writing anything,
-the converter compares the traces of every pair of nets on each layer.
+Where two nets' wires touch on one layer, the merged metal is a short that no
+spacing rule reports. After drawing the wires, and before writing anything,
+the converter compares the wires of every pair of nets on each layer.
 If any touch or overlap it stops with ``ERROR: track ends refused:``, followed
 by one line per place naming the layer, the two nets and the box where they
 meet, and the advice to widen the clearance there. On a board that passes its
-own clearance check, such a touch comes from a square end. Only traces are
+own clearance check, such a touch comes from a square end. Only wires are
 compared: an end that reaches another net's pad, via or die metal is not
 checked here, since the export runs no LVS. That is left to an LVS on the GDS.
 
