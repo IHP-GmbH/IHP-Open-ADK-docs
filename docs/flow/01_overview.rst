@@ -152,6 +152,12 @@ afterwards over the complete GDS when that output is enabled. They are listed
 separately because they consume and produce different artefacts, and because
 ``hyp_to_gds.py`` also runs standalone.
 
+This table is the path you drive in KiCad. When :doc:`/tools/10_packaging_flow`
+runs the assembly, stages 4 and 5 take another input: interposer-pnr writes
+the routed wires and vias as a routed-geometry document, and the run composes
+the interposer and complete GDS from it, with no HyperLynx file in between.
+Only a board a person edited after the run sent it is composed from the board.
+
 The pivot artefact: ``.chiplet``
 --------------------------------
 
