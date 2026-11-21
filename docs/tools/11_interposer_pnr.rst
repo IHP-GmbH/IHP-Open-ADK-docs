@@ -65,7 +65,7 @@ The steps
   fails the route (exit 3): the message names how many gaps it found, says the
   interposer DRC would fail the layout, and points at
   ``<work-dir>/<design>.spacing_check.json``, which lists every one. Moving a
-  die or changing the carrier size gives the router other wires.
+  die or changing the carrier size gives the router other routes.
 - ``routed-geometry`` writes the routed wires and vias, the placed dies and the
   carrier's metal stack as one ``routed-geometry`` 1.0 document (``--out``),
   and the projected I/O pads beside it (``--io-pads-out``). It reads the route's

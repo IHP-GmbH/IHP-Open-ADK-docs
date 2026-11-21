@@ -763,7 +763,7 @@ clearance, plus two warnings that rest on one item's own size:
   ``TM2_bR_w``, and beside a pad wider than ``TM2_bR_w`` and longer than
   ``TM2_bR_cr``. Both hold TopMetal2 metal to other TopMetal2 metal only,
   not to the board outline.
-* ``Slt.c``: a wire wider than the ``Slt_c`` maximum on any copper layer. A
+* ``Slt.c``: a wire wider than the ``Slt_c`` maximum on any metal layer. A
   wider wire needs slits, and cutting them is the designer's step, with the
   KLayout slit macro ``interposer_filler_slit.lym`` on the GDS. No flow step
   cuts them.
