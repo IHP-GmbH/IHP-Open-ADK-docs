@@ -158,7 +158,7 @@ board. The run no longer writes or checks a HyperLynx ``.hyp`` file
 
 These change what a run that passed before may do now:
 
-- The run halts at the ``gds`` row when the metal fill cannot meet a metal's
+- The run stops at the ``gds`` row when the metal fill cannot meet a metal's
   density rule. It names each metal and its coverage, says what usually causes
   it, and no signature waives it. Before, a fill that did not close did not
   stop the run.
@@ -171,8 +171,8 @@ These change what a run that passed before may do now:
   record filed under its key, every gate of the run is refused, not only that
   die's.
 - A technology package with no KiCad view passes its set B check with the note
-  ``PACKAGE_NO_KICAD_VIEW``. The flow still writes a KiCad board, so a run on
-  such a technology stops where the board is written
+  ``PACKAGE_NO_KICAD_VIEW``. Every run writes a KiCad board, so a run on such
+  a technology stops where the board is written
   (:doc:`/formats/01_chiplet`). Before, such a package failed set B.
 
 New commands: ``packaging-flow edit <file.chiplet> --move ID=X,Y[,ROT]`` sets a

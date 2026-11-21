@@ -34,8 +34,8 @@ This page covers ``run``, ``resume``, ``status``, ``map``, ``validate``,
 ``verify``, ``verify-run``, ``verify-sign``, ``sign-request``,
 ``verify-accept``, ``verify-open``, ``review-copy``, ``review-levels``,
 ``views``, ``edit``, ``place``, ``compare-nets``, ``gds-xor``,
-``lvs-bundle``, ``lvs-verify``, ``fab-file`` and ``tasks``. ``packaging-flow --help`` lists
-every subcommand of the version in your image, and ``packaging-flow <command>
+``lvs-bundle``, ``lvs-verify``, ``fab-file`` and ``tasks``.
+``packaging-flow --help`` lists every subcommand of the version in your image, and ``packaging-flow <command>
 --help`` its options.
 
 Where it runs
@@ -134,14 +134,16 @@ drawn (``as_drawn``). When a person edited the board after the flow sent it
 or a signoff-check record that is missing or does not read, refuses the row
 before it draws anything (``CompositionRefused``). The row records which of the
 two it used in its ``composition`` fact. The run no longer writes or checks a
-HyperLynx ``.hyp`` file: on the board path the exporter can still leave one
-beside the draft ``.chiplet``, and the run does not record it. Within one run
+HyperLynx ``.hyp`` file: when the layout is composed from an edited board, the
+exporter can still leave one beside the draft ``.chiplet``, and the run does
+not record it. Within one run
 the board is checked and drawn once: a board edited after ``gds`` has run is
 not checked or drawn again; start a new run from it (`Changing the design`_).
 
-On a design with a terminal profile the ``gds`` row also fills the carrier's
-metals and reads the fill's density report. When the fill cannot meet a
-metal's density rule, the row fails and the run halts there (exit 1). It prints
+On a design whose ``external`` block names a profile, the ``gds`` row also
+fills the carrier's metals and reads the fill's density report. When the fill
+cannot meet a metal's density rule, the row fails and the run stops at that
+row (exit 1). It prints
 one line per metal, for example ``gds: the metal fill could not meet the
 density rules on Metal4: <n> % is covered, below the allowed <lo> to <hi> %``,
 then what usually causes it: dies covering too much of one area, or wires
@@ -388,8 +390,8 @@ refused on resume (exit 3). Changes go through commands that record them:
   (an even number, default 0) drops a difference up to N database units wide,
   ``--cell`` names the cell when a file has more than one top cell, and
   ``--json`` prints the answer as a document. Texts are not compared. It prints
-  each layer that differs with its area and box, then whether the files' canon
-  digests are equal, which it does not grade. It exits 0 when every layer
+  each layer that differs with its area and box, then whether the digests of the
+  two files' canonical forms are equal, which it does not grade. It exits 0 when every layer
   holds and 24 when one does not. It reads the two files only, not a run.
 
 A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the

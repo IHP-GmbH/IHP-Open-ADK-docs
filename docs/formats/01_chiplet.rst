@@ -710,9 +710,9 @@ when the validator itself fails. It needs the ``strict`` extra. Since reader
 release 1.24.0 a package's KiCad view is optional in set B: a package with no
 ``kicad_template``, or with a routing layer that names no
 ``kicad_copper_layer``, passes set B with the note ``PACKAGE_NO_KICAD_VIEW``.
-The note says why it matters: the flow still writes a KiCad board, so a
-packaging-flow run on that technology stops where the board is written
-(interposer-pnr ``export``, exit 5) until the package adds ``kicad_template``
+The note says why it matters: every packaging-flow run writes a KiCad board,
+and interposer-pnr ``export`` refuses to write one for such a package (exit 5),
+so a run on that technology stops there until the package adds ``kicad_template``
 and a ``kicad_copper_layer`` for every routing layer.
 
 The output is semantically equivalent to, but not byte-identical to, what the
