@@ -53,7 +53,7 @@ quote. Never edit the generated files: they are overwritten on every build.
         ``tools/tables/schema_versions.csv``, the format and schema versions;
         ``tools/tables/staged_engines.csv`` and the engine version
         substitutions in ``tools/_staged_engines.inc``; ``_counts.inc``, the
-        interposer layer and rule deck counts, the widest track that needs no
+        interposer layer and rule deck counts, the widest wire that needs no
         slits (``Slt.c``, which it holds the interposer routing technologies
         to), and the ADK test count; and
         ``formats/_vendored_state.inc``, the state of the ADK's vendored

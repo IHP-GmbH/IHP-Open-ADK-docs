@@ -201,9 +201,9 @@ the Cu pillars or bumps generated from each flip-chip die's footprint pads.
 This is the file the ``.chiplet`` references, and it is a deliverable: it is
 the fabrication-oriented view of what you designed.
 
-It is not a copy of what KiCad shows. A free trace end that KiCad draws as a
-round cap is square in the GDS, reaching half a track width past its endpoint,
-so the GDS can hold slightly more metal at a trace end than the board.
+It is not a copy of what KiCad shows. A free wire end that KiCad draws as a
+round cap is square in the GDS, reaching half a wire width past its endpoint,
+so the GDS can hold slightly more metal at a wire end than the board.
 :doc:`/flow/05_hyp_to_gds` explains which ends are drawn square and what that
 does to clearance.
 
@@ -466,7 +466,7 @@ A die exported with ``thickness: 0.0``
     A carrier carries one net; fix the board.
 
 ``ERROR: track ends refused: ... place(s) where two nets' traces touch``
-    Once their ends are drawn square, traces of two nets meet on one layer. The
+    Once their ends are drawn square, wires of two nets meet on one layer. The
     worker writes no GDS and the run fails. Widen the clearance at each place
     the message names; :doc:`/flow/05_hyp_to_gds` has the geometry.
 

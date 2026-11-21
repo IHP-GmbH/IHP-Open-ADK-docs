@@ -741,7 +741,7 @@ them populated, on purpose.
 
 Draw the interposer outline on ``Edge.Cuts``: the exporter derives the interposer
 dimensions from its bounding box and warns about components placed outside it.
-The template's example routing (a small mesh on ``Metal5``, a few traces, four
+The template's example routing (a small mesh on ``Metal5``, a few wires, four
 vias) is there as a reference and is meant to be deleted.
 
 The rules and project files
@@ -759,12 +759,12 @@ edit them by hand.
 The rules file carries, per copper layer, the metal's minimum width and
 clearance, plus two warnings that rest on one item's own size:
 
-* ``TM2.bR``: a larger TopMetal2 clearance beside a track wider than
+* ``TM2.bR``: a larger TopMetal2 clearance beside a wire wider than
   ``TM2_bR_w``, and beside a pad wider than ``TM2_bR_w`` and longer than
   ``TM2_bR_cr``. Both hold TopMetal2 metal to other TopMetal2 metal only,
   not to the board outline.
-* ``Slt.c``: a track wider than the ``Slt_c`` maximum on any copper layer. A
-  wider track needs slits, and cutting them is the designer's step, with the
+* ``Slt.c``: a wire wider than the ``Slt_c`` maximum on any metal layer. A
+  wider wire needs slits, and cutting them is the designer's step, with the
   KLayout slit macro ``interposer_filler_slit.lym`` on the GDS. No flow step
   cuts them.
 
@@ -921,7 +921,7 @@ two disagree. The carrier conductivity is the public SG13G2 substrate value,
 because the interposer carrier's resistivity is not specified yet. Change the
 ``Substrate`` conductivity in the XML if your carrier is high-resistivity.
 
-``libs.tech/parasitics/routed_load.py`` reads one route's traces and bumps, as
+``libs.tech/parasitics/routed_load.py`` reads one route's wires and bumps, as
 interposer-pnr writes them, and gives each named net a capacitance meant to sit
 above what its driver sees on the interposer. Each wire is solved as a 2D
 cross-section at its routed layer and width. The section holds every parallel

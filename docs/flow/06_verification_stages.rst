@@ -157,7 +157,7 @@ occupy the same volume. This is the only stage with a z axis.
 
 **What it cannot prove.** Anything about mask artwork. The export is lossy by
 declaration: artwork, metallurgy, DRC parameters, I/O pads and the boundary
-manifest have no target in the export and are dropped. A shorted trace, a
+manifest have no target in the export and are dropped. A shorted wire, a
 missing via, a pillar that was never drawn into the GDS: none of it exists in
 the model being
 linted.

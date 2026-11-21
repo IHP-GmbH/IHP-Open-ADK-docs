@@ -757,7 +757,7 @@ Troubleshooting
         ``libs.tech/intm4tm2_stack.json``, often the SG13G2 die PDK. Point it
         at an IntM4TM2 checkout or unset it.
     * - "ERROR: track ends refused" in the log
-      - Two nets' traces touch on one layer once their ends are drawn square.
+      - Two nets' wires touch on one layer once their ends are drawn square.
         Widen the clearance at the places it names; see
         :doc:`/flow/05_hyp_to_gds`.
 

@@ -94,11 +94,11 @@ operational.
 
 .. figure:: /_figures/screenshots/chiplet-inteposer-assembly-lateral-view.png
     :align: center
-    :alt: Lateral view of a single die on Cu pillars above an interposer, with wire-bond pads and the traces fanning out to them.
+    :alt: Lateral view of a single die on Cu pillars above an interposer, with wire-bond pads and the metal wires fanning out to them.
     :width: 85%
 
     Lateral view of a single die mounted on its Cu pillars above an interposer,
-    with the wire-bond I/O pads and the traces fanning out to them at the
+    with the wire-bond I/O pads and the metal wires fanning out to them at the
     interposer edge, rendered from the assembly artefacts this flow produces.
 
 How the ADK closes it
