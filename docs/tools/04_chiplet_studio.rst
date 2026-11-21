@@ -207,8 +207,10 @@ A component whose file names no layout, or whose layout does not read, is
 drawn as a box of its stated dimensions, placed by its anchor in both axes
 like a component with a layout. For ``gds_origin`` the file does not say where
 the origin sits in such a box, so the view takes the box's lower-left corner,
-the convention ``gds2kicad`` writes, and the viewing strip names each
-component it assumed this for.
+the convention ``gds2kicad`` writes. A note in the viewing strip names each
+component it assumed this for, says why (no layout named, or the layout did
+not read) and how to place it exactly: name a layout, or use ``anchor:
+bbox_center``.
 
 The **Filter** slider on the View Mode toolbar hides polygons below a percentage
 of the selected component's shape-area distribution. On a real die the polygon
