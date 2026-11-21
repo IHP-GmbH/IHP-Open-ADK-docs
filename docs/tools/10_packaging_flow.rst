@@ -403,8 +403,10 @@ It binds and signs nothing. When it cannot be drawn, the last line says why,
 and that the placement was written, or that it is unchanged.
 
 In VS Code, the design's map (open the design's item in the Packaging Flow
-view) shows the newest placement picture after a ``place``, with its path
-under it. When it cannot show it, it says so in the picture's place: "<file>
+view) shows the newest placement picture, with its path under it, while it
+matches the design's ``.chiplet`` as it is now. Once the ``.chiplet``
+changes by hand or by an edit that draws no picture, it shows none until
+``place`` or ``edit --move`` draws a new one. When it cannot show it, it says so in the picture's place: "<file>
 is the newest placement picture, but it cannot be shown here. Open it in a web
 browser. If a new place gives the same, report it." For a picture larger than
 8 MiB it says "<file> is larger than 8 MiB, the most this view shows. Open it
