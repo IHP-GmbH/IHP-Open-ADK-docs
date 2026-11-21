@@ -191,11 +191,14 @@ at version 2 and asks for each gate's signature again, once. The connection
 sheet is drawn and shown in this release, not signed; the assembly signature
 binds the review schematic.
 
+Open the connection sheet in a web browser, or in any program that shows SVG
+pictures. The run map in VS Code shows the sheet from the release whose review
+offers it; in this release no review item offers it.
+
 Some code in the engines is present but not in use in this release, and
-nothing here describes it as usable: the version 2 signature tables, the
+nothing here describes it as usable: the version 2 signature tables, and the
 review of a routed layout in place of the board (the ``interposer.routed``
-result and the acknowledgment that would sign it), and the connection sheet's
-picture in the VS Code run map, which no checklist item offers yet.
+result and the acknowledgment that would sign it).
 
 .. _release_known_issues:
 
