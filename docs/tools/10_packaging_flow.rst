@@ -394,6 +394,14 @@ refused on resume (exit 3). Changes go through commands that record them:
   two files' canonical forms are equal, which it does not grade. It exits 0 when every layer
   holds and 24 when one does not. It reads the two files only, not a run.
 
+After a placement, ``place`` and ``edit --move`` also draw it as a picture,
+``placement-view.svg`` in the same ``edits/<UTC time>/`` folder, and end with
+``Placement picture: <path>. Open it in a web browser, or in any program that
+shows SVG pictures.`` The picture shows the carrier with its size, each die
+with its id, size and turn, and the external pads by edge, before any routing.
+It binds and signs nothing. When it cannot be drawn, the last line says why,
+and that the placement was written, or that it is unchanged.
+
 A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the
 die-to-die links out, and ``python -m packaging_flow.sheet_handout
 <file.chiplet>`` writes a handout folder beside it, named by its stem, with
