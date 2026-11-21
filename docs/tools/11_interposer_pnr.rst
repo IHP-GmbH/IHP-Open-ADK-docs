@@ -6,7 +6,9 @@ interposer-pnr
 
 ``interposer-pnr`` places the dies of a 2.5D assembly on the interposer, puts
 a bump on every die pad, routes the nets between them with OpenROAD and writes
-the copper as a draft on a KiCad board, which a person then reviews and signs.
+the metal routing as a draft on a KiCad board, which a person then reviews and signs.
+It also writes the routing as a routed-geometry document, which packaging-flow
+composes the layout from.
 Each step is one subcommand that reads files and writes one, so
 :doc:`/tools/10_packaging_flow` runs the steps in turn and stops at the first
 refusal. You can also run them by hand.
@@ -29,7 +31,7 @@ Apache-2.0.
    on a result.
 
 This page covers ``place-check``, ``place``, ``bumps``, ``route``,
-``export``, ``report``, ``signoff``, ``check-requirements``, ``io-pads`` and
+``routed-geometry``, ``export``, ``report``, ``signoff``, ``check-requirements``, ``io-pads`` and
 ``board-revision``. The commands for power delivery are not covered here.
 ``interposer-pnr <command> --help`` lists every option of a command.
 
@@ -57,11 +59,30 @@ The steps
   ``rdl_route``; with two or more it uses global and detailed routing. It
   refuses (exit 3) a die whose interconnect method does not land on the
   attachment surface the technology declares. A partial route is reported,
-  not raised; ``--require-complete`` stops on any unrouted link.
-- ``export`` writes the routed copper onto a copy of your board, never
+  not raised; ``--require-complete`` stops on any unrouted link. After the
+  route, the engine's own spacing check measures the gap between every pair of
+  nets on each layer, on both backends. A gap below the layer's spacing rule
+  fails the route (exit 3): the message names how many gaps it found, says the
+  interposer DRC would fail the layout, and points at
+  ``<work-dir>/<design>.spacing_check.json``, which lists every one. Moving a
+  die or changing the carrier size gives the router other tracks.
+- ``routed-geometry`` writes the routed wires and vias, the placed dies and the
+  carrier's metal stack as one ``routed-geometry`` 1.0 document (``--out``),
+  and the projected I/O pads beside it (``--io-pads-out``). It reads the route's
+  traces and bumps, the ``.chiplet``, the routing technology and each die's
+  pin list and layout, and needs no KiCad board. It prints nothing on success,
+  and writes both files or neither. It refuses (exit 3, ``routed-geometry:
+  refused: <cause>``) a via with only a placeholder size, a via rule with cuts
+  that are not square, an interposer with no die placed on it, and an outline
+  whose lower-left corner is not at (0, 0). packaging-flow composes the layout
+  from this document (:doc:`/tools/10_packaging_flow`).
+- ``export`` writes the routed wires and vias onto a copy of your board, never
   rewriting the board itself. Without ``--board`` it synthesizes a minimal
   board from the routing technology, with the interposer's stackup and its
-  KiCad rule files.
+  KiCad rule files. A technology package with no KiCad view (no
+  ``kicad_template``, or a routing layer with no ``kicad_copper_layer``) still
+  routes, but ``export`` refuses to write a board for it (exit 5) and names the
+  key that is missing.
 - ``report`` collects the step reports into one run manifest.
 - ``signoff`` is the manual gate. It exits 4 until a person has signed that
   exact board; see `Signing`_.
@@ -172,7 +193,7 @@ Signing
 SHA-256 of one board. ``--reviewed`` (the same as ``--channel terminal``) is a
 person who opened the board in KiCad, signing at a terminal; ``--channel
 form`` is a person who reviewed through a review request, named by digest;
-with neither, the record says nobody reviewed the copper. ``signoff --check
+with neither, the record says nobody reviewed the routing. ``signoff --check
 --report <export report> --record <file>`` judges the board against what was
 sent and signs nothing: it writes ``as_drawn``, ``edited_as_sent`` or
 ``refused`` with reasons. Every acknowledgment says it is not fabrication
@@ -195,12 +216,13 @@ the image's verify stage, which ADK-Tools sets:
   there), which must be fixed before real DRC passes.
 - The multi-layer backend reports OpenROAD's detailed-route DRC, which is
   geometric and is not fabrication DRC. On a net widened by a requirement,
-  ``detailed_route`` can report 0 violations while leaving the net closer to
-  other copper than the technology allows. The engine's own copper spacing
-  check fails such a route (exit 3) and names the net. The refusal also
-  quotes drt's own ``check_drc``, run in the same OpenROAD session right after
-  the route, and suggests carrying a declared power or ground rail as a mesh
-  instead of a widened trace.
+  ``detailed_route`` can report 0 violations while leaving two nets closer
+  than the technology allows, with or without a widened net. The engine's own
+  spacing check fails such a route (exit 3), as it does every gap below the
+  rule (see ``route`` above). The refusal also quotes drt's own ``check_drc``,
+  run in the same OpenROAD session right after the route, and when a widened
+  net is in a gap it suggests carrying a declared power or ground rail as a
+  mesh instead of a widened trace.
 - Routing is not impedance-driven, and no parasitics are carried for the IHP
   interposer.
 - ``place`` seeds on a grid as wide as the largest die plus ASM_b, so dies of

@@ -148,17 +148,62 @@ says the same from the examples' side.
 What this release changes
 -------------------------
 
-The interposer DRC checks the seal-ring rules it left out: design metal to the
-ring, the via rings' enclosure in ``EdgeSeal``, ``EdgeSeal`` to the seal ring
-boundary and pad openings to ``EdgeSeal``. The wide-metal space rules measure
-design metal against the ring as well. A layout that passed before can fail
-these now; :doc:`/tools/05_openintm4tm2` lists the rules.
+A run composes its layout from the routed geometry. interposer-pnr's new
+``routed-geometry`` command writes every net's wires and vias, the placed dies
+and the carrier's metal stack into one document, and the ``gds`` row composes
+the interposer and assembly GDS from it when the signoff check reads the board
+as drawn. A board a person edited after the run sent it is composed from the
+board. The run no longer writes or checks a HyperLynx ``.hyp`` file
+(:doc:`/tools/10_packaging_flow`).
 
-``packaging-flow fab-file`` refuses a run with a failed, waived, removed,
-skipped or informative DRC: the interposer, assembly and package DRC rows must
-all have passed, and the run's check plan must require every DRC check
-(:doc:`/tools/10_packaging_flow`). A run that kept its template's checks is not
-affected.
+These change what a run that passed before may do now:
+
+- The run stops at the ``gds`` row when the metal fill cannot meet a metal's
+  density rule. It names each metal and its coverage, says what usually causes
+  it, and no signature waives it. Before, a fill that did not close did not
+  stop the run.
+- ``interposer-pnr route`` fails (exit 3) on any gap between two nets below
+  the layer's spacing rule, on both routing backends. Before, such a gap failed
+  only under a non-default width rule on the multi-layer backend, and never on
+  one routing layer (:doc:`/tools/11_interposer_pnr`).
+- At signing, a signature record that does not read is refused first,
+  whatever gate you name. When a die gate the run recorded as signed has no
+  record filed under its key, every gate of the run is refused, not only that
+  die's.
+- A technology package with no KiCad view passes its set B check with the note
+  ``PACKAGE_NO_KICAD_VIEW``. Every run writes a KiCad board, so a run on such
+  a technology stops where the board is written
+  (:doc:`/formats/01_chiplet`). Before, such a package failed set B.
+
+New commands: ``packaging-flow edit <file.chiplet> --move ID=X,Y[,ROT]`` sets a
+placed die's position and turn, checked as ``place`` checks a file;
+``packaging-flow gds-xor`` says whether two layouts draw the same geometry.
+``place`` and ``edit --move`` also draw the placement as an SVG picture and
+print where it is.
+In VS Code, the design's map shows the newest placement picture.
+A run now draws the connection sheet of the assembly as a picture, in a row
+of its own after the schematic. Open it in a web browser, or in any program
+that shows SVG pictures; ``verify-open <run> connection_sheet
+assembly.connection_sheet`` prints its path. Where a review is not part of a
+run because a row was skipped, the reason names the ``connection-sheet`` row
+when it is the one skipped.
+
+Chiplet Studio draws a component whose file names no layout where its anchor
+puts it, in both axes; before, such a box sat half its own height off
+(:doc:`/tools/04_chiplet_studio`).
+
+Signatures given under this release are of version 1. A later release signs
+at version 2 and asks for each gate's signature again, once. The connection
+sheet is drawn and shown in this release, not signed; the assembly signature
+binds the review schematic.
+
+The run map in VS Code shows the connection sheet from the release whose
+review offers it; in this release no review item offers it.
+
+Some code in the engines is present but not in use in this release, and
+nothing here describes it as usable: the version 2 signature tables, and the
+review of a routed layout in place of the board (the ``interposer.routed``
+result and the acknowledgment that would sign it).
 
 .. _release_known_issues:
 
@@ -232,9 +277,3 @@ Only a ``no_connect`` pad listed under ``open`` gets through assembly LVS
     to a carrier pad is refused, but only when the run builds its assembly
     LVS inputs, after the die and interposer gates. List such a pad under
     ``open`` and nowhere else.
-
-The from-scratch guide was run on an earlier release's image
-    The blocks of :doc:`/from_scratch` and the values it states are those the
-    worked examples ran on the |typical-01-release| image (ADK-Tools
-    |typical-01-adk-tools|). They move to this release once the examples are
-    locked to its image.

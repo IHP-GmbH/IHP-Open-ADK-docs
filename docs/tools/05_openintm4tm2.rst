@@ -710,7 +710,7 @@ layers are already renamed after the PDK metals:
       - Lowest routing metal
 
 The reason to start from the template is mechanical: the HYP-to-GDS exporter maps
-board copper to PDK metals **by name**. A board that keeps the default KiCad
+board copper layers to PDK metals **by name**. A board that keeps the default KiCad
 names leaves its routing on layers the PDK does not recognise. When most of the
 routing lands on unmapped layers the exporter aborts and points back at the
 template; when only some of it does it warns and continues. You can reproduce the
@@ -761,7 +761,7 @@ clearance, plus two warnings that rest on one item's own size:
 
 * ``TM2.bR``: a larger TopMetal2 clearance beside a track wider than
   ``TM2_bR_w``, and beside a pad wider than ``TM2_bR_w`` and longer than
-  ``TM2_bR_cr``. Both hold TopMetal2 copper to other TopMetal2 copper only,
+  ``TM2_bR_cr``. Both hold TopMetal2 metal to other TopMetal2 metal only,
   not to the board outline.
 * ``Slt.c``: a track wider than the ``Slt_c`` maximum on any copper layer. A
   wider track needs slits, and cutting them is the designer's step, with the
@@ -774,14 +774,14 @@ TopVia2 via, which are legal on every layer. Each class carries every key the
 ADK KiCad build writes for one, because KiCad ignores an incomplete class and
 falls back to its printed-board defaults, which hold every via to a 0.3 mm
 minimum.
-The copper-to-edge floor is 0.001 mm, so copper that touches the outline is
+The copper-to-edge floor is 0.001 mm, so metal that touches the outline is
 flagged.
 
 .. note::
    KiCad's check is an aid while drawing and misses violations. It flags a
    clearance only once it is more than its DRC epsilon (0.5 um by default)
    under the rule, so the Metal4 and Metal5 space is never caught; it checks
-   one track or pad at a time, so merged copper, zones and graphic shapes stay
+   one track or pad at a time, so merged metal, zones and graphic shapes stay
    KLayout checks; and it sees the board, not the exported GDS. The
    ``TM2.bR`` warnings have no parallel-run condition, so they also fire on
    runs the deck accepts. The KLayout decks on the GDS are the DRC that
@@ -795,7 +795,7 @@ Device footprints and symbols
 
 ``libs.tech/kicad/footprints/intm4tm2.pretty`` holds the MIM capacitor family.
 The footprints are **real-size**: each mirrors the plate geometry of the KLayout
-PCell rather than using a symbolic land pattern, so the copper drawn on the board
+PCell rather than using a symbolic land pattern, so the metal drawn on the board
 is the same size as the capacitor drawn in the layout. For a plate ``w`` by
 ``l`` (um), the MINUS plate on Metal5 is the outer ``(w + 1.2) x (l + 1.2)``
 rectangle and the PLUS plate on TopMetal1 is the inner rectangle from the PCell

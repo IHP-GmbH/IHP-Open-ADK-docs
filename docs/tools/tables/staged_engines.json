@@ -1,7 +1,7 @@
 {
   "assembly-lvs": {
     "distribution": "assembly-lvs",
-    "ref": "d407f608d0c39fbe1e31b2b6e2ad66139029092e",
+    "ref": "c9ce76cdf5f37e7946c80cb22ddabde6253eb48c",
     "version": "0.8.0"
   },
   "chiplet-cosim": {

@@ -33,9 +33,9 @@ It is licensed GPL-3.0-or-later.
 This page covers ``run``, ``resume``, ``status``, ``map``, ``validate``,
 ``verify``, ``verify-run``, ``verify-sign``, ``sign-request``,
 ``verify-accept``, ``verify-open``, ``review-copy``, ``review-levels``,
-``views``, ``edit``, ``place``, ``compare-nets``, ``lvs-bundle``,
-``lvs-verify``, ``fab-file`` and ``tasks``. ``packaging-flow --help`` lists
-every subcommand of the version in your image, and ``packaging-flow <command>
+``views``, ``edit``, ``place``, ``compare-nets``, ``gds-xor``,
+``lvs-bundle``, ``lvs-verify``, ``fab-file`` and ``tasks``.
+``packaging-flow --help`` lists every subcommand of the version in your image, and ``packaging-flow <command>
 --help`` its options.
 
 Where it runs
@@ -108,15 +108,49 @@ the run is not green.
 The run is a fixed list of stages. The ones you see in ``status`` include
 ``spec``, ``elaborate``, ``terminals``, ``admit:<instance>`` (or ``build`` and
 ``emit`` for a die built in the run), ``place-check``, ``bumps``, ``route``,
-``export``, ``gds``, ``drc``, ``terminal-map``, ``assembly-lvs``,
-``package-drc``, ``signoff-check`` and ``verdict``, with a ``halt:<gate>`` row at
-each checkpoint. A design finding before a checkpoint does not stop the run:
-it is recorded on its row, and the run is not green.
+``routed-geometry``, ``export``, ``gds``, ``drc``, ``terminal-map``,
+``assembly-lvs``, ``package-drc``, ``signoff-check`` and ``verdict``, with a
+``halt:<gate>`` row at each checkpoint. A design finding before a checkpoint
+does not stop the run: it is recorded on its row, and the run is not green.
+Two failures do stop it at their row: a route that leaves two nets closer than
+the layer's spacing rule (:doc:`/tools/11_interposer_pnr`), and a metal fill
+that cannot meet the density rules (see `The layout`_).
 
 Placement works to the registry's ``ASM_b`` and ``ASM_g``, so a run that
 dispatches the assembly DRC deck refuses an interposer adapter that overrides
 either to a different value (:ref:`placement and adapter overrides
 <adk_placement_overrides>`).
+
+The layout
+----------
+
+The ``routed-geometry`` row has interposer-pnr write every net's wires and
+vias as the flow routed them, with the placed dies and the carrier's metal
+stack, into ``pnr/routed-geometry.json``, and the I/O pads beside it into
+``pnr/routed-io-pads.json``. The ``gds`` row composes the interposer and
+assembly GDS from that document when the signoff check reads the board as
+drawn (``as_drawn``). When a person edited the board after the flow sent it
+(``edited_as_sent``), the row composes from the board instead. Any other word,
+or a signoff-check record that is missing or does not read, refuses the row
+before it draws anything (``CompositionRefused``). The row records which of the
+two it used in its ``composition`` fact. The run no longer writes or checks a
+HyperLynx ``.hyp`` file: when the layout is composed from an edited board, the
+exporter can still leave one beside the draft ``.chiplet``, and the run does
+not record it. Within one run
+the board is checked and drawn once: a board edited after ``gds`` has run is
+not checked or drawn again; start a new run from it (`Changing the design`_).
+
+On a design whose ``external`` block names a profile, the ``gds`` row also
+fills the carrier's metals and reads the fill's density report. When the fill
+cannot meet a metal's density rule, the row fails and the run stops at that
+row (exit 1). It prints
+one line per metal, for example ``gds: the metal fill could not meet the
+density rules on Metal4: <n> % is covered, below the allowed <lo> to <hi> %``,
+then what usually causes it: dies covering too much of one area, or wires
+drawn too densely in one area. No signature waives it. Move the dies apart or
+make the interposer larger in ``system.chiplet``, then run again. ``verify``
+refuses such a run with the same text. A report the row cannot read is
+recorded as a tooling failure, not as a statement about the design.
 
 Checkpoints and signatures
 --------------------------
@@ -145,6 +179,20 @@ your role and your name; a ``no`` signs nothing. A failing check of a kind that
 allows it may be waived there, with a reason. ``resume`` continues the run once
 every gate the halt waits on is signed, and halts at the next one.
 
+Before it looks at the gate, ``verify-sign`` reads every signature record filed
+under the signatures folder. A record that does not read is refused first,
+whatever gate you name, and the message says to restore it as it was filed or
+move it out of ``signatures/`` and sign its gate again. When a die gate the run
+recorded as signed has no record filed at its path under its key, every gate of
+the run is refused, not only that die's: either the signatures folder is not
+the one the run was signed in (check ``--root``), or the record or the run's
+``manifest.json`` changed after signing. Nothing is signed in either case.
+
+Every signature this version files is of version 1. It cannot check a
+signature filed at a newer version: every gate of such a run reads as having
+no key, and the message says to use the packaging-flow that signed it, or a
+newer one.
+
 Away from a terminal, ``sign-request --gate <gate> --answers <file>`` writes
 the gate's request, ``$RUN/requests/<gate>.json``, from the run's map and your
 answers file, and ``verify-sign --answers <request>`` signs from it. Nothing is
@@ -164,6 +212,23 @@ Close KiCad without saving. The signature binds the board's bytes under
 ``run/pnr/``, and a save changes only the copy, which ``verify-open`` then
 refuses as moved. To change the board on
 purpose, see `Changing the design`_.
+
+The run also draws the system's connection sheet, in its ``connection-sheet``
+row right after the system schematic: the dies with their pins, the wires to
+the net labels, the no-connect marks and the carrier pads, as on the KiCad
+sheet, with the assembly name and the digest of its ``.chiplet`` in the title.
+It is one SVG picture, ``pnr/<name>.draft.connection-sheet.svg`` under
+``run/``. ``verify-open`` prints its path and opens nothing:
+
+.. code-block:: bash
+
+    packaging-flow verify-open $RUN connection_sheet assembly.connection_sheet
+
+Open the file in a web browser, or in any program that shows SVG pictures.
+The sheet is drawn and shown, not signed: the assembly signature of this
+release binds the review schematic, not the sheet. A name the picture cannot
+hold stops the run at that row (``refused (undrawable_text)``) and says what
+to rename. A sheet larger than 8 MiB is still written, with a warning.
 
 The verdict
 -----------
@@ -298,6 +363,17 @@ refused on resume (exit 3). Changes go through commands that record them:
   ``edit $RUN --sheet <file.kicad_sch>`` a saved system schematic, and writes
   the change into the ``system.chiplet`` the run read. The next run starts
   from it.
+- ``edit <file.chiplet> --move ID=X,Y[,ROT]`` sets a placed die's position, in
+  um in the carrier frame the file states, and optionally its rotation (0, 90,
+  180 or 270). Repeat ``--move`` for several dies: every move is checked
+  together, as ``place`` checks a file, before anything is written. On a
+  carrier with no size the dies are shifted together to the margins, so their
+  positions relative to each other are the ones you asked for. It prints the
+  reasons and the diff, writes the file, keeps its working files under
+  ``edits/<UTC time>/`` beside it, and ends with ``wrote <file> (sha256 ...);
+  start a new run of it``. A die without a position yet is refused: run
+  ``place`` first. A placement the placer refuses exits 22, and nothing is
+  written.
 - ``place <file.chiplet>`` asks interposer-pnr to place the dies the file
   leaves without a position, size the carrier when the file gives no size, and
   put each unplaced external pin on an edge. It writes the result into the
@@ -307,6 +383,32 @@ refused on resume (exit 3). Changes go through commands that record them:
   :doc:`/tools/11_interposer_pnr`).
 - ``compare-nets <file> <reference>`` compares the nets of two files; it exits
   0 when they agree and 21 when they differ.
+- ``gds-xor <a.gds> <b.gds>`` says whether two layouts draw the same geometry,
+  for example a layout before and after a change. It compares every layer
+  either file holds, flattened through the hierarchy, by the XOR of its
+  shapes; a layer in one file only differs as a whole. ``--tolerance-dbu N``
+  (an even number, default 0) drops a difference up to N database units wide,
+  ``--cell`` names the cell when a file has more than one top cell, and
+  ``--json`` prints the answer as a document. Texts are not compared. It prints
+  each layer that differs with its area and box, then whether the digests of the
+  two files' canonical forms are equal, which it does not grade. It exits 0 when every layer
+  holds and 24 when one does not. It reads the two files only, not a run.
+
+After a placement, ``place`` and ``edit --move`` also draw it as a picture,
+``placement-view.svg`` in the same ``edits/<UTC time>/`` folder, and end with
+``Placement picture: <path>. Open it in a web browser, or in any program that
+shows SVG pictures.`` The picture shows the carrier with its size, each die
+with its id, size and turn, and the external pads by edge, before any routing.
+It binds and signs nothing. When it cannot be drawn, the last line says why,
+and that the placement was written, or that it is unchanged.
+
+In VS Code, the design's map (open the design's item in the Packaging Flow
+view) shows the newest placement picture after a ``place``, with its path
+under it. When it cannot show it, it says so in the picture's place: "<file>
+is the newest placement picture, but it cannot be shown here. Open it in a web
+browser. If a new place gives the same, report it." For a picture larger than
+8 MiB it says "<file> is larger than 8 MiB, the most this view shows. Open it
+in a web browser."
 
 A system can also start from a blank KiCad sheet. Its ``.chiplet`` leaves the
 die-to-die links out, and ``python -m packaging_flow.sheet_handout
@@ -400,6 +502,8 @@ Exit codes are never renumbered:
       - The placer refused.
     * - 23
       - A source has no placement.
+    * - 24
+      - ``gds-xor``: the two layouts do not draw the same geometry.
     * - 130
       - Interrupted.
 

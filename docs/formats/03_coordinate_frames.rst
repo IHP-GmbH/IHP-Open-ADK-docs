@@ -185,7 +185,7 @@ canonical frame. Every file the pipeline writes keeps the interposer at z 0,
 where the local and canonical planes coincide.
 
 When the outline contains all drawn geometry, the full bbox equals the outline
-bbox and both fields describe the same rectangle. When copper leaks outside the
+bbox and both fields describe the same rectangle. When metal leaks outside the
 outline, which is a design error and which the converter warns about loudly at
 export, ``dimensions`` keeps the true board size while ``position`` follows the
 mesh centre. That preserves die and pillar registration in the render at the

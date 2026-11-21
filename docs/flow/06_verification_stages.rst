@@ -331,7 +331,7 @@ limit.
 **What it catches that the others miss.** An interposer route drawn to the wrong
 landing. Every die pad still has its pillar, the pillar field is legally spaced,
 and the 3Dblox model takes its connectivity from the declared netlist rather
-than from the drawn copper, so all four geometric stages pass. Only assembly LVS
+than from the drawn metal, so all four geometric stages pass. Only assembly LVS
 follows the drawn metal from pad to pad, and it reports the open on the net the
 route should have joined and the short on the net it lands on.
 

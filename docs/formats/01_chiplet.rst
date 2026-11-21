@@ -706,7 +706,14 @@ release 1.22.0) validates a technology package, the tree whose manifest is
 and assembly), B (automated design) and C (analysis).
 ``python -m chiplet_format_io.technology_package ROOT`` exits 0 when the
 required sets pass, 1 when one does not, 2 when the package is refused and 3
-when the validator itself fails. It needs the ``strict`` extra.
+when the validator itself fails. It needs the ``strict`` extra. Since reader
+release 1.24.0 a package's KiCad view is optional in set B: a package with no
+``kicad_template``, or with a routing layer that names no
+``kicad_copper_layer``, passes set B with the note ``PACKAGE_NO_KICAD_VIEW``.
+The note says why it matters: every packaging-flow run writes a KiCad board,
+and interposer-pnr ``export`` refuses to write one for such a package (exit 5),
+so a run on that technology stops there until the package adds ``kicad_template``
+and a ``kicad_copper_layer`` for every routing layer.
 
 The output is semantically equivalent to, but not byte-identical to, what the
 GPL host tools write. The KiCad fork exporter and the KiCad plugin writer are
