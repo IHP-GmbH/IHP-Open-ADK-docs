@@ -148,17 +148,54 @@ says the same from the examples' side.
 What this release changes
 -------------------------
 
-The interposer DRC checks the seal-ring rules it left out: design metal to the
-ring, the via rings' enclosure in ``EdgeSeal``, ``EdgeSeal`` to the seal ring
-boundary and pad openings to ``EdgeSeal``. The wide-metal space rules measure
-design metal against the ring as well. A layout that passed before can fail
-these now; :doc:`/tools/05_openintm4tm2` lists the rules.
+A run composes its layout from the routed geometry. interposer-pnr's new
+``routed-geometry`` command writes every net's wires and vias, the placed dies
+and the carrier's metal stack into one document, and the ``gds`` row composes
+the interposer and assembly GDS from it when the signoff check reads the board
+as drawn. A board a person edited after the run sent it is composed from the
+board. The run no longer writes or checks a HyperLynx ``.hyp`` file
+(:doc:`/tools/10_packaging_flow`).
 
-``packaging-flow fab-file`` refuses a run with a failed, waived, removed,
-skipped or informative DRC: the interposer, assembly and package DRC rows must
-all have passed, and the run's check plan must require every DRC check
-(:doc:`/tools/10_packaging_flow`). A run that kept its template's checks is not
-affected.
+These change what a run that passed before may do now:
+
+- The run halts at the ``gds`` row when the metal fill cannot meet a metal's
+  density rule. It names each metal and its coverage, says what usually causes
+  it, and no signature waives it. Before, a fill that did not close did not
+  stop the run.
+- ``interposer-pnr route`` fails (exit 3) on any gap between two nets below
+  the layer's spacing rule, on both routing backends. Before, such a gap failed
+  only under a non-default width rule on the multi-layer backend, and never on
+  one routing layer (:doc:`/tools/11_interposer_pnr`).
+- At signing, a signature record that does not read is refused first,
+  whatever gate you name. When a die gate the run recorded as signed has no
+  record filed under its key, every gate of the run is refused, not only that
+  die's.
+- A technology package with no KiCad view passes its set B check with the note
+  ``PACKAGE_NO_KICAD_VIEW``. The flow still writes a KiCad board, so a run on
+  such a technology stops where the board is written
+  (:doc:`/formats/01_chiplet`). Before, such a package failed set B.
+
+New commands: ``packaging-flow edit <file.chiplet> --move ID=X,Y[,ROT]`` sets a
+placed die's position and turn, checked as ``place`` checks a file;
+``packaging-flow gds-xor`` says whether two layouts draw the same geometry.
+Each run draws the system's connection sheet as an SVG picture;
+``verify-open <run> connection_sheet assembly.connection_sheet`` prints its
+path.
+
+Chiplet Studio draws a component whose file names no layout where its anchor
+puts it, in both axes; before, such a box sat half its own height off
+(:doc:`/tools/04_chiplet_studio`).
+
+Signatures given under this release are of version 1. The next release signs
+at version 2 and asks for each gate's signature again, once. The connection
+sheet is drawn and shown in this release, not signed; the assembly signature
+binds the review schematic.
+
+Some code in the engines is present but not in use in this release, and
+nothing here describes it as usable: the version 2 signature tables, the
+review of a routed layout in place of the board (the ``interposer.routed``
+result and the acknowledgment that would sign it), and the connection sheet's
+picture in the VS Code run map, which no checklist item offers yet.
 
 .. _release_known_issues:
 
