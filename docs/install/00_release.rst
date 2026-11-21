@@ -178,9 +178,12 @@ These change what a run that passed before may do now:
 New commands: ``packaging-flow edit <file.chiplet> --move ID=X,Y[,ROT]`` sets a
 placed die's position and turn, checked as ``place`` checks a file;
 ``packaging-flow gds-xor`` says whether two layouts draw the same geometry.
-Each run draws the system's connection sheet as an SVG picture;
-``verify-open <run> connection_sheet assembly.connection_sheet`` prints its
-path.
+A run now draws the connection sheet of the assembly as a picture, in a row
+of its own after the schematic. Open it in a web browser, or in any program
+that shows SVG pictures; ``verify-open <run> connection_sheet
+assembly.connection_sheet`` prints its path. Where a review is not part of a
+run because a row was skipped, the reason names the ``connection-sheet`` row
+when it is the one skipped.
 
 Chiplet Studio draws a component whose file names no layout where its anchor
 puts it, in both axes; before, such a box sat half its own height off
@@ -191,9 +194,8 @@ at version 2 and asks for each gate's signature again, once. The connection
 sheet is drawn and shown in this release, not signed; the assembly signature
 binds the review schematic.
 
-Open the connection sheet in a web browser, or in any program that shows SVG
-pictures. The run map in VS Code shows the sheet from the release whose review
-offers it; in this release no review item offers it.
+The run map in VS Code shows the connection sheet from the release whose
+review offers it; in this release no review item offers it.
 
 Some code in the engines is present but not in use in this release, and
 nothing here describes it as usable: the version 2 signature tables, and the
