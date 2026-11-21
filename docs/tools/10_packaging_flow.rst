@@ -211,6 +211,23 @@ Close KiCad without saving. The signature binds the board's bytes under
 refuses as moved. To change the board on
 purpose, see `Changing the design`_.
 
+The run also draws the system's connection sheet, in its ``connection-sheet``
+row right after the system schematic: the dies with their pins, the wires to
+the net labels, the no-connect marks and the carrier pads, as on the KiCad
+sheet, with the assembly name and the digest of its ``.chiplet`` in the title.
+It is one SVG picture, ``pnr/<name>.draft.connection-sheet.svg`` under
+``run/``. ``verify-open`` prints its path and opens nothing:
+
+.. code-block:: bash
+
+    packaging-flow verify-open $RUN connection_sheet assembly.connection_sheet
+
+Open the file in a web browser, or in any program that shows SVG pictures.
+The sheet is drawn and shown, not signed: the assembly signature of this
+release binds the review schematic, not the sheet. A name the picture cannot
+hold stops the run at that row (``refused (undrawable_text)``) and says what
+to rename. A sheet larger than 8 MiB is still written, with a warning.
+
 The verdict
 -----------
 
