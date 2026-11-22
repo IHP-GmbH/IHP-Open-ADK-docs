@@ -189,15 +189,17 @@ not see that override.
 Signing
 -------
 
-``signoff --sign`` records an acknowledgment that binds a signer to the
-SHA-256 of one board. ``--reviewed`` (the same as ``--channel terminal``) is a
-person who opened the board in KiCad, signing at a terminal; ``--channel
-form`` is a person who reviewed through a review request, named by digest;
-with neither, the record says nobody reviewed the routing. ``signoff --check
---report <export report> --record <file>`` judges the board against what was
-sent and signs nothing: it writes ``as_drawn``, ``edited_as_sent`` or
-``refused`` with reasons. Every acknowledgment says it is not fabrication
-sign-off.
+``signoff --sign`` writes an acknowledgment that records the SHA-256 of one
+board and, when a person reviewed it, the signer's name. With ``--reviewed``
+(the same as ``--channel terminal``), the record says the signer, at a
+terminal, opened the board in KiCad. With ``--channel form``, it says the
+signer reviewed through a review request, which it names by digest. With
+neither, it says nobody reviewed the routing.
+
+``signoff --check --report <export report> --record <file>`` judges the board
+against what was sent and signs nothing: it writes ``as_drawn``,
+``edited_as_sent`` or ``refused`` with reasons. Every acknowledgment says it
+is not fabrication sign-off.
 
 In a run you do not call ``signoff`` yourself: packaging-flow's
 ``verify-sign --gate interposer`` has the run's own interposer-pnr sign the
